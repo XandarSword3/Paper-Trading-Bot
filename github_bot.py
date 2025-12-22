@@ -15,7 +15,7 @@ PAIR = "XBTUSD"  # BTC/USD on Kraken
 
 # Telegram Configuration
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8489311506:AAGyZli23sqDU6D8_VD_TJw6cq_XT0EdgL0")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")  # Set your chat ID
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "7599276205")
 
 # V1 Strategy Parameters (optimized from backtesting)
 ENTRY_LEN = 40
