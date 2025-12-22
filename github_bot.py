@@ -3,6 +3,7 @@ GitHub Actions Trading Bot - V1 Turtle-Donchian Strategy
 SIMULATION MODE: Uses Kraken public API (works globally, no geo-restrictions)
 Simulates trades internally (no exchange account needed)
 """
+import os
 import json
 import requests
 from datetime import datetime, timezone
@@ -11,6 +12,10 @@ from pathlib import Path
 # === CONFIGURATION ===
 KRAKEN_API = "https://api.kraken.com/0/public"
 PAIR = "XBTUSD"  # BTC/USD on Kraken
+
+# Telegram Configuration
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8489311506:AAGyZli23sqDU6D8_VD_TJw6cq_XT0EdgL0")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")  # Set your chat ID
 
 # V1 Strategy Parameters (optimized from backtesting)
 ENTRY_LEN = 40
@@ -23,6 +28,23 @@ MAX_UNITS = 4
 # File paths
 STATE_FILE = Path("bot_state.json")
 TRADES_FILE = Path("trades.json")
+
+
+# === TELEGRAM NOTIFICATIONS ===
+def send_telegram(message):
+    """Send message to Telegram"""
+    if not TELEGRAM_CHAT_ID:
+        return
+    
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        requests.post(url, json={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }, timeout=10)
+    except Exception as e:
+        print(f"Telegram error: {e}")
 
 
 # === STATE MANAGEMENT ===
@@ -271,6 +293,16 @@ def run_bot():
                 'size': position_size, 'pnl': pnl, 'equity': equity
             })
             
+            # Telegram notification
+            emoji = "🟢" if pnl > 0 else "🔴"
+            send_telegram(
+                f"{emoji} <b>EXIT - {exit_reason}</b>\n\n"
+                f"📍 Price: ${order['price']:,.2f}\n"
+                f"📊 Size: {position_size:.5f} BTC\n"
+                f"💰 P&L: ${pnl:+,.2f}\n"
+                f"💼 Equity: ${equity:,.2f}"
+            )
+            
             position_size = 0.0
             position_units = []
             state['trade_count'] += 1
@@ -317,6 +349,16 @@ def run_bot():
                 'size': order['quantity'], 'trailing_stop': trailing_stop,
                 'equity': equity
             })
+            
+            # Telegram notification
+            send_telegram(
+                f"📈 <b>ENTRY - {entry_reason}</b>\n\n"
+                f"📍 Price: ${order['price']:,.2f}\n"
+                f"📊 Size: {order['quantity']:.5f} BTC\n"
+                f"🛑 Stop: ${trailing_stop:,.2f}\n"
+                f"📦 Units: {len(position_units)}/{MAX_UNITS}\n"
+                f"💼 Equity: ${equity:,.2f}"
+            )
     
     # Update trailing stops
     for unit in position_units:
