@@ -23,7 +23,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install python-binance requests
+          pip install requests
       
       - name: Run trading bot
         env:
