@@ -6,6 +6,9 @@ on:
     - cron: '5 0,4,8,12,16,20 * * *'
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: write  # Allow pushing commits
+
 jobs:
   trade:
     runs-on: ubuntu-latest
@@ -13,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,10 +27,6 @@ jobs:
           pip install requests
       
       - name: Run trading bot
-        env:
-          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
-          BINANCE_API_SECRET: ${{ secrets.BINANCE_API_SECRET }}
-          BINANCE_TESTNET: 'true'
         run: |
           python github_bot.py
       
