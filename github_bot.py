@@ -78,18 +78,18 @@ def get_client():
     
     if testnet:
         print("Connected to Binance TESTNET")
-        # Use explicit testnet base URLs to avoid geo-restrictions
-        client = Client(api_key, api_secret)
-        client.API_URL = 'https://testnet.binance.vision/api'
-        client.MARGIN_API_URL = 'https://testnet.binance.vision/sapi'
-        client.WEBSITE_URL = 'https://testnet.binance.vision'
-        client.FUTURES_URL = 'https://testnet.binancefuture.com/fapi'
-        client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
-        client.FUTURES_COIN_URL = "https://testnet.binancefuture.com/dapi"
-        client.FUTURES_COIN_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
-        client.OPTIONS_URL = 'https://testnet.binance.vision/vapi'
-        client.OPTIONS_TESTNET_URL = 'https://testnet.binance.vision/vapi'
-        return client
+        # Override base URLs BEFORE creating client to avoid geo-restrictions
+        import binance.client
+        binance.client.BaseClient.API_URL = 'https://testnet.binance.vision/api'
+        binance.client.BaseClient.MARGIN_API_URL = 'https://testnet.binance.vision/sapi'
+        binance.client.BaseClient.WEBSITE_URL = 'https://testnet.binance.vision'
+        binance.client.BaseClient.FUTURES_URL = 'https://testnet.binancefuture.com/fapi'
+        binance.client.BaseClient.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
+        binance.client.BaseClient.FUTURES_COIN_URL = "https://testnet.binancefuture.com/dapi"
+        binance.client.BaseClient.FUTURES_COIN_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
+        binance.client.BaseClient.OPTIONS_URL = 'https://testnet.binance.vision/vapi'
+        binance.client.BaseClient.OPTIONS_TESTNET_URL = 'https://testnet.binance.vision/vapi'
+        return Client(api_key, api_secret)
     else:
         print("WARNING: Connected to MAINNET!")
         return Client(api_key, api_secret)
