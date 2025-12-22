@@ -1,4 +1,4 @@
-name: Trading Bot
+name: BTC Trading Bot
 
 on:
   schedule:
