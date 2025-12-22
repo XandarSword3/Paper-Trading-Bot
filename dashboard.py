@@ -19,7 +19,7 @@ st.set_page_config(
 # GitHub raw file URLs
 GITHUB_USER = "XandarSword3"
 GITHUB_REPO = "Paper-Trading-Bot"
-GITHUB_BRANCH = "main"
+GITHUB_BRANCH = "master"
 
 STATE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state.json"
 TRADES_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/trades.json"
