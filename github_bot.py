@@ -78,13 +78,18 @@ def get_client():
     
     if testnet:
         print("Connected to Binance TESTNET")
-        # Use explicit testnet URLs to avoid geo-restrictions
-        return Client(
-            api_key, 
-            api_secret, 
-            testnet=True,
-            tld='us'  # Use .us domain which supports testnet globally
-        )
+        # Use explicit testnet base URLs to avoid geo-restrictions
+        client = Client(api_key, api_secret)
+        client.API_URL = 'https://testnet.binance.vision/api'
+        client.MARGIN_API_URL = 'https://testnet.binance.vision/sapi'
+        client.WEBSITE_URL = 'https://testnet.binance.vision'
+        client.FUTURES_URL = 'https://testnet.binancefuture.com/fapi'
+        client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
+        client.FUTURES_COIN_URL = "https://testnet.binancefuture.com/dapi"
+        client.FUTURES_COIN_DATA_URL = 'https://testnet.binancefuture.com/futures/data'
+        client.OPTIONS_URL = 'https://testnet.binance.vision/vapi'
+        client.OPTIONS_TESTNET_URL = 'https://testnet.binance.vision/vapi'
+        return client
     else:
         print("WARNING: Connected to MAINNET!")
         return Client(api_key, api_secret)
