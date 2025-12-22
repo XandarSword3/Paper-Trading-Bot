@@ -78,7 +78,13 @@ def get_client():
     
     if testnet:
         print("Connected to Binance TESTNET")
-        return Client(api_key, api_secret, testnet=True)
+        # Use explicit testnet URLs to avoid geo-restrictions
+        return Client(
+            api_key, 
+            api_secret, 
+            testnet=True,
+            tld='us'  # Use .us domain which supports testnet globally
+        )
     else:
         print("WARNING: Connected to MAINNET!")
         return Client(api_key, api_secret)
