@@ -16,9 +16,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# GitHub raw file URLs - UPDATE THESE with your repo
-GITHUB_USER = "YOUR_GITHUB_USERNAME"  # <-- Change this
-GITHUB_REPO = "btc-strategy"  # <-- Change this
+# GitHub raw file URLs
+GITHUB_USER = "XandarSword3"
+GITHUB_REPO = "Paper-Trading-Bot"
 GITHUB_BRANCH = "main"
 
 STATE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state.json"
