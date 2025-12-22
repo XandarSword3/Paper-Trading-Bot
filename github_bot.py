@@ -1,8 +1,7 @@
 """
 GitHub Actions Trading Bot - V1 Turtle-Donchian Strategy
-SIMULATION MODE: Uses real price data from Binance PUBLIC API
+SIMULATION MODE: Uses Kraken public API (works globally, no geo-restrictions)
 Simulates trades internally (no exchange account needed)
-Works from any location including GitHub Actions runners
 """
 import json
 import requests
@@ -10,9 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # === CONFIGURATION ===
-# Binance PUBLIC API - works globally, no auth needed
-BINANCE_API = "https://api.binance.com/api/v3"
-SYMBOL = "BTCUSDT"
+KRAKEN_API = "https://api.kraken.com/0/public"
+PAIR = "XBTUSD"  # BTC/USD on Kraken
 
 # V1 Strategy Parameters (optimized from backtesting)
 ENTRY_LEN = 40
@@ -79,45 +77,46 @@ def save_trade(trade):
         json.dump(trades, f, indent=2, default=str)
 
 
-# === MARKET DATA (Public API - No Auth) ===
-def get_price():
-    """Get current BTC price from public API"""
+# === MARKET DATA (Kraken Public API) ===
+def get_candles(limit=720):
+    """
+    Fetch 4H candles from Kraken public API.
+    Kraken returns up to 720 candles per request.
+    Interval 240 = 4 hours (in minutes).
+    """
     try:
         response = requests.get(
-            f"{BINANCE_API}/ticker/price",
-            params={"symbol": SYMBOL},
-            timeout=10
-        )
-        response.raise_for_status()
-        return float(response.json()["price"])
-    except Exception as e:
-        print(f"Failed to get price: {e}")
-        return None
-
-
-def get_candles(limit=200):
-    """Fetch 4H candles from public API"""
-    try:
-        response = requests.get(
-            f"{BINANCE_API}/klines",
+            f"{KRAKEN_API}/OHLC",
             params={
-                "symbol": SYMBOL,
-                "interval": "4h",
-                "limit": limit
+                "pair": PAIR,
+                "interval": 240  # 4 hours in minutes
             },
             timeout=30
         )
         response.raise_for_status()
+        data = response.json()
+        
+        if data.get("error") and len(data["error"]) > 0:
+            print(f"Kraken API error: {data['error']}")
+            return []
+        
+        # Kraken returns data in format: [time, open, high, low, close, vwap, volume, count]
+        # The key is like "XXBTZUSD" (with X prefix for crypto)
+        result_key = list(data["result"].keys())[0]
+        if result_key == "last":
+            result_key = list(data["result"].keys())[1]
+        
+        raw_candles = data["result"][result_key]
         
         candles = []
-        for k in response.json():
+        for k in raw_candles:
             candles.append({
-                'time': k[0],
+                'time': int(k[0]) * 1000,  # Convert to milliseconds
                 'open': float(k[1]),
                 'high': float(k[2]),
                 'low': float(k[3]),
                 'close': float(k[4]),
-                'volume': float(k[5])
+                'volume': float(k[6])
             })
         
         return candles
@@ -126,25 +125,39 @@ def get_candles(limit=200):
         return []
 
 
+def get_price():
+    """Get current BTC price from Kraken"""
+    try:
+        response = requests.get(
+            f"{KRAKEN_API}/Ticker",
+            params={"pair": PAIR},
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get("error") and len(data["error"]) > 0:
+            return None
+        
+        result_key = list(data["result"].keys())[0]
+        return float(data["result"][result_key]["c"][0])  # Last trade price
+    except Exception as e:
+        print(f"Failed to get price: {e}")
+        return None
+
+
 # === SIMULATED TRADING ===
 def simulate_order(side, quantity, current_price):
-    """
-    Simulate a market order execution.
-    Uses current price with small slippage simulation.
-    """
-    # Simulate 0.05% slippage
+    """Simulate a market order with 0.05% slippage"""
     slippage = 0.0005
     if side == "BUY":
         fill_price = current_price * (1 + slippage)
     else:
         fill_price = current_price * (1 - slippage)
     
-    print(f"[SIMULATED] Order: {side} {quantity:.5f} BTC @ ${fill_price:,.2f}")
+    print(f"[SIMULATED] {side} {quantity:.5f} BTC @ ${fill_price:,.2f}")
     
-    return {
-        'price': fill_price,
-        'quantity': quantity
-    }
+    return {'price': fill_price, 'quantity': quantity}
 
 
 # === INDICATORS ===
@@ -170,11 +183,7 @@ def calculate_indicators(candles):
         low = candles[i]['low']
         prev_close = candles[i-1]['close']
         
-        tr = max(
-            high - low,
-            abs(high - prev_close),
-            abs(low - prev_close)
-        )
+        tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
         trs.append(tr)
     
     atr = sum(trs) / len(trs) if trs else 0
@@ -191,102 +200,77 @@ def calculate_indicators(candles):
 
 # === MAIN BOT LOGIC ===
 def run_bot():
-    """Main bot execution - called once per 4H candle"""
+    """Main bot execution"""
     now = datetime.now(timezone.utc)
     print("=" * 70)
     print(f"TRADING BOT - {now.strftime('%Y-%m-%d %H:%M UTC')}")
     print("=" * 70)
-    print("[SIMULATION MODE] Using real prices, simulated trades")
+    print("[SIMULATION MODE] Using Kraken prices, simulated trades")
     
     # Load state
     state = load_state()
-    print(f"\nLoaded state: Equity=${state['equity']:,.2f}, Position={state['position_size']:.5f} BTC")
+    print(f"\nLoaded: Equity=${state['equity']:,.2f}, Position={state['position_size']:.5f} BTC")
     
     # Fetch candles
-    print("\nFetching market data from Binance...")
-    candles = get_candles(limit=200)
+    print("\nFetching data from Kraken...")
+    candles = get_candles()
     if not candles:
         print("ERROR: Failed to fetch candles")
         save_state(state)
         return
     
-    print(f"Fetched {len(candles)} candles successfully")
+    print(f"Got {len(candles)} candles")
     
     # Calculate indicators
     indicators = calculate_indicators(candles)
     if not indicators:
-        print("ERROR: Not enough candles for indicators")
+        print("ERROR: Not enough data for indicators")
         save_state(state)
         return
     
-    print(f"\nMarket Data:")
-    print(f"  Current Price: ${indicators['current_price']:,.2f}")
-    print(f"  ATR (20): ${indicators['atr']:,.2f}")
+    print(f"\nMarket:")
+    print(f"  Price: ${indicators['current_price']:,.2f}")
+    print(f"  ATR: ${indicators['atr']:,.2f}")
     print(f"  Entry High (40): ${indicators['entry_high']:,.2f}")
     print(f"  Exit Low (16): ${indicators['exit_low']:,.2f}")
-    print(f"  Prev Candle High: ${indicators['prev_high']:,.2f}")
-    print(f"  Prev Candle Low: ${indicators['prev_low']:,.2f}")
-    
-    print(f"\nCurrent Position:")
-    print(f"  Equity: ${state['equity']:,.2f}")
-    print(f"  Position: {state['position_size']:.5f} BTC ({len(state['position_units'])} units)")
     
     # Trading logic
     position_size = state['position_size']
     position_units = state['position_units']
     equity = state['equity']
-    current_price = indicators['current_price']
+    price = indicators['current_price']
     
-    # === CHECK EXITS FIRST ===
+    # === CHECK EXITS ===
     if position_size > 0:
         exit_triggered = False
         exit_reason = ""
         
-        # Donchian exit: previous low broke below exit channel
         if indicators['prev_low'] < indicators['exit_low']:
             exit_triggered = True
-            exit_reason = "Donchian Exit (prev low < exit channel)"
-        
-        # Trailing stop check
-        if not exit_triggered:
+            exit_reason = "Donchian Exit"
+        else:
             for unit in position_units:
-                if current_price <= unit.get('trailing_stop', 0):
+                if price <= unit.get('trailing_stop', 0):
                     exit_triggered = True
-                    exit_reason = f"Trailing Stop (price ${current_price:,.2f} <= stop ${unit['trailing_stop']:,.2f})"
+                    exit_reason = "Trailing Stop"
                     break
         
         if exit_triggered:
-            print(f"\n>>> EXIT SIGNAL: {exit_reason}")
+            print(f"\n>>> EXIT: {exit_reason}")
+            order = simulate_order("SELL", position_size, price)
             
-            # Simulate closing position
-            order = simulate_order("SELL", position_size, current_price)
-            exit_price = order['price']
-            
-            # Calculate P&L
             total_cost = sum(u['entry_price'] * u['size'] for u in position_units)
-            total_revenue = exit_price * position_size
-            pnl = total_revenue - total_cost
-            pnl_pct = (pnl / total_cost) * 100 if total_cost > 0 else 0
-            
-            # Update equity
+            pnl = order['price'] * position_size - total_cost
             equity += pnl
             
-            print(f"Position closed: P&L ${pnl:,.2f} ({pnl_pct:+.2f}%)")
-            print(f"New equity: ${equity:,.2f}")
+            print(f"P&L: ${pnl:,.2f}")
             
-            # Record trade
             save_trade({
-                'type': 'EXIT',
-                'reason': exit_reason,
-                'time': now.isoformat(),
-                'price': exit_price,
-                'size': position_size,
-                'pnl': pnl,
-                'pnl_pct': pnl_pct,
-                'equity': equity
+                'type': 'EXIT', 'reason': exit_reason,
+                'time': now.isoformat(), 'price': order['price'],
+                'size': position_size, 'pnl': pnl, 'equity': equity
             })
             
-            # Reset position
             position_size = 0.0
             position_units = []
             state['trade_count'] += 1
@@ -296,105 +280,59 @@ def run_bot():
         entry_signal = False
         entry_reason = ""
         
-        # Breakout entry: previous high broke above entry channel
         if indicators['prev_high'] > indicators['entry_high']:
-            # Check pyramid spacing (need 1 ATR above last entry)
             if position_units:
                 last_entry = position_units[-1]['entry_price']
-                if current_price >= last_entry + indicators['atr']:
+                if price >= last_entry + indicators['atr']:
                     entry_signal = True
-                    entry_reason = f"Pyramid Add (price >= last entry + ATR)"
+                    entry_reason = "Pyramid"
             else:
                 entry_signal = True
-                entry_reason = "Breakout Entry (prev high > entry channel)"
+                entry_reason = "Breakout"
         
         if entry_signal:
-            print(f"\n>>> ENTRY SIGNAL: {entry_reason}")
+            print(f"\n>>> ENTRY: {entry_reason}")
             
-            # Calculate position size (1% risk per unit)
-            risk_amount = equity * RISK_PCT
-            stop_distance = TRAIL_MULT * indicators['atr']
-            unit_size = risk_amount / stop_distance
+            risk = equity * RISK_PCT
+            stop_dist = TRAIL_MULT * indicators['atr']
+            unit_size = max(0.0001, min(risk / stop_dist, 0.1))
             
-            # Clamp to reasonable BTC size
-            unit_size = max(0.0001, min(unit_size, 0.1))
+            order = simulate_order("BUY", unit_size, price)
+            trailing_stop = order['price'] - stop_dist
             
-            # Check if we can afford it
-            unit_value = unit_size * current_price
-            if unit_value > equity * 0.25:  # Max 25% of equity per unit
-                unit_size = (equity * 0.25) / current_price
-                unit_size = max(0.0001, unit_size)
-            
-            print(f"Unit size: {unit_size:.5f} BTC (${unit_size * current_price:,.2f})")
-            
-            # Simulate order
-            order = simulate_order("BUY", unit_size, current_price)
-            entry_price = order['price']
-            actual_size = order['quantity']
-            
-            # Calculate trailing stop
-            trailing_stop = entry_price - stop_distance
-            
-            # Add unit
             position_units.append({
-                'entry_price': entry_price,
-                'size': actual_size,
+                'entry_price': order['price'],
+                'size': order['quantity'],
                 'trailing_stop': trailing_stop,
                 'time': now.isoformat()
             })
-            
-            position_size += actual_size
+            position_size += order['quantity']
             state['trade_count'] += 1
             
-            print(f"Entry: {actual_size:.5f} BTC @ ${entry_price:,.2f}")
-            print(f"Trailing stop: ${trailing_stop:,.2f}")
+            print(f"Stop: ${trailing_stop:,.2f}")
             
-            # Record trade
             save_trade({
-                'type': 'ENTRY',
-                'reason': entry_reason,
-                'time': now.isoformat(),
-                'price': entry_price,
-                'size': actual_size,
-                'trailing_stop': trailing_stop,
+                'type': 'ENTRY', 'reason': entry_reason,
+                'time': now.isoformat(), 'price': order['price'],
+                'size': order['quantity'], 'trailing_stop': trailing_stop,
                 'equity': equity
             })
     
-    # === UPDATE TRAILING STOPS ===
-    if position_units:
-        stops_updated = 0
-        for unit in position_units:
-            new_stop = current_price - (TRAIL_MULT * indicators['atr'])
-            if new_stop > unit.get('trailing_stop', 0):
-                unit['trailing_stop'] = new_stop
-                stops_updated += 1
-        
-        if stops_updated > 0:
-            print(f"\nUpdated {stops_updated} trailing stop(s)")
+    # Update trailing stops
+    for unit in position_units:
+        new_stop = price - (TRAIL_MULT * indicators['atr'])
+        if new_stop > unit.get('trailing_stop', 0):
+            unit['trailing_stop'] = new_stop
     
-    # === SAVE STATE ===
+    # Save state
     state['position_size'] = position_size
     state['position_units'] = position_units
     state['equity'] = equity
     save_state(state)
     
-    # Summary
-    unrealized_pnl = 0
-    if position_size > 0:
-        total_cost = sum(u['entry_price'] * u['size'] for u in position_units)
-        current_value = current_price * position_size
-        unrealized_pnl = current_value - total_cost
-    
     print(f"\n{'='*70}")
-    print(f"SUMMARY")
-    print(f"{'='*70}")
-    print(f"  Equity: ${equity:,.2f}")
-    print(f"  Position: {position_size:.5f} BTC")
-    print(f"  Units: {len(position_units)}/{MAX_UNITS}")
-    if position_size > 0:
-        print(f"  Unrealized P&L: ${unrealized_pnl:,.2f}")
-    print(f"  Total Trades: {state['trade_count']}")
-    print(f"{'='*70}")
+    print(f"Equity: ${equity:,.2f} | Position: {position_size:.5f} BTC | Trades: {state['trade_count']}")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
