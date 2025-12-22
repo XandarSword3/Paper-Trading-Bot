@@ -18,6 +18,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# === SIDEBAR NAVIGATION ===
+st.sidebar.markdown("## 📊 Navigation")
+st.sidebar.markdown("""
+- **Home** (Overview & Analytics)
+- **📊 Candle Analysis** (Interactive chart with strategy fit %)
+- Use sidebar to switch pages
+""")
+
+st.sidebar.divider()
+
 # === GITHUB CONFIG ===
 GITHUB_USER = "XandarSword3"
 GITHUB_REPO = "Paper-Trading-Bot"
