@@ -1,6 +1,6 @@
 """
 🚀 BTC Trading Bot - Premium Dashboard
-V1 Turtle-Donchian Strategy | Live monitoring
+Dual Strategy: V1 Turtle (4H) + V4 Fast (1H)
 Deploy free on Streamlit Cloud: https://share.streamlit.io
 """
 import streamlit as st
@@ -21,9 +21,10 @@ st.set_page_config(
 # === SIDEBAR NAVIGATION ===
 st.sidebar.markdown("## 📊 Navigation")
 st.sidebar.markdown("""
-- **Home** (Overview & Analytics)
-- **📊 Candle Analysis** (Interactive chart with strategy fit %)
-- Use sidebar to switch pages
+- **Home** - Combined Overview
+- **📊 Candle Analysis** - Interactive chart
+- **🐢 V1 Strategy** - Turtle (4H)
+- **⚡ V4 Strategy** - Fast (1H)
 """)
 
 st.sidebar.divider()
@@ -35,6 +36,8 @@ GITHUB_BRANCH = "master"
 
 STATE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state.json"
 TRADES_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/trades.json"
+STATE_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state_v4.json"
+TRADES_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/trades_v4.json"
 KRAKEN_PRICE_URL = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
 
 # === CUSTOM CSS ===
@@ -111,7 +114,7 @@ st.markdown("""
 # === DATA LOADING ===
 @st.cache_data(ttl=30)
 def load_state():
-    """Load bot state from GitHub"""
+    """Load V1 bot state from GitHub"""
     try:
         response = requests.get(STATE_URL + f"?t={int(time.time())}", timeout=10)
         if response.status_code == 200:
@@ -123,9 +126,33 @@ def load_state():
 
 @st.cache_data(ttl=30)
 def load_trades():
-    """Load trade history from GitHub"""
+    """Load V1 trade history from GitHub"""
     try:
         response = requests.get(TRADES_URL + f"?t={int(time.time())}", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return []
+
+
+@st.cache_data(ttl=30)
+def load_state_v4():
+    """Load V4 bot state from GitHub"""
+    try:
+        response = requests.get(STATE_V4_URL + f"?t={int(time.time())}", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
+
+
+@st.cache_data(ttl=30)
+def load_trades_v4():
+    """Load V4 trade history from GitHub"""
+    try:
+        response = requests.get(TRADES_V4_URL + f"?t={int(time.time())}", timeout=10)
         if response.status_code == 200:
             return response.json()
     except:
@@ -221,6 +248,7 @@ def main():
     col_title, col_status = st.columns([4, 1])
     with col_title:
         st.markdown("# 🚀 BTC Trading Bot")
+        st.caption("Dual Strategy: 🐢 V1 Turtle (4H) + ⚡ V4 Fast (1H)")
     with col_status:
         st.markdown("""
             <div style='text-align: right; padding-top: 20px;'>
@@ -229,17 +257,67 @@ def main():
             </div>
         """, unsafe_allow_html=True)
     
-    # Load data
+    # Load data for both strategies
     state = load_state()
     trades = load_trades()
+    state_v4 = load_state_v4()
+    trades_v4 = load_trades_v4()
     live_price = get_live_price()
     
+    # === COMBINED STRATEGY OVERVIEW ===
+    st.markdown("---")
+    st.subheader("📊 Strategy Overview")
+    
+    col_v1, col_v4, col_combined = st.columns(3)
+    
+    # V1 Stats
+    with col_v1:
+        st.markdown("### 🐢 V1 Turtle")
+        if state:
+            v1_equity = state.get('equity', 1000)
+            v1_initial = state.get('initial_capital', 1000)
+            v1_return = ((v1_equity / v1_initial) - 1) * 100
+            v1_pos = state.get('position_size', 0)
+            st.metric("Equity", f"${v1_equity:,.2f}", f"{v1_return:+.1f}%")
+            st.caption(f"Position: {'LONG' if v1_pos > 0 else 'FLAT'}")
+            st.caption(f"Trades: {state.get('trade_count', 0)}")
+        else:
+            st.info("V1 not yet started")
+    
+    # V4 Stats
+    with col_v4:
+        st.markdown("### ⚡ V4 Fast")
+        if state_v4:
+            v4_equity = state_v4.get('equity', 1000)
+            v4_initial = state_v4.get('initial_capital', 1000)
+            v4_return = ((v4_equity / v4_initial) - 1) * 100
+            v4_pos = state_v4.get('position_size', 0)
+            st.metric("Equity", f"${v4_equity:,.2f}", f"{v4_return:+.1f}%")
+            st.caption(f"Position: {'LONG' if v4_pos > 0 else 'FLAT'}")
+            st.caption(f"Trades: {state_v4.get('trade_count', 0)}")
+        else:
+            st.info("V4 not yet started")
+    
+    # Combined Stats
+    with col_combined:
+        st.markdown("### 💼 Combined")
+        v1_eq = state.get('equity', 1000) if state else 1000
+        v4_eq = state_v4.get('equity', 1000) if state_v4 else 1000
+        combined_equity = v1_eq + v4_eq
+        combined_initial = 2000
+        combined_return = ((combined_equity / combined_initial) - 1) * 100
+        st.metric("Total Equity", f"${combined_equity:,.2f}", f"{combined_return:+.1f}%")
+        v1_trades = state.get('trade_count', 0) if state else 0
+        v4_trades = state_v4.get('trade_count', 0) if state_v4 else 0
+        st.caption(f"Total Trades: {v1_trades + v4_trades}")
+        st.caption(f"BTC: ${live_price:,.2f}" if live_price else "")
+    
     if not state:
-        st.error("⚠️ Could not connect to bot. Check GitHub configuration.")
+        st.error("⚠️ Could not connect to V1 bot. Check GitHub configuration.")
         st.code(f"STATE_URL = {STATE_URL}")
         return
     
-    # === TOP METRICS ===
+    # === TOP METRICS (V1 focus for backward compatibility) ===
     st.markdown("---")
     
     col1, col2, col3, col4, col5 = st.columns(5)
