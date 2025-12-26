@@ -2,8 +2,8 @@ name: BTC Trading Bot
 
 on:
   schedule:
-    # Run every 4 hours at minute 5 (after candle close)
-    - cron: '5 0,4,8,12,16,20 * * *'
+    # V4 runs every hour (fast strategy)
+    - cron: '5 * * * *'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
@@ -26,17 +26,31 @@ jobs:
         run: |
           pip install requests
       
-      - name: Run trading bot
+      - name: Get current hour
+        id: hour
+        run: echo "hour=$(date -u +'%H')" >> $GITHUB_OUTPUT
+      
+      - name: Run V4 Bot (hourly - 1H candles)
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          echo "===== V4 HIGH-FREQUENCY BOT ====="
+          python github_bot_v4.py
+      
+      - name: Run V1 Bot (every 4H - only at 0,4,8,12,16,20 UTC)
+        if: contains('0,4,8,12,16,20', steps.hour.outputs.hour)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          echo "===== V1 TURTLE BOT ====="
           python github_bot.py
       
       - name: Commit state changes
         run: |
           git config --local user.email "bot@github.com"
           git config --local user.name "Trading Bot"
-          git add bot_state.json trades.json
+          git add bot_state.json trades.json bot_state_v4.json trades_v4.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "Bot update: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master

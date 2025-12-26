@@ -1,0 +1,9 @@
+{
+  "strategy": "V4",
+  "initial_capital": 1000.0,
+  "equity": 1000.0,
+  "position_size": 0.0,
+  "position_units": [],
+  "trade_count": 0,
+  "last_run": null
+}
