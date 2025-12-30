@@ -451,7 +451,59 @@ This runs:
 - ✅ Bot state persistence
 - ✅ API connection tests
 
-## 📈 Comparison: Strategy vs S&P 500
+## 📈 Comparison: Strategy vs Buy-and-Hold Bitcoin
+
+### The Uncomfortable Truth
+
+**This is the most important comparison you need to see:**
+
+| Metric | BTC Buy-Hold | V1 Strategy | V4 Strategy |
+|--------|--------------|-------------|-------------|
+| Period | Jan 2017 - Dec 2025 | Same | Same |
+| Starting Price | $998 | $1,000 capital | $1,000 capital |
+| Ending Price | $87,450 | N/A | N/A |
+| **CAGR** | **74.0%** | **32.2%** | **41.7%** |
+| Total Return | **8,663%** | **855%** | **1,572%** |
+| **vs Buy-Hold** | Baseline | 43.6% | 56.4% |
+| Max Drawdown | ~-65% (2018) | -39.3% | -65% |
+| Active Management | None | Required | Intensive |
+
+### What This Means
+
+**If you had $1,000 and did NOTHING:**
+- Buy-and-hold: **$87,450** (74% CAGR)
+- V1 Strategy: **$9,550** (32.2% CAGR)
+- **Difference: $77,900 forgone**
+
+**The Hard Truth:**
+- ✓ Both strategies are profitable
+- ✗ Both massively underperform simple buy-and-hold on BTC
+- ✗ V1 captures only **44%** of buy-and-hold returns
+- ✗ V4 captures only **56%** of buy-and-hold returns
+- ✓ But V1 has **lower psychological stress** (-39% vs -65% drawdown)
+
+### Why This Happened
+
+Trend-following systems like the Turtle-Donchian work best in:
+- Choppy/sideways markets (missed 2017-2021 mega-bull)
+- Ranging periods (lock in small gains)
+- Volatile corrections (protect downside)
+
+They struggle in:
+- Strong bull markets (miss early rallies)
+- Parabolic moves (whipsaws on corrections)
+- Bitcoin's historical 74% CAGR trend (too good to beat!)
+
+### The Real Value Proposition
+
+**This system isn't about beating buy-and-hold.** It's about:
+- 🛡️ **Lower drawdown** (39% vs 65%+ swings)
+- 😴 **Sleep better at night** (less volatility stress)
+- 📊 **Active income** (something to actively manage)
+- 🎓 **Learning framework** (understand algo trading)
+- 🔍 **Diverse portfolio** (use alongside other strategies)
+
+### Strategy vs S&P 500 (Alternative Comparison)
 
 **Scenario:** $1,000 initial + $300/month for 8 years
 
@@ -465,7 +517,7 @@ This runs:
 | Risk (Max DD) | -39.3% | ~-25% |
 | Active Management | Required | Passive |
 
-**Key Insight:** Strategy outperforms on capital efficiency (no monthly additions needed), but S&P 500 wins with disciplined monthly investing.
+**Key Insight:** S&P 500 wins with disciplined monthly contributions, but V1 wins on pure initial capital efficiency (no ongoing deposits needed).
 
 ## 🛡️ Risk Management
 
@@ -583,6 +635,51 @@ This is a personal research project, but suggestions are welcome!
 This project is for educational purposes only. Use at your own risk.
 
 **Disclaimer:** Trading cryptocurrencies involves substantial risk of loss. Past performance does not guarantee future results. This software is provided "as is" without warranty. The author is not responsible for any financial losses.
+
+---
+
+## 💡 Honest Assessment for Buyers/Users
+
+### What This System Actually Is
+
+✅ **A professional backtesting and paper trading framework** for learning algorithmic trading
+✅ **A risk management approach** that prioritizes consistent returns over maximum gains
+✅ **A research tool** for understanding Donchian breakout strategies
+✅ **A lower-volatility alternative** to simple buy-and-hold (39% vs 65%+ drawdowns)
+
+### What This System Is NOT
+
+❌ **A "get rich quick" scheme** (it underperforms buy-and-hold on Bitcoin)
+❌ **A replacement for passive investing** (if you want max returns, just HODL)
+❌ **A guaranteed money-maker** (historical results ≠ future profits)
+❌ **Better than buying Bitcoin** (74% CAGR vs 32% for V1, 41.7% for V4)
+
+### Who Should Use This
+
+**Perfect for:**
+- Quant traders learning algorithmic systems
+- Traders who prefer active management over passive holding
+- People with high stress/anxiety from market volatility
+- Portfolio allocation (e.g., 20% in this strategy, 80% in index funds)
+- Risk management practitioners studying position sizing
+- Developers wanting to learn trading bot architecture
+
+**NOT recommended for:**
+- People wanting maximum returns (just buy BTC/ETH)
+- Passive "set-and-forget" investors
+- Beginners expecting consistent 10%+ monthly returns
+- Anyone who can't afford to lose their capital
+- Traders uncomfortable with 39%+ temporary drawdowns
+
+### The Core Truth
+
+**The Bitcoin market from 2017-2025 was a 74% CAGR bull market.** Trend-following systems aren't designed to maximize bull market returns—they're designed to:
+1. Survive bear markets (this system did)
+2. Avoid psychological panic (lower drawdown helps)
+3. Provide steady income streams (active trading)
+4. Offer learning and adaptability (parameters can evolve)
+
+If maximizing returns is your goal, this system finished second. But if managing risk and staying sane is your goal, it succeeded.
 
 ## 🙏 Acknowledgments
 

@@ -52,13 +52,13 @@ def get_candles(interval=240, count=200):
         return pd.DataFrame()
 
 
-def calculate_indicators(df):
-    """Calculate strategy indicators"""
+def calculate_indicators(df, entry_len=ENTRY_LEN, exit_len=EXIT_LEN, atr_len=ATR_LEN):
+    """Calculate strategy indicators (dynamic lengths)"""
     df = df.copy()
     
     # Donchian Channels
-    df['entry_high'] = df['high'].shift(1).rolling(ENTRY_LEN).max()
-    df['exit_low'] = df['low'].shift(1).rolling(EXIT_LEN).min()
+    df['entry_high'] = df['high'].shift(1).rolling(entry_len).max()
+    df['exit_low'] = df['low'].shift(1).rolling(exit_len).min()
     
     # ATR
     df['prev_close'] = df['close'].shift(1)
@@ -69,7 +69,7 @@ def calculate_indicators(df):
             abs(df['low'] - df['prev_close'])
         )
     )
-    df['atr'] = df['tr'].rolling(ATR_LEN).mean()
+    df['atr'] = df['tr'].rolling(atr_len).mean()
     
     # Breakout signals
     df['prev_high'] = df['high'].shift(1)
@@ -207,7 +207,7 @@ def analyze_candle(row, df, idx):
     }
 
 
-def create_chart(df):
+def create_chart(df, entry_len=ENTRY_LEN, exit_len=EXIT_LEN):
     """Create interactive candlestick chart with signals"""
     
     # Calculate fit scores for all candles
@@ -246,22 +246,22 @@ def create_chart(df):
         ]
     ))
     
-    # Entry channel (40-period high)
+    # Entry channel (dynamic)
     fig.add_trace(go.Scatter(
         x=df['time'],
         y=df['entry_high'],
         mode='lines',
-        name=f'Entry High ({ENTRY_LEN})',
+        name=f'Entry High ({entry_len})',
         line=dict(color='#00FF00', width=2, dash='dash'),
         hoverinfo='skip'
     ))
     
-    # Exit channel (16-period low)
+    # Exit channel (dynamic)
     fig.add_trace(go.Scatter(
         x=df['time'],
         y=df['exit_low'],
         mode='lines',
-        name=f'Exit Low ({EXIT_LEN})',
+        name=f'Exit Low ({exit_len})',
         line=dict(color='#FF6B6B', width=2, dash='dash'),
         hoverinfo='skip'
     ))
@@ -375,16 +375,19 @@ def main():
             index=1
         )
         candle_count = st.slider("Candles to show", 50, 200, 100)
-        
+
+        # Dynamic entry length: use 8 for 1-hour, keep 40 otherwise
+        entry_len = 8 if timeframe == 60 else ENTRY_LEN
+
         st.divider()
         st.subheader("📋 Strategy Rules")
         st.markdown(f"""
-        - **Entry**: High > {ENTRY_LEN}-period high
+        - **Entry**: High > {entry_len}-period high
         - **Exit**: Low < {EXIT_LEN}-period low
         - **ATR**: {ATR_LEN}-period average
         - **Trail Stop**: {TRAIL_MULT}x ATR
         """)
-        
+
         if st.button("🔄 Refresh Data"):
             st.cache_data.clear()
     
@@ -395,11 +398,17 @@ def main():
         st.error("Failed to load data")
         return
     
-    # Calculate indicators
-    df = calculate_indicators(df)
+    # Calculate indicators (pass dynamic entry length)
+    # entry_len was set inside the sidebar block above
+    try:
+        entry_len  # ensure entry_len exists in scope
+    except NameError:
+        entry_len = ENTRY_LEN
+
+    df = calculate_indicators(df, entry_len=entry_len, exit_len=EXIT_LEN, atr_len=ATR_LEN)
     
-    # Create and display chart
-    fig, df = create_chart(df)
+    # Create and display chart (pass dynamic entry/exit lengths)
+    fig, df = create_chart(df, entry_len=entry_len, exit_len=EXIT_LEN)
     
     # Use plotly_chart with click events
     st.plotly_chart(fig, use_container_width=True)
@@ -412,7 +421,7 @@ def main():
         st.subheader("🔎 Analyze Specific Candle")
         
         # Select candle by index
-        valid_indices = list(range(max(0, ENTRY_LEN), len(df)))
+        valid_indices = list(range(max(0, entry_len), len(df)))
         if valid_indices:
             selected_idx = st.slider(
                 "Select candle",
