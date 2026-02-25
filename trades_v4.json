@@ -968,5 +968,15 @@
     "trailing_stop": 62367.9188,
     "equity": 960.5471797288337,
     "strategy": "V4"
+  },
+  {
+    "type": "ENTRY",
+    "reason": "Pyramid",
+    "time": "2026-02-25T13:15:33.870603+00:00",
+    "price": 66085.026,
+    "size": 0.004828932859406454,
+    "trailing_stop": 64095.876,
+    "equity": 960.5471797288337,
+    "strategy": "V4"
   }
 ]
