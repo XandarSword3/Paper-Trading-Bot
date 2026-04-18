@@ -23,6 +23,11 @@ secrets.json
 *.key
 *.pem
 
+# Bot state & trade logs (contain sensitive trading data)
+bot_state*.json
+trades*.json
+paper_bot.log
+
 # IDE
 .vscode/
 .idea/
