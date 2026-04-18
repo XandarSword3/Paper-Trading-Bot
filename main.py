@@ -6,6 +6,8 @@ Turtle-Inspired Donchian Strategy Analysis Pipeline
 import os
 import sys
 import time
+import json
+import argparse
 from datetime import datetime
 import pandas as pd
 
@@ -16,6 +18,33 @@ from config import (
     DEFAULT_PARAMS, DEFAULT_BACKTEST, RESULTS_DIR, PLOTS_DIR,
     StrategyParams
 )
+
+
+def parse_args():
+    """Parse CLI arguments for unified strategy entrypoint."""
+    parser = argparse.ArgumentParser(
+        description="BTC Strategy runner (Turtle pipeline + Liquidation Hunter bridge)"
+    )
+    parser.add_argument(
+        "--engine",
+        choices=["turtle", "liquidation-hunter"],
+        default="turtle",
+        help="Engine to run. Default keeps existing turtle analysis pipeline.",
+    )
+
+    # Liquidation Hunter bridge options
+    parser.add_argument("--lh-mode", choices=["backtest", "paper", "live", "research", "observe"], default="research")
+    parser.add_argument("--lh-dir", default=None, help="Optional path to liquidation-hunter project directory")
+    parser.add_argument("--iterations", type=int, default=None, help="Optional max loop iterations for paper/live")
+    parser.add_argument("--poll-seconds", type=int, default=None)
+    parser.add_argument("--candles", type=int, default=None)
+    parser.add_argument("--oos-ratio", type=float, default=None)
+    parser.add_argument("--folds", type=int, default=None)
+    parser.add_argument("--mc-iterations", type=int, default=None)
+    parser.add_argument("--compare-timeframes", action="store_true")
+    parser.add_argument("--no-sync-artifacts", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    return parser.parse_args()
 
 
 def print_header():
@@ -298,6 +327,40 @@ def generate_final_report(
 def main():
     """Main execution function"""
     import pandas as pd
+
+    args = parse_args()
+
+    if args.engine == "liquidation-hunter":
+        from liquidation_hunter_bridge import LiquidationHunterBridgeError, run_liquidation_hunter
+
+        try:
+            result = run_liquidation_hunter(
+                mode=args.lh_mode,
+                liquidation_dir=args.lh_dir,
+                iterations=args.iterations,
+                poll_seconds=args.poll_seconds,
+                candles=args.candles,
+                oos_ratio=args.oos_ratio,
+                folds=args.folds,
+                mc_iterations=args.mc_iterations,
+                compare_timeframes=args.compare_timeframes,
+                sync_artifacts=not args.no_sync_artifacts,
+                dry_run=args.dry_run,
+            )
+        except LiquidationHunterBridgeError as exc:
+            print("\n" + "=" * 80)
+            print("LIQUIDATION HUNTER BRIDGE FAILED")
+            print("=" * 80)
+            print(str(exc))
+            print("=" * 80)
+            return
+
+        print("\n" + "=" * 80)
+        print("LIQUIDATION HUNTER BRIDGE COMPLETED")
+        print("=" * 80)
+        print(json.dumps(result, indent=2, default=str))
+        print("=" * 80)
+        return
     
     print_header()
     

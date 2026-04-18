@@ -177,15 +177,26 @@ def download_btc_data(
         # Check if we need to update
         last_date = df.index[-1]
         today = pd.Timestamp.now()
+        staleness_days = (today - last_date).days
         
-        if (today - last_date).days > 1:
-            print(f"Data is outdated (last: {last_date}). Updating...")
-            new_start = (last_date + timedelta(hours=1)).strftime("%Y-%m-%d")
-            new_df = fetcher.fetch_klines(timeframe, new_start, end_date)
-            df = pd.concat([df, new_df])
-            df = df[~df.index.duplicated(keep="last")]
-            df.sort_index(inplace=True)
-            fetcher.save_data(df, filename)
+        if staleness_days > 7:
+            print(f"\n⚠️  WARNING: Data is {staleness_days} days old (last candle: {last_date.strftime('%Y-%m-%d')})")
+            print(f"   Attempting auto-refresh from Binance...")
+        
+        if staleness_days > 1:
+            try:
+                new_start = (last_date + timedelta(hours=1)).strftime("%Y-%m-%d")
+                new_df = fetcher.fetch_klines(timeframe, new_start, end_date)
+                df = pd.concat([df, new_df])
+                df = df[~df.index.duplicated(keep="last")]
+                df.sort_index(inplace=True)
+                fetcher.save_data(df, filename)
+                print(f"   ✅ Data updated to {df.index[-1].strftime('%Y-%m-%d')}")
+            except Exception as e:
+                print(f"   ❌ Auto-refresh failed: {e}")
+                if staleness_days > 7:
+                    print(f"   ⚠️  Proceeding with STALE data. Results may not reflect current market.")
+                    print(f"   Run with force_refresh=True to force full re-download.")
         
         return df
     

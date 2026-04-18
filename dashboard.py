@@ -25,6 +25,7 @@ st.sidebar.markdown("""
 - **📊 Candle Analysis** - Interactive chart
 - **🐢 V1 Strategy** - Turtle (4H)
 - **⚡ V4 Strategy** - Fast (1H)
+- **🎯 Liquidation Hunter** - Cascades
 """)
 
 st.sidebar.divider()
@@ -377,7 +378,7 @@ def main():
     st.markdown("---")
     
     # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["📈 Overview", "📜 Trade History", "📊 Analytics", "⚙️ Strategy"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Overview", "📜 Trade History", "📊 Analytics", "⚙️ Strategy", "🎯 Liquidation Hunter"])
     
     # === TAB 1: OVERVIEW ===
     with tab1:
@@ -667,6 +668,35 @@ def main():
             - [📊 Bot State (JSON)]({STATE_URL})
             - [📜 Trade History (JSON)]({TRADES_URL})
             """)
+    
+    # === TAB 5: LIQUIDATION HUNTER ===
+    with tab5:
+        st.subheader("🎯 Liquidation Cascade Hunter")
+        st.markdown("""
+        **Strategy Overview:**
+        This is a highly defensive mean-reversion algorithm that hunts for intense Liquidation Cascades on Bybit Perpetuals.
+        It uses Orderbook analytics and ATR volatility checks to snipe entries using Limit Orders after extreme capitulations.
+        It runs entirely independently from the Turtle-Donchian trend-following systems.
+        
+        **Key Defenses:**
+        - 🛑 Intraday Drawdown limit (5%)
+        - 📅 Macro Event Blackouts (FOMC, CPI skips)
+        - 📉 Real-time Bid/Ask Spread & Open Interest validation
+        """)
+        
+        st.markdown("### 📊 Live Engine Metrics")
+        try:
+            import os
+            # Attempt to read local LH logs
+            lh_path = os.path.join("Trading Bot", "liquidation-hunter", "logs", "paper_readiness.json")
+            if os.path.exists(lh_path):
+                with open(lh_path, "r", encoding="utf-8") as f:
+                    lh_stats = json.load(f)
+                st.json(lh_stats)
+            else:
+                st.info("Liquidation Hunter metrics will appear here once the engine generates `paper_readiness.json`.")
+        except Exception as e:
+            st.error(f"Could not load Liquidation Hunter stats: {e}")
     
     # === SIDEBAR ===
     with st.sidebar:

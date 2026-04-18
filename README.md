@@ -46,6 +46,29 @@ python main.py
 streamlit run dashboard.py
 ```
 
+### Run Liquidation Hunter From This Repo
+
+The project now includes a bridge to run the attached `liquidation-hunter` stack from the same entrypoint.
+
+```bash
+# Run robustness research via bridge
+python main.py --engine liquidation-hunter --lh-mode research --candles 8760 --oos-ratio 0.4 --folds 4 --mc-iterations 2000
+
+# Backtest mode via bridge
+python main.py --engine liquidation-hunter --lh-mode backtest --candles 8760
+
+# Dry-run to verify command/path without execution
+python main.py --engine liquidation-hunter --lh-mode research --dry-run
+```
+
+Path resolution order for `liquidation-hunter`:
+
+1. `--lh-dir` argument.
+2. `LIQUIDATION_HUNTER_DIR` environment variable.
+3. Default sibling path: `../Trading Bot/liquidation-hunter`.
+
+When a bridge run completes, key artifacts are synced into `results/liquidation_hunter/`.
+
 ## 📁 Project Structure
 
 ```
@@ -729,86 +752,8 @@ If maximizing returns is your goal, this system finished second. But if managing
 
 ---
 
-**Last Updated:** December 27, 2025
+
+**Last Updated:** April 2026
 
 **Built with ❤️ for algorithmic trading education**
-- Max Drawdown: 39.3% (acceptable)
-- Longest Drawdown: 2.5 years
-- Worst losing streak: 13 trades
-- **PASSES stress test**
 
-### Phase 5: Monte Carlo ✓
-- Ran 500 randomized simulations
-- Monte Carlo shows path-dependent risk
-- Important: Backtest ≠ guaranteed future returns
-
-### Phase 6-7: Forward Testing Framework ✓
-- Paper trading tracker ready
-- Signal generator implemented
-- Deployment checklist created
-
-## Critical Insights
-
-1. **The TradingView parameters are WRONG for this strategy**
-   - Entry=20 is too short, catches false breakouts
-   - Trail=2.5 is too tight, gets stopped out prematurely
-   - Pyramid spacing=0.5 ATR is too aggressive
-
-2. **The strategy HAS edge, but only in specific parameter regions**
-   - Robustness testing shows wide profitable plateaus
-   - Need Entry >= 35, Trail >= 3.5 for consistent profits
-
-3. **Time underwater is VERY high (98%)**
-   - You will be in drawdown almost constantly
-   - Patience and discipline are essential
-
-4. **Monte Carlo reveals path risk**
-   - Shuffling trade order changes outcomes significantly
-   - Don't expect backtest returns in live trading
-
-## Files Generated
-
-- `results/backtest_results.csv` - Full backtest data
-- `results/backtest_optimized.csv` - Optimized params backtest
-- `results/regime_analysis.csv` - Regime breakdown
-- `results/robustness_results.csv` - All parameter combinations
-- `results/plots/equity_curve.png` - Equity chart
-- `results/plots/trade_analysis.png` - Trade statistics
-- `results/plots/robustness_heatmaps.png` - Parameter sensitivity
-- `results/plots/monte_carlo_optimized.png` - MC distribution
-
-## Next Steps
-
-1. Review the robustness heatmaps to understand parameter sensitivity
-2. Run forward_test.py to start paper trading
-3. Paper trade for 3-6 months before real deployment
-4. Start with 10-20% of intended capital when going live
-
-## Warning
-
-> **This strategy will lose money with the TradingView default parameters.**
-> 
-> You MUST use the optimized parameters or run your own robustness testing
-> to find profitable parameter regions.
-
-## Usage
-
-### Generate current signals:
-```bash
-python forward_test.py
-```
-
-### Run regime analysis only:
-```bash
-python regime_analysis.py
-```
-
-### Run survivability analysis:
-```bash
-python survivability.py
-```
-
-### Run Monte Carlo simulation:
-```bash
-python monte_carlo.py
-```
