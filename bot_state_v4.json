@@ -2,8 +2,15 @@
   "strategy": "V4",
   "initial_capital": 1000.0,
   "equity": 741.5535537486282,
-  "position_size": 0.0,
-  "position_units": [],
-  "trade_count": 122,
-  "last_run": "2026-07-11T00:48:49.822237+00:00"
+  "position_size": 0.00682437412859659,
+  "position_units": [
+    {
+      "entry_price": 64021.094549999994,
+      "size": 0.00682437412859659,
+      "trailing_stop": 62934.469549999994,
+      "time": "2026-07-11T01:40:36.294021+00:00"
+    }
+  ],
+  "trade_count": 123,
+  "last_run": "2026-07-11T01:40:36.392802+00:00"
 }
