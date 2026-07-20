@@ -48,8 +48,6 @@ from strategy import TurtleDonchianStrategy
 
 warnings.filterwarnings("ignore")
 
-PARAM_FIELDS = ["entry_len", "exit_len", "trail_mult", "risk_percent", "pyramid_spacing"]
-
 
 # ---------------------------------------------------------------------------
 # Fold generation
