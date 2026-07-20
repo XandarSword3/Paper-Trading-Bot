@@ -9,13 +9,17 @@ import requests
 from datetime import datetime, timezone
 from pathlib import Path
 
+from readiness_gate import check_gate
+
 # === CONFIGURATION ===
 KRAKEN_API = "https://api.kraken.com/0/public"
 PAIR = "XBTUSD"  # BTC/USD on Kraken
 
 # Telegram Configuration
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8489311506:AAGyZli23sqDU6D8_VD_TJw6cq_XT0EdgL0")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "7599276205")
+# NOTE: no hardcoded fallback token — see github_bot_v4.py for context. Rotate the
+# old token via @BotFather; it was committed in plaintext across 5 files.
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # V1 Strategy Parameters (optimized from backtesting)
 ENTRY_LEN = 40
@@ -33,7 +37,7 @@ TRADES_FILE = Path("trades.json")
 # === TELEGRAM NOTIFICATIONS ===
 def send_telegram(message):
     """Send message to Telegram"""
-    if not TELEGRAM_CHAT_ID:
+    if not TELEGRAM_CHAT_ID or not TELEGRAM_TOKEN:
         return
     
     try:
@@ -228,7 +232,17 @@ def run_bot():
     print(f"TRADING BOT - {now.strftime('%Y-%m-%d %H:%M UTC')}")
     print("=" * 70)
     print("[SIMULATION MODE] Using Kraken prices, simulated trades")
-    
+
+    # === FAIL-CLOSED READINESS GATE ===
+    # No readiness_v1.json exists yet (Phase 5 of the remediation plan builds one
+    # from real walk-forward/paper results). Until it does, this gate always
+    # blocks: log market data below, but do not open/add-to/close any position.
+    ready, gate_reason = check_gate("v1")
+    if not ready:
+        print(f"\n[V1] GATE BLOCKED — log-only mode, no trades will be placed: {gate_reason}")
+    else:
+        print(f"\n[V1] Gate passed: {gate_reason}")
+
     # Load state
     state = load_state()
     print(f"\nLoaded: Equity=${state['equity']:,.2f}, Position={state['position_size']:.5f} BTC")
@@ -262,110 +276,116 @@ def run_bot():
     equity = state['equity']
     price = indicators['current_price']
     
-    # === CHECK EXITS ===
-    if position_size > 0:
-        exit_triggered = False
-        exit_reason = ""
+    if ready:
+        # === CHECK EXITS ===
+        if position_size > 0:
+            exit_triggered = False
+            exit_reason = ""
         
-        if indicators['prev_low'] < indicators['exit_low']:
-            exit_triggered = True
-            exit_reason = "Donchian Exit"
-        else:
-            for unit in position_units:
-                if price <= unit.get('trailing_stop', 0):
-                    exit_triggered = True
-                    exit_reason = "Trailing Stop"
-                    break
-        
-        if exit_triggered:
-            print(f"\n>>> EXIT: {exit_reason}")
-            order = simulate_order("SELL", position_size, price)
-            
-            total_cost = sum(u['entry_price'] * u['size'] for u in position_units)
-            pnl = order['price'] * position_size - total_cost
-            equity += pnl
-            
-            print(f"P&L: ${pnl:,.2f}")
-            
-            save_trade({
-                'type': 'EXIT', 'reason': exit_reason,
-                'time': now.isoformat(), 'price': order['price'],
-                'size': position_size, 'pnl': pnl, 'equity': equity
-            })
-            
-            # Telegram notification
-            emoji = "🟢" if pnl > 0 else "🔴"
-            send_telegram(
-                f"{emoji} <b>EXIT - {exit_reason}</b>\n\n"
-                f"📍 Price: ${order['price']:,.2f}\n"
-                f"📊 Size: {position_size:.5f} BTC\n"
-                f"💰 P&L: ${pnl:+,.2f}\n"
-                f"💼 Equity: ${equity:,.2f}"
-            )
-            
-            position_size = 0.0
-            position_units = []
-            state['trade_count'] += 1
-    
-    # === CHECK ENTRIES ===
-    if len(position_units) < MAX_UNITS:
-        entry_signal = False
-        entry_reason = ""
-        
-        if indicators['prev_high'] > indicators['entry_high']:
-            if position_units:
-                last_entry = position_units[-1]['entry_price']
-                if price >= last_entry + indicators['atr']:
-                    entry_signal = True
-                    entry_reason = "Pyramid"
+            if indicators['prev_low'] < indicators['exit_low']:
+                exit_triggered = True
+                exit_reason = "Donchian Exit"
             else:
-                entry_signal = True
-                entry_reason = "Breakout"
+                for unit in position_units:
+                    if price <= unit.get('trailing_stop', 0):
+                        exit_triggered = True
+                        exit_reason = "Trailing Stop"
+                        break
         
-        if entry_signal:
-            print(f"\n>>> ENTRY: {entry_reason}")
+            if exit_triggered:
+                print(f"\n>>> EXIT: {exit_reason}")
+                order = simulate_order("SELL", position_size, price)
             
-            risk = equity * RISK_PCT
-            stop_dist = TRAIL_MULT * indicators['atr']
-            unit_size = max(0.0001, min(risk / stop_dist, 0.1))
+                total_cost = sum(u['entry_price'] * u['size'] for u in position_units)
+                pnl = order['price'] * position_size - total_cost
+                equity += pnl
             
-            order = simulate_order("BUY", unit_size, price)
-            trailing_stop = order['price'] - stop_dist
+                print(f"P&L: ${pnl:,.2f}")
             
-            position_units.append({
-                'entry_price': order['price'],
-                'size': order['quantity'],
-                'trailing_stop': trailing_stop,
-                'time': now.isoformat()
-            })
-            position_size += order['quantity']
-            state['trade_count'] += 1
+                save_trade({
+                    'type': 'EXIT', 'reason': exit_reason,
+                    'time': now.isoformat(), 'price': order['price'],
+                    'size': position_size, 'pnl': pnl, 'equity': equity
+                })
             
-            print(f"Stop: ${trailing_stop:,.2f}")
+                # Telegram notification
+                emoji = "🟢" if pnl > 0 else "🔴"
+                send_telegram(
+                    f"{emoji} <b>EXIT - {exit_reason}</b>\n\n"
+                    f"📍 Price: ${order['price']:,.2f}\n"
+                    f"📊 Size: {position_size:.5f} BTC\n"
+                    f"💰 P&L: ${pnl:+,.2f}\n"
+                    f"💼 Equity: ${equity:,.2f}"
+                )
             
-            save_trade({
-                'type': 'ENTRY', 'reason': entry_reason,
-                'time': now.isoformat(), 'price': order['price'],
-                'size': order['quantity'], 'trailing_stop': trailing_stop,
-                'equity': equity
-            })
-            
-            # Telegram notification
-            send_telegram(
-                f"📈 <b>ENTRY - {entry_reason}</b>\n\n"
-                f"📍 Price: ${order['price']:,.2f}\n"
-                f"📊 Size: {order['quantity']:.5f} BTC\n"
-                f"🛑 Stop: ${trailing_stop:,.2f}\n"
-                f"📦 Units: {len(position_units)}/{MAX_UNITS}\n"
-                f"💼 Equity: ${equity:,.2f}"
-            )
+                position_size = 0.0
+                position_units = []
+                state['trade_count'] += 1
     
-    # Update trailing stops
-    for unit in position_units:
-        new_stop = price - (TRAIL_MULT * indicators['atr'])
-        if new_stop > unit.get('trailing_stop', 0):
-            unit['trailing_stop'] = new_stop
+        # === CHECK ENTRIES ===
+        if len(position_units) < MAX_UNITS:
+            entry_signal = False
+            entry_reason = ""
+        
+            if indicators['prev_high'] > indicators['entry_high']:
+                if position_units:
+                    last_entry = position_units[-1]['entry_price']
+                    if price >= last_entry + indicators['atr']:
+                        entry_signal = True
+                        entry_reason = "Pyramid"
+                else:
+                    entry_signal = True
+                    entry_reason = "Breakout"
+        
+            if entry_signal:
+                print(f"\n>>> ENTRY: {entry_reason}")
+            
+                risk = equity * RISK_PCT
+                stop_dist = TRAIL_MULT * indicators['atr']
+                unit_size = max(0.0001, min(risk / stop_dist, 0.1))
+            
+                order = simulate_order("BUY", unit_size, price)
+                trailing_stop = order['price'] - stop_dist
+            
+                position_units.append({
+                    'entry_price': order['price'],
+                    'size': order['quantity'],
+                    'trailing_stop': trailing_stop,
+                    'time': now.isoformat()
+                })
+                position_size += order['quantity']
+                state['trade_count'] += 1
+            
+                print(f"Stop: ${trailing_stop:,.2f}")
+            
+                save_trade({
+                    'type': 'ENTRY', 'reason': entry_reason,
+                    'time': now.isoformat(), 'price': order['price'],
+                    'size': order['quantity'], 'trailing_stop': trailing_stop,
+                    'equity': equity
+                })
+            
+                # Telegram notification
+                send_telegram(
+                    f"📈 <b>ENTRY - {entry_reason}</b>\n\n"
+                    f"📍 Price: ${order['price']:,.2f}\n"
+                    f"📊 Size: {order['quantity']:.5f} BTC\n"
+                    f"🛑 Stop: ${trailing_stop:,.2f}\n"
+                    f"📦 Units: {len(position_units)}/{MAX_UNITS}\n"
+                    f"💼 Equity: ${equity:,.2f}"
+                )
     
+        # Update trailing stops
+        for unit in position_units:
+            new_stop = price - (TRAIL_MULT * indicators['atr'])
+            if new_stop > unit.get('trailing_stop', 0):
+                unit['trailing_stop'] = new_stop
+    
+    else:
+        print(f"[V1] Skipping entry/exit logic — {gate_reason}")
+        print(f"[V1] Existing position (if any) is left unmanaged until the gate is fixed; "
+              f"see readiness_gate.py / Phase 5 of the remediation plan.")
+
     # Save state
     state['position_size'] = position_size
     state['position_units'] = position_units
