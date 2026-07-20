@@ -114,6 +114,41 @@ class DataSplitConfig:
     holdout_end: str = None  # None = through whatever is the latest available candle
 
 
+@dataclass
+class WalkForwardConfig:
+    """
+    Rolling walk-forward parameters — Phase 2 of VALIDATION_REMEDIATION_PLAN.md.
+
+    Each fold optimizes on `train_years` of data and scores the result on the
+    following `test_months`, never touched during that fold's optimization.
+    Folds roll forward by `step_months` and are generated only inside the
+    development window (DataSplitConfig.in_sample_start -> holdout_start) —
+    see walk_forward.generate_folds() for the enforcement.
+
+    train_years:      length of each fold's optimization (in-sample) window.
+    test_months:      length of each fold's out-of-sample scoring window.
+    step_months:      how far the window rolls between folds. Equal to
+                       test_months by default so OOS windows tile the
+                       development period with no gap or overlap.
+    expanding:        if True, train_start stays fixed at the development
+                       start and the window grows each fold instead of
+                       sliding (anchored walk-forward). Default is the
+                       sliding window the remediation plan describes.
+    selection_metric: field on ParameterResult used to pick each fold's
+                       winning parameter set from the in-sample grid.
+    min_trades_for_selection: in-sample combos with fewer trades than this
+                       are excluded from fold-winner selection so a lucky
+                       near-zero-trade combo can't top the ranking on a
+                       near-zero, near-riskless "sharpe".
+    """
+    train_years: float = 2.0
+    test_months: int = 6
+    step_months: int = 6
+    expanding: bool = False
+    selection_metric: str = "sharpe_ratio"
+    min_trades_for_selection: int = 5
+
+
 # Default instances
 DEFAULT_PARAMS = StrategyParams()
 DEFAULT_BACKTEST = BacktestConfig()
@@ -121,3 +156,4 @@ DEFAULT_ROBUSTNESS = RobustnessRanges()
 DEFAULT_REGIMES = RegimeDefinition()
 DEFAULT_MONTE_CARLO = MonteCarloConfig()
 DEFAULT_SPLIT = DataSplitConfig()
+DEFAULT_WALK_FORWARD = WalkForwardConfig()
