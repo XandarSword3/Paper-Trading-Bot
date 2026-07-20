@@ -64,6 +64,7 @@ def phase_1_setup():
     print("=" * 80)
     
     from data_fetcher import download_btc_data
+    from data_splits import get_development, describe_split
     from strategy import TurtleDonchianStrategy
     
     # Download data
@@ -73,8 +74,15 @@ def phase_1_setup():
         start_date="2017-01-01",
         force_refresh=False
     )
+
+    # Phase 1 of the remediation plan: this whole pipeline (regime analysis,
+    # robustness, survivability, Monte Carlo all reuse this same df) is
+    # restricted to the development window. The true holdout is never
+    # scored here — see final_holdout_validation.py.
+    print(f"\n{describe_split()}")
+    df = get_development(df)
     
-    print(f"\nData loaded: {len(df)} candles")
+    print(f"\nData loaded: {len(df)} candles (development window only)")
     print(f"Date range: {df.index[0]} to {df.index[-1]}")
     print(f"Price range: ${df['low'].min():,.0f} to ${df['high'].max():,.0f}")
     

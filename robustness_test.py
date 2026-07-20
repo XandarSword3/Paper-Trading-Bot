@@ -383,10 +383,17 @@ class RobustnessTester:
 if __name__ == "__main__":
     import os
     from data_fetcher import download_btc_data
+    from data_splits import get_development, describe_split
     from config import RESULTS_DIR, PLOTS_DIR
     
     print("Loading BTC data...")
     df = download_btc_data(timeframe="4h")
+
+    # Phase 1 of the remediation plan: never grid-search on the true holdout.
+    print(f"\n{describe_split()}")
+    df = get_development(df)
+    print(f"Restricted to development window (in-sample + validation): "
+          f"{len(df)} candles, {df.index[0]} -> {df.index[-1]}")
     
     tester = RobustnessTester()
     results_df = tester.run_full_test(df)

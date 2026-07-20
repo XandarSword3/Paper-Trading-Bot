@@ -398,10 +398,19 @@ class MonteCarloSimulator:
 if __name__ == "__main__":
     import os
     from data_fetcher import download_btc_data
+    from data_splits import get_development, describe_split
     from config import RESULTS_DIR, PLOTS_DIR
     
     print("Loading BTC data...")
     df = download_btc_data(timeframe="4h")
+
+    # Phase 1 of the remediation plan: never touch the true holdout here.
+    # NOTE: as-is, this still reshuffles in-sample trades — that's Phase 3's
+    # "label it accurately as sequence-risk only" fix, not this one.
+    print(f"\n{describe_split()}")
+    df = get_development(df)
+    print(f"Restricted to development window (in-sample + validation): "
+          f"{len(df)} candles, {df.index[0]} -> {df.index[-1]}")
     
     simulator = MonteCarloSimulator()
     results = simulator.run_simulation(df, n_simulations=1000)

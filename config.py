@@ -68,7 +68,13 @@ class RegimeDefinition:
         {"name": "2019 Chop", "start": "2019-01-01", "end": "2019-12-31", "type": "chop"},
         {"name": "2020-2021 Bull", "start": "2020-01-01", "end": "2021-12-31", "type": "bull"},
         {"name": "2022 Bear", "start": "2022-01-01", "end": "2022-12-31", "type": "bear"},
-        {"name": "2023-2025 Recovery", "start": "2023-01-01", "end": "2025-12-31", "type": "recovery"},
+        # Was "2023-2025 Recovery" through 2025-12-31 — that range reached into
+        # 2025, which Phase 1 of the remediation plan froze as the true
+        # holdout (DataSplitConfig.holdout_start). Trimmed to stop at the end
+        # of the validation window so regime_simulation.py never scores on
+        # holdout data. If you need a regime covering 2025+, that belongs in
+        # final_holdout_validation.py, not here.
+        {"name": "2023-2024 Recovery", "start": "2023-01-01", "end": "2024-12-31", "type": "recovery"},
     ])
 
 
@@ -81,9 +87,37 @@ class MonteCarloConfig:
     execution_noise_std: float = 0.001  # Price execution noise
 
 
+@dataclass
+class DataSplitConfig:
+    """
+    Canonical chronological data split — frozen per Phase 1 of
+    VALIDATION_REMEDIATION_PLAN.md. This is the ONE split definition for the
+    whole repo; nothing else should hand-roll its own date filter.
+
+    in_sample:  free to use for feature/rule development and robustness
+                testing (Phase 3 of the 16-phase pipeline).
+    validation: used for walk-forward OOS folds (Phase 2 of the remediation
+                plan) and stress testing (Monte Carlo/regime/survivability) —
+                still "seen" during development, never used to pick final
+                parameters.
+    holdout:    touched by exactly ONE script in this repo —
+                final_holdout_validation.py. Scored once, at the very end,
+                after Phases 2-4 of the remediation plan are done. See
+                data_splits.py for the enforcement mechanism and its
+                acceptance check.
+    """
+    in_sample_start: str = "2017-01-01"
+    in_sample_end: str = "2023-12-31"
+    validation_start: str = "2024-01-01"
+    validation_end: str = "2024-12-31"
+    holdout_start: str = "2025-01-01"
+    holdout_end: str = None  # None = through whatever is the latest available candle
+
+
 # Default instances
 DEFAULT_PARAMS = StrategyParams()
 DEFAULT_BACKTEST = BacktestConfig()
 DEFAULT_ROBUSTNESS = RobustnessRanges()
 DEFAULT_REGIMES = RegimeDefinition()
 DEFAULT_MONTE_CARLO = MonteCarloConfig()
+DEFAULT_SPLIT = DataSplitConfig()

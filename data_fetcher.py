@@ -5,14 +5,51 @@ Supports 1H and 4H timeframes from 2017 to present
 
 import os
 import time
+import hashlib
+import json
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import requests
 from tqdm import tqdm
 
 from config import DATA_DIR, DEFAULT_BACKTEST
+
+MANIFEST_PATH = os.path.join(DATA_DIR, "MANIFEST.json")
+
+
+def _update_manifest(filename: str, df: pd.DataFrame, parquet_path: str) -> None:
+    """
+    Record dataset provenance — Phase 1 of the remediation plan asks for a
+    canonical, versioned dataset instead of silent re-fetches. This doesn't
+    stop re-fetching, but it makes every snapshot on disk identifiable: exact
+    row count, date range, fetch time, and a content hash, so it's possible
+    to tell whether two runs actually used the same data.
+    """
+    with open(parquet_path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+
+    manifest = {}
+    if os.path.exists(MANIFEST_PATH):
+        try:
+            with open(MANIFEST_PATH, "r") as f:
+                manifest = json.load(f)
+        except Exception:
+            manifest = {}
+
+    manifest[filename] = {
+        "source": "Binance api.binance.com/api/v3/klines",
+        "symbol": "BTCUSDT",
+        "rows": int(len(df)),
+        "start": str(df.index[0]),
+        "end": str(df.index[-1]),
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "sha256": file_hash,
+    }
+
+    with open(MANIFEST_PATH, "w") as f:
+        json.dump(manifest, f, indent=2)
 
 
 class BinanceDataFetcher:
@@ -125,7 +162,8 @@ class BinanceDataFetcher:
         
         df.to_csv(csv_path)
         df.to_parquet(parquet_path)
-        
+        _update_manifest(filename, df, parquet_path)
+
         print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
         return csv_path
     
