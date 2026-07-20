@@ -2,6 +2,26 @@
 Phase 3: Robustness Testing
 Tests parameter ranges to find stable plateaus of profitability
 NO OPTIMIZATION - only testing for robustness
+
+IN-SAMPLE ONLY — READ THIS BEFORE TRUSTING ANY NUMBER FROM THIS FILE.
+Everything below (RobustnessTester, the plateau/cliff analysis, the "top 10
+by Sharpe" table) is scored on whatever window of data it's handed, with no
+held-out data of its own. That's fine for its actual job — checking whether
+a parameter's *shape* is a broad plateau or a narrow spike — but it is NOT a
+performance claim: parameter combinations here can and do get selected using
+the same data they're scored on, which is exactly the failure Phase 2 of
+VALIDATION_REMEDIATION_PLAN.md (STRATEGY_VERSION_AUDIT.md's "fake robustness
+test" finding) documents.
+
+For an honest out-of-sample number, use walk_forward.py / walk_forward_test.py
+instead: those optimize each fold on one window and score strictly on the
+next, unseen window, and only ever report the stitched-together OOS result.
+This file is still used as-is by main.py's phase_3_robustness_test() and by
+walk_forward.optimize_fold() (which calls RobustnessTester.test_parameters()
+per-fold on training data only) — so its class/API surface is left intact
+here; only this file's own standalone __main__ run below now says so
+out loud instead of presenting a single in-sample grid search as validated
+performance.
 """
 
 import pandas as pd
@@ -399,6 +419,12 @@ if __name__ == "__main__":
     results_df = tester.run_full_test(df)
     
     print(tester.get_summary_report())
+
+    print("\n" + "!" * 80)
+    print("REMINDER: every number above is IN-SAMPLE — parameters were scored on")
+    print("the same data shown here, nothing here was held out. For the honest,")
+    print("out-of-sample walk-forward number, run: python walk_forward_test.py")
+    print("!" * 80)
     
     # Save results
     results_df.to_csv(os.path.join(RESULTS_DIR, "robustness_results.csv"), index=False)
