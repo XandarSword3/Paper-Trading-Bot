@@ -45,6 +45,12 @@ from config import (
 from data_splits import get_development
 from robustness_test import ParameterResult, RobustnessTester
 from strategy import TurtleDonchianStrategy
+from metrics_utils import infer_bars_per_year as _infer_bars_per_year
+# Re-exported under the old name: monte_carlo.py and edge_validation_test.py
+# both do `from walk_forward import _infer_bars_per_year`. The implementation
+# now lives in metrics_utils.py (strategy.py needs it too, and importing this
+# module from there would be circular — walk_forward.py imports
+# TurtleDonchianStrategy from strategy.py).
 
 warnings.filterwarnings("ignore")
 
@@ -324,18 +330,6 @@ def stitch_oos_equity(fold_results: List[FoldResult], initial_capital: float) ->
     if not pieces:
         return pd.Series(dtype=float)
     return pd.concat(pieces).sort_index()
-
-
-def _infer_bars_per_year(index: pd.DatetimeIndex) -> float:
-    """Median bar spacing, not the (often-unset) .freq attribute, since real
-    fetched data frequently has freq=None even when regularly spaced."""
-    if len(index) < 3:
-        return 365.0
-    diffs = index.to_series().diff().dropna()
-    median_seconds = diffs.dt.total_seconds().median()
-    if not median_seconds or median_seconds <= 0:
-        return 365.0
-    return (365.25 * 86400) / median_seconds
 
 
 def compute_equity_stats(equity: pd.Series, initial_capital: float) -> dict:
