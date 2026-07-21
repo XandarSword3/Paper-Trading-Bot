@@ -237,9 +237,10 @@ def run_bot():
     print("[SIMULATION MODE] Using Kraken prices, simulated trades")
 
     # === FAIL-CLOSED READINESS GATE ===
-    # No readiness_v4.json exists yet (Phase 5 of the remediation plan builds one
-    # from real walk-forward/paper results). Until it does, this gate always
-    # blocks: log market data below, but do not open/add-to/close any position.
+    # Phase 5 of the remediation plan (build_readiness_gates.py) generates
+    # readiness_v4.json from this strategy's own recorded paper track record.
+    # If it's missing, stale, or says not ready, this gate blocks: log market
+    # data below, but do not open/add-to/close any position.
     ready, gate_reason = check_gate("v4")
     if not ready:
         print(f"\n[V4] GATE BLOCKED — log-only mode, no trades will be placed: {gate_reason}")
