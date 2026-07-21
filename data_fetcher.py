@@ -146,47 +146,188 @@ class BinanceDataFetcher:
             raise FileNotFoundError(f"No data file found: {filename}")
 
 
+class KrakenDataFetcher:
+    """
+    Fetches historical BTC/USD data from Kraken's public OHLC API.
+
+    Binance blocks access from US-hosted infrastructure (HTTP 451, "restricted
+    location" per their ToS) -- this includes GitHub Actions runners, which are
+    Azure/US-hosted. Kraken has no such restriction and is reachable from GH
+    Actions runners (confirmed via diag-network.yml probe).
+
+    Kraken's OHLC endpoint caps each response at 720 candles, but supports a
+    `since` cursor to walk forward through history: request from an old
+    timestamp, take the last returned candle's time as the next `since`, and
+    repeat until reaching the present. This assembles arbitrarily long history
+    at the cost of one HTTP request per ~720 candles.
+
+    Kraken doesn't offer a USDT pair; XBTUSD (BTC/USD) is used as a close proxy
+    since USDT is designed to track USD 1:1. Output is saved under the same
+    BTCUSDT_{timeframe} filename so it's a drop-in replacement for every
+    downstream script that calls download_btc_data().
+    """
+
+    BASE_URL = "https://api.kraken.com/0/public/OHLC"
+    PAIR = "XBTUSD"
+    INTERVALS = {"1h": 60, "4h": 240}  # Kraken interval = minutes
+
+    def __init__(self, symbol: str = "BTCUSDT"):
+        self.symbol = symbol  # kept for interface parity with BinanceDataFetcher
+
+    def fetch_klines(
+        self,
+        interval: str = "4h",
+        start_date: str = "2017-01-01",
+        end_date: Optional[str] = None,
+    ) -> pd.DataFrame:
+        if interval not in self.INTERVALS:
+            raise ValueError(f"Unsupported interval for Kraken: {interval}")
+
+        minutes = self.INTERVALS[interval]
+        since = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
+        end_ts = (
+            int(datetime.now().timestamp())
+            if end_date is None
+            else int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
+        )
+
+        all_rows = []
+        seen_sinces = set()
+        print(f"Fetching {self.PAIR} {interval} data from Kraken, {start_date} to "
+              f"{end_date or 'now'}...")
+
+        with tqdm(desc="Downloading (Kraken, ~720 candles/request)") as pbar:
+            while since < end_ts:
+                if since in seen_sinces:
+                    break  # safety net against infinite loop
+                seen_sinces.add(since)
+
+                resp = requests.get(
+                    self.BASE_URL,
+                    params={"pair": self.PAIR, "interval": minutes, "since": since},
+                    timeout=20,
+                )
+                resp.raise_for_status()
+                payload = resp.json()
+
+                if payload.get("error"):
+                    raise RuntimeError(f"Kraken API error: {payload['error']}")
+
+                result = payload["result"]
+                pair_key = next(k for k in result.keys() if k != "last")
+                rows = result[pair_key]
+
+                if not rows:
+                    break
+
+                all_rows.extend(rows)
+                new_since = int(rows[-1][0])
+                if new_since <= since:
+                    break
+                since = new_since + 1
+                pbar.update(len(rows))
+                time.sleep(1.0)  # polite rate limiting for Kraken public API
+
+        if not all_rows:
+            raise ValueError("No data fetched from Kraken")
+
+        df = pd.DataFrame(
+            all_rows,
+            columns=["timestamp", "open", "high", "low", "close", "vwap", "volume", "count"],
+        )
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+        df.set_index("timestamp", inplace=True)
+        for col in ["open", "high", "low", "close", "volume"]:
+            df[col] = df[col].astype(float)
+        df = df[["open", "high", "low", "close", "volume"]]
+        df = df[~df.index.duplicated(keep="first")]
+        df.sort_index(inplace=True)
+
+        print(f"Downloaded {len(df)} candles from {df.index[0]} to {df.index[-1]} (source: Kraken XBTUSD)")
+        return df
+
+    def save_data(self, df: pd.DataFrame, filename: str) -> str:
+        csv_path = os.path.join(DATA_DIR, f"{filename}.csv")
+        parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
+        df.to_csv(csv_path)
+        df.to_parquet(parquet_path)
+        print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
+        return csv_path
+
+    def load_data(self, filename: str) -> pd.DataFrame:
+        parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
+        csv_path = os.path.join(DATA_DIR, f"{filename}.csv")
+        if os.path.exists(parquet_path):
+            df = pd.read_parquet(parquet_path)
+            if not isinstance(df.index, pd.DatetimeIndex):
+                df.index = pd.to_datetime(df.index)
+            return df
+        elif os.path.exists(csv_path):
+            return pd.read_csv(csv_path, index_col=0, parse_dates=True)
+        else:
+            raise FileNotFoundError(f"No data file found: {filename}")
+
+
 def download_btc_data(
     timeframe: str = "4h",
     start_date: str = "2017-01-01",
     end_date: Optional[str] = None,
-    force_refresh: bool = False
+    force_refresh: bool = False,
+    source: str = "auto",
 ) -> pd.DataFrame:
     """
     Main function to download or load BTC data.
-    
+
     Args:
         timeframe: '1h' or '4h'
         start_date: Start date
         end_date: End date (default: today)
         force_refresh: Force re-download even if file exists
-    
+        source: 'auto' (try Binance, fall back to Kraken), 'binance', or 'kraken'
+
     Returns:
         DataFrame with OHLCV data
     """
     filename = f"BTCUSDT_{timeframe}"
-    fetcher = BinanceDataFetcher()
-    
+
+    def get_fetcher(name: str):
+        return BinanceDataFetcher() if name == "binance" else KrakenDataFetcher()
+
+    def fetch_with_fallback(tf, s_date, e_date):
+        if source == "binance":
+            return get_fetcher("binance").fetch_klines(tf, s_date, e_date)
+        if source == "kraken":
+            return get_fetcher("kraken").fetch_klines(tf, s_date, e_date)
+        # auto: try Binance first (works if run from an unrestricted region),
+        # fall back to Kraken on any failure (e.g. HTTP 451 geo-block).
+        try:
+            return get_fetcher("binance").fetch_klines(tf, s_date, e_date)
+        except Exception as e:
+            print(f"   Binance fetch failed ({e}); falling back to Kraken...")
+            return get_fetcher("kraken").fetch_klines(tf, s_date, e_date)
+
+    fetcher = get_fetcher("kraken" if source in ("auto", "kraken") else "binance")
+
     # Check if data exists
     parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
-    
+
     if os.path.exists(parquet_path) and not force_refresh:
         print(f"Loading existing data from {parquet_path}")
         df = fetcher.load_data(filename)
-        
+
         # Check if we need to update
         last_date = df.index[-1]
         today = pd.Timestamp.now()
         staleness_days = (today - last_date).days
-        
+
         if staleness_days > 7:
             print(f"\n⚠️  WARNING: Data is {staleness_days} days old (last candle: {last_date.strftime('%Y-%m-%d')})")
-            print(f"   Attempting auto-refresh from Binance...")
-        
+            print(f"   Attempting auto-refresh...")
+
         if staleness_days > 1:
             try:
                 new_start = (last_date + timedelta(hours=1)).strftime("%Y-%m-%d")
-                new_df = fetcher.fetch_klines(timeframe, new_start, end_date)
+                new_df = fetch_with_fallback(timeframe, new_start, end_date)
                 df = pd.concat([df, new_df])
                 df = df[~df.index.duplicated(keep="last")]
                 df.sort_index(inplace=True)
@@ -197,13 +338,13 @@ def download_btc_data(
                 if staleness_days > 7:
                     print(f"   ⚠️  Proceeding with STALE data. Results may not reflect current market.")
                     print(f"   Run with force_refresh=True to force full re-download.")
-        
+
         return df
-    
+
     # Fresh download
-    df = fetcher.fetch_klines(timeframe, start_date, end_date)
+    df = fetch_with_fallback(timeframe, start_date, end_date)
     fetcher.save_data(df, filename)
-    
+
     return df
 
 
@@ -212,7 +353,8 @@ if __name__ == "__main__":
     df = download_btc_data(
         timeframe="4h",
         start_date="2017-01-01",
-        force_refresh=False
+        force_refresh=False,
+        source="auto",
     )
     print(f"\nData shape: {df.shape}")
     print(f"\nSample data:\n{df.tail()}")
