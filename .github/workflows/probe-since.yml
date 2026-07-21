@@ -3,32 +3,67 @@ name: Probe Kraken Since Behavior
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Probe since= behavior
         run: |
-          echo "=== since=2017-01-01 (old) ==="
-          curl -s "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240&since=1483228800" | python3 -c "
+          {
+            echo "=== since=2017-01-01 (old), interval=240 (4h) ==="
+            curl -s "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240&since=1483228800" | python3 -c "
+          import json,sys
+          d = json.load(sys.stdin)
+          if d.get('error'):
+              print('ERROR:', d['error']); sys.exit()
+          r = d['result']
+          key = [k for k in r if k != 'last'][0]
+          rows = r[key]
+          print('rows returned:', len(rows))
+          print('first row time (unix):', rows[0][0])
+          print('last row time (unix):', rows[-1][0])
+          print('result[last] cursor:', r['last'])
+          "
+            echo ""
+            echo "=== since=2020-01-01 (mid), interval=240 ==="
+            curl -s "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240&since=1577836800" | python3 -c "
+          import json,sys
+          d = json.load(sys.stdin)
+          if d.get('error'):
+              print('ERROR:', d['error']); sys.exit()
+          r = d['result']
+          key = [k for k in r if k != 'last'][0]
+          rows = r[key]
+          print('rows returned:', len(rows))
+          print('first row time (unix):', rows[0][0])
+          print('last row time (unix):', rows[-1][0])
+          "
+            echo ""
+            echo "=== no since param at all, interval=240 ==="
+            curl -s "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240" | python3 -c "
           import json,sys
           d = json.load(sys.stdin)
           r = d['result']
           key = [k for k in r if k != 'last'][0]
           rows = r[key]
           print('rows returned:', len(rows))
-          print('first row time:', rows[0][0])
-          print('last row time:', rows[-1][0])
-          print('result[last]:', r['last'])
+          print('first row time (unix):', rows[0][0])
+          print('last row time (unix):', rows[-1][0])
           "
-          echo "=== since=2020-01-01 (mid) ==="
-          curl -s "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240&since=1577836800" | python3 -c "
-          import json,sys
-          d = json.load(sys.stdin)
-          r = d['result']
-          key = [k for k in r if k != 'last'][0]
-          rows = r[key]
-          print('rows returned:', len(rows))
-          print('first row time:', rows[0][0])
-          print('last row time:', rows[-1][0])
-          "
+          } > since_probe.txt 2>&1
+          cat since_probe.txt
+
+      - name: Commit probe results
+        if: always()
+        run: |
+          git config --local user.email "data-bot@github.com"
+          git config --local user.name "Data Fetch Bot"
+          git add -f since_probe.txt
+          git diff --staged --quiet || git commit -m "diag: kraken since= pagination probe results"
+          git push origin master
