@@ -1,11 +1,20 @@
-=== Download start: Tue Jul 21 08:36:52 UTC 2026 ===
-usage: gdown [-h] [-V] [-O OUTPUT] [-q] [--proxy PROXY] [--speed SPEED]
-             [--no-cookies] [--no-check-certificate] [--continue] [--folder]
-             [--json] [--format FORMAT] [--user-agent USER_AGENT]
-             url_or_id
-gdown: error: unrecognized arguments: --id
-gdown --id FAILED
-=== Download end: Tue Jul 21 08:36:52 UTC 2026 ===
+=== Download start: Tue Jul 21 08:38:08 UTC 2026 ===
+Failed to retrieve file url:
+
+	Too many users have viewed or downloaded this file recently. Please
+	try accessing the file again later. If the file you are trying to
+	access is particularly large or is shared with many people, it may
+	take up to 24 hours to be able to view or download the file. If you
+	still can't access a file after 24 hours, contact your domain
+	administrator.
+
+You may still be able to access the file from the browser:
+
+	https://drive.google.com/uc?id=1ptNqWYidLkhb2VAKuLCxmp2OXEfGO-AP
+
+but Gdown can't. Please check connections and permissions.
+gdown FAILED
+=== Download end: Tue Jul 21 08:38:10 UTC 2026 ===
 === File size ===
 ls: cannot access 'kraken_full.zip': No such file or directory
 no file present
