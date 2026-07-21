@@ -1,0 +1,45 @@
+name: Fetch Historical Data
+
+on:
+  workflow_dispatch:      # manual trigger, or trigger via API
+  schedule:
+    - cron: '0 6 * * 1'   # weekly refresh, Monday 06:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal dependencies
+        run: pip install pandas numpy requests tqdm pyarrow
+
+      - name: Fetch BTCUSDT historical data (4h and 1h)
+        run: |
+          python -c "
+          from data_fetcher import download_btc_data
+          print('Fetching 4h...')
+          df4 = download_btc_data(timeframe='4h', start_date='2017-01-01', force_refresh=True)
+          print(f'4h: {len(df4)} candles, {df4.index[0]} -> {df4.index[-1]}')
+          print('Fetching 1h...')
+          df1 = download_btc_data(timeframe='1h', start_date='2017-01-01', force_refresh=True)
+          print(f'1h: {len(df1)} candles, {df1.index[0]} -> {df1.index[-1]}')
+          "
+
+      - name: Commit and push data
+        run: |
+          git config --local user.email "data-bot@github.com"
+          git config --local user.name "Data Fetch Bot"
+          git add -f data/BTCUSDT_4h.parquet data/BTCUSDT_4h.csv data/BTCUSDT_1h.parquet data/BTCUSDT_1h.csv
+          git diff --staged --quiet || git commit -m "data: refresh BTCUSDT historical dataset ($(date -u +'%Y-%m-%d'))"
+          git push origin master
