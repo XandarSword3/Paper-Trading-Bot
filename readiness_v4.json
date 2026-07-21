@@ -1,0 +1,27 @@
+{
+  "ready_for_live": false,
+  "generated_at": "2026-07-21T07:49:11.748089+00:00",
+  "strategy": "v4",
+  "reasons": [
+    "annualized paper Sharpe -1.36 < required 0.5",
+    "total paper return -28.7% is below the 0.0% floor (i.e. net negative)",
+    "max paper drawdown 39.8% exceeds 25.0% limit",
+    "walk-forward OOS comparison not evaluated (no walk_forward_results file found)"
+  ],
+  "metrics": {
+    "trade_count": 104,
+    "win_rate": 0.20192307692307693,
+    "total_return_pct": -28.669651840445663,
+    "max_drawdown_pct": 39.75161133650909,
+    "sharpe": -1.356061767623473,
+    "first_trade_time": "2025-12-28T18:34:41.149552+00:00",
+    "last_trade_time": "2026-07-20T06:50:27.433116+00:00",
+    "span_days": 203.51095235606482
+  },
+  "thresholds": {
+    "min_trades": 30,
+    "min_sharpe": 0.5,
+    "min_total_return_pct": 0.0,
+    "max_drawdown_pct": 25.0
+  }
+}

@@ -1,0 +1,42 @@
+name: Refresh Readiness Gates
+
+# Phase 5 of VALIDATION_REMEDIATION_PLAN.md. readiness_gate.py treats a gate
+# file older than 24h as NOT READY (fail-closed), so this needs to run at
+# least once a day for a strategy to ever be able to trade — regenerating
+# readiness_v1.json / readiness_v4.json from each strategy's own latest
+# trades.json / trades_v4.json, committed by bot.yml after every run.
+#
+# This workflow only recomputes and commits the gate files. It never sets
+# ready_for_live itself — build_readiness_gates.py decides that from the
+# actual recorded track record every time it runs.
+
+on:
+  schedule:
+    - cron: '30 6 * * *'  # once daily, offset from bot.yml's own commits
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rebuild both gate files
+        run: python build_readiness_gates.py --all
+
+      - name: Commit gate files
+        run: |
+          git config --local user.email "bot@github.com"
+          git config --local user.name "Trading Bot"
+          git add readiness_v1.json readiness_v4.json
+          git diff --staged --quiet || git commit -m "Refresh readiness gates: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push origin master
