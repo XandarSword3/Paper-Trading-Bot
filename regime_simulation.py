@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import RESULTS_DIR, PLOTS_DIR
 from data_fetcher import download_btc_data
+from data_splits import get_development, describe_split
 
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
@@ -574,7 +575,12 @@ def main():
     # Load data
     print("\nLoading BTC 4H data...")
     df = download_btc_data(timeframe="4h")
-    print(f"Data: {df.index[0]} to {df.index[-1]} ({len(df)} candles)")
+
+    # Phase 1 of the remediation plan: regime performance must come from
+    # development data only, not the true holdout.
+    print(f"\n{describe_split()}")
+    df = get_development(df)
+    print(f"Data: {df.index[0]} to {df.index[-1]} ({len(df)} candles) — development window only")
     
     # Identify regimes
     print("\nIdentifying market regimes...")

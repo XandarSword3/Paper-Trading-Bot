@@ -9,7 +9,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # Configuration
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8489311506:AAGyZli23sqDU6D8_VD_TJw6cq_XT0EdgL0")
+# NOTE: no hardcoded fallback token — see github_bot_v4.py for context. Rotate the
+# old token via @BotFather; it was committed in plaintext across 5 files.
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 # Kraken API

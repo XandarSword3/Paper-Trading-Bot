@@ -1,0 +1,26 @@
+{
+  "ready_for_live": false,
+  "generated_at": "2026-07-21T07:49:11.746261+00:00",
+  "strategy": "v1",
+  "reasons": [
+    "only 0 completed paper trades recorded (need >= 30)",
+    "Sharpe could not be computed (insufficient trades or zero variance)",
+    "walk-forward OOS comparison not evaluated (no walk_forward_results file found)"
+  ],
+  "metrics": {
+    "trade_count": 0,
+    "win_rate": null,
+    "total_return_pct": 0.0,
+    "max_drawdown_pct": 0.0,
+    "sharpe": null,
+    "first_trade_time": null,
+    "last_trade_time": null,
+    "span_days": 0.0
+  },
+  "thresholds": {
+    "min_trades": 30,
+    "min_sharpe": 0.5,
+    "min_total_return_pct": 0.0,
+    "max_drawdown_pct": 25.0
+  }
+}

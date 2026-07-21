@@ -74,13 +74,20 @@ When a bridge run completes, key artifacts are synced into `results/liquidation_
 ```
 BTC Strategy/
 ├── 📊 Core Strategy Files
-│   ├── strategy.py              # V1: Core Turtle-Donchian implementation (4H)
-│   ├── strategy_v2.py           # V2: Enhanced version with improvements
-│   ├── strategy_v3.py           # V3: Fast execution variant
-│   ├── strategy_v4.py           # V4: High-frequency 1H version (1572% returns!)
-│   ├── config.py                # V1 optimized parameters
-│   ├── config_v2.py             # V2 configuration
-│   └── config_v4_optimal.py     # V4 optimal parameters
+│   ├── strategy.py              # V1: Core Turtle-Donchian implementation (4H) — the
+│   │                             #     one canonical, tested module (walk_forward.py,
+│   │                             #     monte_carlo.py, cross_market_validation.py all
+│   │                             #     run against this); github_bot.py's live params
+│   │                             #     match config.py's DEFAULT_PARAMS
+│   └── config.py                # V1 optimized parameters
+#
+# V2/V3/V4 experimental variants (strategy_v2/v3/v4*.py, config_v2.py,
+# config_v4_optimal.py, enhanced_strategy.py) moved to backups/ in Phase 6 —
+# none were imported by any live bot, the dashboard, or the validation
+# pipeline. V4's old "1572% backtest return" headline was an in-sample
+# number (same flaw this whole remediation plan exists to fix); its real
+# paper track record is a confirmed loss — see readiness_v4.json and
+# backups/README.md.
 │
 ├── 🔬 Analysis & Testing
 │   ├── data_fetcher.py          # Downloads BTCUSDT data from Binance
@@ -130,9 +137,10 @@ BTC Strategy/
 │   │   ├── backtest_results.csv
 │   │   ├── robustness_results.csv
 │   │   └── plots/               # Generated charts
-│   └── backups/
-│       ├── strategy_v1_winning.py
-│       └── config_v1_winning.py
+│   └── backups/                 # Archived/non-authoritative — see backups/README.md
+│       ├── strategy_v1_winning.py, config_v1_winning.py, sp500_reinvest_v1.py
+│       └── strategy_v2/v3/v3_fast/v4/v4_fast.py, v3_strategy.py,
+│           enhanced_strategy.py, config_v2.py, config_v4_optimal.py
 │
 └── 🔧 Configuration Files
     ├── requirements.txt          # Python dependencies
