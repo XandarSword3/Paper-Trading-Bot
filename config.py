@@ -210,6 +210,37 @@ class CrossMarketConfig:
     ])
 
 
+@dataclass
+class GateThresholds:
+    """
+    Phase 5 pass/fail bar for readiness_<strategy>.json — see
+    build_readiness_gates.py. A strategy only clears the gate if ALL of these
+    hold against its OWN recorded paper-trading track record (trades.json /
+    trades_v4.json), not against a backtest or an in-sample number.
+
+    Missing or insufficient data is NOT READY, never "pass by default" — this
+    mirrors readiness_gate.py's fail-closed semantics (Phase 0). A strategy
+    with 0 trades (V1, as of this writing) fails min_trades, not because it's
+    bad, but because there isn't yet a track record to judge.
+
+    min_trades:            below this, there isn't enough of a sample to draw
+                            any conclusion, good or bad.
+    min_sharpe:             annualized, computed from realized per-trade
+                            returns on the paper equity curve (see
+                            build_readiness_gates.compute_paper_metrics).
+    min_total_return_pct:   must not be net negative over the paper window.
+                            0.0, not some positive hurdle — this is a floor,
+                            not a target.
+    max_drawdown_pct:       peak-to-trough on the paper equity curve.
+    """
+    min_trades: int = 30
+    min_sharpe: float = 0.5
+    min_total_return_pct: float = 0.0
+    max_drawdown_pct: float = 25.0
+
+
+DEFAULT_GATE_THRESHOLDS = GateThresholds()
+
 # Default instances
 DEFAULT_PARAMS = StrategyParams()
 DEFAULT_BACKTEST = BacktestConfig()
