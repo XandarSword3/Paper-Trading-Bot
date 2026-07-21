@@ -170,6 +170,46 @@ class WalkForwardConfig:
     min_trades_for_selection: int = 5
 
 
+@dataclass
+class CrossMarketLeg:
+    """One market to run the frozen rule set against, unchanged — Phase 4 of
+    VALIDATION_REMEDIATION_PLAN.md. 'source' is 'binance' or 'kraken';
+    'symbol' is that source's own ticker (data_fetcher.py's Binance symbols
+    vs. data_fetcher_kraken.py's PAIR_ALIASES keys)."""
+    label: str
+    source: str
+    symbol: str
+    timeframe: str
+
+
+@dataclass
+class CrossMarketConfig:
+    """
+    Phase 4 — cross-market validation. Goal: check whether V1's edge is
+    structural or a BTC-2017-2025-shaped coincidence, by running the exact
+    same StrategyParams (DEFAULT_PARAMS below, no re-fitting per market) on
+    a few other liquid assets/timeframes/sources and comparing.
+
+    reference: the strategy's own primary market (BTC/USDT 4h, Binance),
+        run through this same script for an apples-to-apples baseline
+        instead of quoting an old headline number computed a different way.
+    legs: one leg per axis the plan names as worth varying — a different
+        asset (ETH/USDT), a different timeframe (BTC/USDT 1h), and a
+        different data source (BTC/USD via Kraken, the source both live
+        bots already trade against).
+    """
+    reference: CrossMarketLeg = field(
+        default_factory=lambda: CrossMarketLeg(
+            "BTC/USDT 4h (Binance) - reference", "binance", "BTCUSDT", "4h"
+        )
+    )
+    legs: List[CrossMarketLeg] = field(default_factory=lambda: [
+        CrossMarketLeg("ETH/USDT 4h (Binance) - different asset", "binance", "ETHUSDT", "4h"),
+        CrossMarketLeg("BTC/USDT 1h (Binance) - different timeframe", "binance", "BTCUSDT", "1h"),
+        CrossMarketLeg("BTC/USD 4h (Kraken) - different data source", "kraken", "BTCUSD", "4h"),
+    ])
+
+
 # Default instances
 DEFAULT_PARAMS = StrategyParams()
 DEFAULT_BACKTEST = BacktestConfig()
@@ -179,3 +219,4 @@ DEFAULT_MONTE_CARLO = MonteCarloConfig()
 DEFAULT_BLOCK_BOOTSTRAP = BlockBootstrapConfig()
 DEFAULT_SPLIT = DataSplitConfig()
 DEFAULT_WALK_FORWARD = WalkForwardConfig()
+DEFAULT_CROSS_MARKET = CrossMarketConfig()
