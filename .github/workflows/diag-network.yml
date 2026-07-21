@@ -1,0 +1,25 @@
+name: Diagnose Data Source Reachability
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Binance public API
+        run: |
+          echo "--- Binance ping ---"
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://api.binance.com/api/v3/ping || true
+          echo "--- Binance klines (1 candle) ---"
+          curl -s -w "\nHTTP %{http_code}\n" "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=1" || true
+
+      - name: Probe Kraken public OHLC
+        run: |
+          echo "--- Kraken OHLC (BTCUSD, 4h) ---"
+          curl -s -w "\nHTTP %{http_code}\n" "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=240" | head -c 2000 || true
+
+      - name: Probe CryptoCompare histohour
+        run: |
+          echo "--- CryptoCompare histohour ---"
+          curl -s -w "\nHTTP %{http_code}\n" "https://min-api.cryptocompare.com/data/v2/histohour?fsym=BTC&tsym=USD&limit=5" || true
