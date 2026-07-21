@@ -1,0 +1,18 @@
+=== Download start: Tue Jul 21 08:36:52 UTC 2026 ===
+usage: gdown [-h] [-V] [-O OUTPUT] [-q] [--proxy PROXY] [--speed SPEED]
+             [--no-cookies] [--no-check-certificate] [--continue] [--folder]
+             [--json] [--format FORMAT] [--user-agent USER_AGENT]
+             url_or_id
+gdown: error: unrecognized arguments: --id
+gdown --id FAILED
+=== Download end: Tue Jul 21 08:36:52 UTC 2026 ===
+=== File size ===
+ls: cannot access 'kraken_full.zip': No such file or directory
+no file present
+=== Zip entry count ===
+unzip:  cannot find or open kraken_full.zip, kraken_full.zip.zip or kraken_full.zip.ZIP.
+=== BTC/XBT pair entries ===
+no BTC/XBT matches
+=== Disk space remaining ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root        72G   58G   15G  80% /
