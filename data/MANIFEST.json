@@ -1,0 +1,20 @@
+{
+  "BTCUSDT_4h": {
+    "source": "Kraken api.kraken.com/0/public/OHLC (BTCUSD proxy \u2014 Binance unreachable)",
+    "symbol": "XXBTZUSD",
+    "rows": 721,
+    "start": "2026-03-23 08:00:00",
+    "end": "2026-07-21 08:00:00",
+    "fetched_at": "2026-07-21T08:57:07.536706+00:00",
+    "sha256": "49680b0c4295c72739d9e1f53ffba5fa74319b21f709f5ee4f57665c1f9c864b"
+  },
+  "BTCUSDT_1h": {
+    "source": "Kraken api.kraken.com/0/public/OHLC (BTCUSD proxy \u2014 Binance unreachable)",
+    "symbol": "XXBTZUSD",
+    "rows": 721,
+    "start": "2026-06-21 08:00:00",
+    "end": "2026-07-21 08:00:00",
+    "fetched_at": "2026-07-21T08:57:39.388213+00:00",
+    "sha256": "1f3daeb440aaf383506922e12c504adb4cf0d2e0dc5d2f4b88e6a72c1861357d"
+  }
+}
