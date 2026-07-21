@@ -1,0 +1,25 @@
+=== Bitstamp OHLC, step=14400 (4h), far back start ===
+{"data": {"pair": "BTC/USD", "ohlc": [{"timestamp": "1483228800", "open": "966.34", "high": "966.99", "low": "960.53", "close": "962.83", "volume": "423.39742304"}, {"timestamp": "1483243200", "open": "960.61", "high": "964.99", "low": "960.60", "close": "964.96", "volume": "133.17551638"}, {"timestamp": "1483257600", "open": "964.96", "high": "975.00", "low": "964.96", "close": "974.92", "volume": "787.80953518"}, {"timestamp": "1483272000", "open": "975.00", "high": "977.92", "low": "972.50", "close": "976.71", "volume": "670.05759012"}, {"timestamp": "1483286400", "open": "976.71", "high": "998.00", "low": "976.22", "close": "997.03", "volume": "2333.81726464"}]}}
+HTTP 200
+
+=== Bitstamp OHLC, no start (recent) ===
+{"data": {"pair": "BTC/USD", "ohlc": [{"timestamp": "1784592000", "open": "65212.60", "high": "65612.31", "low": "65108.55", "close": "65533.78", "volume": "121.86892917"}, {"timestamp": "1784606400", "open": "65526.17", "high": "66201.00", "low": "65436.29", "close": "66149.44", "volume": "125.49014856"}, {"timestamp": "1784620800", "open": "66140.72", "high": "66306.46", "low": "66083.89", "close": "66151.14", "volume": "43.04957649"}]}}
+HTTP 200
+
+=== CryptoDataDownload Kraken BTCUSD 1h CSV (head) ===
+<h1>Not Found</h1><p>The requested resource was not found on this server.</p>
+HTTP 404
+
+=== CryptoDataDownload Bitstamp BTCUSD 1h CSV (head) ===
+https://www.CryptoDataDownload.com
+unix,date,symbol,open,high,low,close,Volume BTC,Volume USD
+1784592000,2026-07-21 00:00:00,BTC/USD,65212.60,65212.60,65125.01,65147.65,6.62715243,431743.4070062895
+1784588400,2026-07-20 23:00:00,BTC/USD,65099.79,65228.50,65087.17,65212.60,17.90504298,1167634.405837548
+1784584800,2026-07-20 22:00:00,BTC/USD,65244.41,65244.41,65044.61,65099.79,23.05492004,1500870.4530707914
+1784581200,2026-07-20 21:00:00,BTC/USD,65318.33,65396.79,65219.28,65244.42,26.57231187,1733695.0760172654
+1784577600,2026-07-20 20:00:00,BTC/USD,65095.79,65390.15,65009.20,65318.34,56.51467412,3691444.699159361
+1784574000,2026-07-20 19:00:00,BTC/USD,65197.02,65229.98,64996.46,65095.77,84.08638616,5473668.053602543
+1784570400,2026-07-20 18:00:00,BTC/USD,65532.84,65747.46,65152.27,65209.47,
+=== CryptoDataDownload Coinbase BTC-USD 1h CSV (head) ===
+<h1>Not Found</h1><p>The requested resource was not found on this server.</p>
+HTTP 404
