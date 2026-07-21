@@ -1,0 +1,100 @@
+{
+  "strategy": "v1",
+  "timeframe": "4h",
+  "generated_at": "2026-07-21T18:47:31.737775+00:00",
+  "grid_mode": "fast (reduced grid, sanity check only)",
+  "config": {
+    "train_years": 2.0,
+    "test_months": 6,
+    "step_months": 6,
+    "expanding": false
+  },
+  "acceptance_check_passed": true,
+  "num_folds": 9,
+  "total_oos_trades": 404,
+  "oos_win_rate_pct": 40.84158415841584,
+  "oos_sharpe": 0.04012029267314588,
+  "oos_total_return_pct": -15.17876614840662,
+  "oos_cagr_pct": -3.5892613371914295,
+  "oos_max_drawdown_pct": -58.653016149029035,
+  "oos_calmar_ratio": -0.061194829743650744,
+  "oos_coverage_start": "2020-05-15 04:00:00",
+  "oos_coverage_end": "2024-11-15 00:00:00",
+  "parameter_stability": {
+    "entry_len": {
+      "is_stable": true,
+      "distinct_values": 2,
+      "sequence": [
+        25,
+        25,
+        35,
+        25,
+        35,
+        35,
+        35,
+        35,
+        25
+      ]
+    },
+    "exit_len": {
+      "is_stable": false,
+      "distinct_values": 3,
+      "sequence": [
+        7,
+        7,
+        19,
+        19,
+        19,
+        7,
+        19,
+        13,
+        19
+      ]
+    },
+    "trail_mult": {
+      "is_stable": true,
+      "distinct_values": 2,
+      "sequence": [
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        2.0,
+        4.0
+      ]
+    },
+    "risk_percent": {
+      "is_stable": true,
+      "distinct_values": 2,
+      "sequence": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.5
+      ]
+    },
+    "pyramid_spacing_n": {
+      "is_stable": true,
+      "distinct_values": 3,
+      "sequence": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        1.0,
+        1.5,
+        0.5,
+        1.5,
+        1.5
+      ]
+    }
+  }
+}
