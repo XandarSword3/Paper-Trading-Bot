@@ -22,6 +22,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 
@@ -110,6 +111,44 @@ def main():
     report.fold_results_df().to_csv(folds_path, index=False)
 
     print(f"\nSaved:\n  {equity_path}\n  {folds_path}")
+
+    # --- Publish a small, git-tracked summary ------------------------------
+    # results/ is gitignored (regenerable); this is the durable, committed
+    # pointer to it — read_only degradation check in build_readiness_gates.py
+    # (Phase 5) looks for exactly this filename/schema.
+    strategy_name = {"4h": "v1", "1h": "v4"}.get(args.timeframe, args.timeframe)
+    summary = {
+        "strategy": strategy_name,
+        "timeframe": args.timeframe,
+        "generated_at": pd.Timestamp.now(tz="UTC").isoformat(),
+        "grid_mode": "fast (reduced grid, sanity check only)" if args.fast else "full",
+        "config": {
+            "train_years": config.train_years,
+            "test_months": config.test_months,
+            "step_months": config.step_months,
+            "expanding": config.expanding,
+        },
+        "acceptance_check_passed": not leaked,
+        "num_folds": len(report.fold_results),
+        "total_oos_trades": report.total_oos_trades,
+        "oos_win_rate_pct": report.oos_win_rate,
+        "oos_sharpe": report.overall_stats.get("sharpe_ratio"),
+        "oos_total_return_pct": report.overall_stats.get("total_return_pct"),
+        "oos_cagr_pct": report.overall_stats.get("cagr_pct"),
+        "oos_max_drawdown_pct": report.overall_stats.get("max_drawdown_pct"),
+        "oos_calmar_ratio": report.overall_stats.get("calmar_ratio"),
+        "oos_coverage_start": str(report.overall_stats.get("start")) if report.overall_stats else None,
+        "oos_coverage_end": str(report.overall_stats.get("end")) if report.overall_stats else None,
+        "parameter_stability": {
+            name: {"is_stable": info["is_stable"], "distinct_values": info["distinct_values"],
+                   "sequence": info["sequence"]}
+            for name, info in report.stability.items()
+        },
+    }
+    summary_path = f"walk_forward_results_{strategy_name}.json"
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2, default=str)
+    print(f"  {summary_path}")
 
 
 if __name__ == "__main__":
