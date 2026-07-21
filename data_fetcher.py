@@ -60,6 +60,7 @@ class BinanceDataFetcher:
         "1h": 3600 * 1000,
         "4h": 4 * 3600 * 1000,
     }
+    MAX_CONSECUTIVE_FAILURES = 5  # give up loudly instead of retrying forever
     
     def __init__(self, symbol: str = "BTCUSDT"):
         self.symbol = symbol
@@ -97,6 +98,7 @@ class BinanceDataFetcher:
         
         print(f"Fetching {self.symbol} {interval} data from {start_date} to {end_date}...")
         
+        consecutive_failures = 0
         with tqdm(total=total_batches, desc="Downloading") as pbar:
             while current_ts < end_ts:
                 params = {
@@ -108,7 +110,7 @@ class BinanceDataFetcher:
                 }
                 
                 try:
-                    response = requests.get(self.BASE_URL, params=params)
+                    response = requests.get(self.BASE_URL, params=params, timeout=30)
                     response.raise_for_status()
                     data = response.json()
                     
@@ -118,13 +120,21 @@ class BinanceDataFetcher:
                     all_data.extend(data)
                     current_ts = data[-1][0] + 1  # Next timestamp after last candle
                     pbar.update(1)
+                    consecutive_failures = 0
                     
                     # Rate limiting
                     time.sleep(0.1)
                     
                 except requests.exceptions.RequestException as e:
-                    print(f"Error fetching data: {e}")
-                    time.sleep(1)
+                    consecutive_failures += 1
+                    print(f"Error fetching data ({consecutive_failures}/{self.MAX_CONSECUTIVE_FAILURES}): {e}")
+                    if consecutive_failures >= self.MAX_CONSECUTIVE_FAILURES:
+                        raise ConnectionError(
+                            f"Binance fetch failed {consecutive_failures} times in a row "
+                            f"({self.BASE_URL}) — giving up instead of retrying forever. "
+                            f"Last error: {e}"
+                        ) from e
+                    time.sleep(min(2 ** consecutive_failures, 30))  # capped exponential backoff
                     continue
         
         if not all_data:
