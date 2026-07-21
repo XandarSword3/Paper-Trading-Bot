@@ -7,6 +7,7 @@ import os
 import time
 import hashlib
 import json
+from io import StringIO
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta, timezone
@@ -208,6 +209,81 @@ class BinanceDataFetcher:
             raise FileNotFoundError(f"No data file found: {filename}")
 
 
+class CryptoDataDownloadFetcher:
+    """
+    Downloads a full-history OHLCV CSV from cryptodatadownload.com.
+
+    Kraken's public OHLC endpoint (see data_fetcher_kraken.py) ignores the
+    `since` cursor and always returns only its most recent ~720 candles —
+    confirmed live (since_probe.txt): requesting since=2017, since=2020, and
+    no `since` at all returned the identical latest window. It's a live-data
+    endpoint, not a historical-backfill one, so it can't provide 2017-2025
+    depth at any pagination speed.
+
+    cryptodatadownload.com instead hosts a single prebuilt CSV per exchange/
+    pair/granularity spanning that exchange's full history — one HTTP GET,
+    no pagination, no rate limit. Bitstamp is used here (BTC/USD, live since
+    2011) since its file already covers 2017 onward and is kept current
+    (confirmed live via source_probe.txt: top row was the current day).
+
+    Only 1h/1d/minute granularities are published per exchange (no native 4h
+    file), so 4h is produced by resampling the 1h data.
+    """
+
+    BASE_URL = "https://www.cryptodatadownload.com/cdd/{exchange}_{pair}_{gran}.csv"
+
+    def __init__(self, exchange: str = "Bitstamp", pair: str = "BTCUSD"):
+        self.exchange = exchange
+        self.pair = pair
+
+    def fetch(
+        self,
+        timeframe: str = "4h",
+        start_date: str = "2017-01-01",
+        end_date: Optional[str] = None,
+    ) -> pd.DataFrame:
+        gran = "1h" if timeframe in ("1h", "4h") else timeframe
+        url = self.BASE_URL.format(exchange=self.exchange, pair=self.pair, gran=gran)
+
+        print(f"Fetching {self.exchange} {self.pair} {gran} full-history CSV from {url} ...")
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+
+        # CDD's files have a banner URL on line 1, then the real CSV header.
+        lines = resp.text.splitlines()
+        csv_text = "\n".join(lines[1:]) if lines and lines[0].strip().lower().startswith("http") else resp.text
+
+        df = pd.read_csv(StringIO(csv_text))
+        df["timestamp"] = pd.to_datetime(df["unix"], unit="s")
+        df.set_index("timestamp", inplace=True)
+
+        volume_col = "Volume BTC" if "Volume BTC" in df.columns else "Volume"
+        df = df.rename(columns={volume_col: "volume"})
+        df = df[["open", "high", "low", "close", "volume"]].astype(float)
+        df = df[~df.index.duplicated(keep="first")]
+        df.sort_index(inplace=True)
+
+        start_ts = pd.Timestamp(start_date)
+        end_ts = pd.Timestamp(end_date) if end_date else df.index.max()
+        df = df[(df.index >= start_ts) & (df.index <= end_ts)]
+
+        if df.empty:
+            raise ValueError(
+                f"CryptoDataDownload returned data but none fell within "
+                f"{start_date} .. {end_date or 'now'} (file range: "
+                f"{df.index.min() if len(df) else 'n/a'})"
+            )
+
+        if timeframe == "4h":
+            df = df.resample("4h").agg(
+                {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
+            ).dropna()
+
+        print(f"Downloaded {len(df)} {timeframe} candles from {df.index[0]} to {df.index[-1]} "
+              f"(source: CryptoDataDownload, {self.exchange} {self.pair})")
+        return df
+
+
 def download_binance_data(
     symbol: str = "BTCUSDT",
     timeframe: str = "4h",
@@ -290,14 +366,17 @@ def download_btc_data(
 
     Binance is not reliably reachable from Lebanon or from GitHub Actions'
     US-hosted runners (HTTP 451, confirmed via diag-network.yml) — so on
-    failure this transparently falls back to Kraken's BTCUSD pair
-    (data_fetcher_kraken.KrakenDataFetcher) as a USD-pegged proxy for BTCUSDT.
-    Both live bots (github_bot.py, github_bot_v4.py) already trade off Kraken
-    for the same reason. The fallback result is cached under the same
-    BTCUSDT_{timeframe} filename regardless of source, since every caller
-    imports download_btc_data() by name and doesn't care which exchange it
-    came from — MANIFEST.json records the true source for whichever snapshot
-    ends up on disk.
+    failure this transparently falls back to a full-history Bitstamp CSV via
+    CryptoDataDownload.com as a USD-pegged proxy for BTCUSDT. (Kraken's own
+    OHLC endpoint was tried first, but it only ever serves its most recent
+    ~720 candles regardless of the `since` parameter — confirmed live via
+    since_probe.txt — so it can't backfill 2017-2025 history at any speed.
+    data_fetcher_kraken.py is still used elsewhere for Phase 4's cross-market
+    validation, which only needs Kraken's recent window.) The fallback result
+    is cached under the same BTCUSDT_{timeframe} filename regardless of
+    source, since every caller imports download_btc_data() by name and
+    doesn't care which exchange it came from — MANIFEST.json records the true
+    source for whichever snapshot ends up on disk.
 
     Args:
         timeframe: '1h' or '4h'
@@ -318,23 +397,21 @@ def download_btc_data(
         )
     except Exception as e:
         print(f"\n⚠️  Binance unavailable ({e})")
-        print(f"   Falling back to Kraken BTCUSD as a USD-pegged proxy for BTCUSDT...")
-
-        from data_fetcher_kraken import KrakenDataFetcher  # deferred import: avoids circular import
+        print(f"   Falling back to CryptoDataDownload (Bitstamp BTCUSD) as a USD-pegged proxy for BTCUSDT...")
 
         filename = f"BTCUSDT_{timeframe}"
         parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
         csv_path = os.path.join(DATA_DIR, f"{filename}.csv")
 
-        kraken_fetcher = KrakenDataFetcher(pair="BTCUSD")
-        df = kraken_fetcher.fetch_ohlc(timeframe=timeframe, start_date=start_date, end_date=end_date)
+        cdd_fetcher = CryptoDataDownloadFetcher(exchange="Bitstamp", pair="BTCUSD")
+        df = cdd_fetcher.fetch(timeframe=timeframe, start_date=start_date, end_date=end_date)
 
         df.to_csv(csv_path)
         df.to_parquet(parquet_path)
         _update_manifest(
             filename, df, parquet_path,
-            source="Kraken api.kraken.com/0/public/OHLC (BTCUSD proxy — Binance unreachable)",
-            symbol=kraken_fetcher.kraken_pair,
+            source="CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy — Binance unreachable)",
+            symbol="BTCUSD",
         )
         print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
 
