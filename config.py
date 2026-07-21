@@ -88,6 +88,27 @@ class MonteCarloConfig:
 
 
 @dataclass
+class BlockBootstrapConfig:
+    """
+    Block-bootstrap parameters — Phase 3 of VALIDATION_REMEDIATION_PLAN.md.
+
+    Resamples contiguous blocks of the walk-forward OOS return series
+    (walk_forward.py / walk_forward_test.py output) rather than individual
+    in-sample trades, and rather than shuffling returns independently — a
+    block preserves the short-run autocorrelation/volatility-clustering
+    real bar-to-bar returns have, which an iid shuffle destroys.
+
+    block_size_bars: default 42 bars ≈ one week at the 4h timeframe — long
+        enough to span a handful of consecutive trades and typical regime
+        persistence, short enough to give many blocks per resample. Override
+        for other timeframes.
+    """
+    block_size_bars: int = 42
+    n_simulations: int = 1000
+    random_seed: int = 42
+
+
+@dataclass
 class DataSplitConfig:
     """
     Canonical chronological data split — frozen per Phase 1 of
@@ -155,5 +176,6 @@ DEFAULT_BACKTEST = BacktestConfig()
 DEFAULT_ROBUSTNESS = RobustnessRanges()
 DEFAULT_REGIMES = RegimeDefinition()
 DEFAULT_MONTE_CARLO = MonteCarloConfig()
+DEFAULT_BLOCK_BOOTSTRAP = BlockBootstrapConfig()
 DEFAULT_SPLIT = DataSplitConfig()
 DEFAULT_WALK_FORWARD = WalkForwardConfig()
