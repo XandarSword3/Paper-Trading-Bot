@@ -68,7 +68,13 @@ class RegimeDefinition:
         {"name": "2019 Chop", "start": "2019-01-01", "end": "2019-12-31", "type": "chop"},
         {"name": "2020-2021 Bull", "start": "2020-01-01", "end": "2021-12-31", "type": "bull"},
         {"name": "2022 Bear", "start": "2022-01-01", "end": "2022-12-31", "type": "bear"},
-        {"name": "2023-2025 Recovery", "start": "2023-01-01", "end": "2025-12-31", "type": "recovery"},
+        # Was "2023-2025 Recovery" through 2025-12-31 — that range reached into
+        # 2025, which Phase 1 of the remediation plan froze as the true
+        # holdout (DataSplitConfig.holdout_start). Trimmed to stop at the end
+        # of the validation window so regime_simulation.py never scores on
+        # holdout data. If you need a regime covering 2025+, that belongs in
+        # final_holdout_validation.py, not here.
+        {"name": "2023-2024 Recovery", "start": "2023-01-01", "end": "2024-12-31", "type": "recovery"},
     ])
 
 
@@ -81,9 +87,167 @@ class MonteCarloConfig:
     execution_noise_std: float = 0.001  # Price execution noise
 
 
+@dataclass
+class BlockBootstrapConfig:
+    """
+    Block-bootstrap parameters — Phase 3 of VALIDATION_REMEDIATION_PLAN.md.
+
+    Resamples contiguous blocks of the walk-forward OOS return series
+    (walk_forward.py / walk_forward_test.py output) rather than individual
+    in-sample trades, and rather than shuffling returns independently — a
+    block preserves the short-run autocorrelation/volatility-clustering
+    real bar-to-bar returns have, which an iid shuffle destroys.
+
+    block_size_bars: default 42 bars ≈ one week at the 4h timeframe — long
+        enough to span a handful of consecutive trades and typical regime
+        persistence, short enough to give many blocks per resample. Override
+        for other timeframes.
+    """
+    block_size_bars: int = 42
+    n_simulations: int = 1000
+    random_seed: int = 42
+
+
+@dataclass
+class DataSplitConfig:
+    """
+    Canonical chronological data split — frozen per Phase 1 of
+    VALIDATION_REMEDIATION_PLAN.md. This is the ONE split definition for the
+    whole repo; nothing else should hand-roll its own date filter.
+
+    in_sample:  free to use for feature/rule development and robustness
+                testing (Phase 3 of the 16-phase pipeline).
+    validation: used for walk-forward OOS folds (Phase 2 of the remediation
+                plan) and stress testing (Monte Carlo/regime/survivability) —
+                still "seen" during development, never used to pick final
+                parameters.
+    holdout:    touched by exactly ONE script in this repo —
+                final_holdout_validation.py. Scored once, at the very end,
+                after Phases 2-4 of the remediation plan are done. See
+                data_splits.py for the enforcement mechanism and its
+                acceptance check.
+    """
+    in_sample_start: str = "2017-01-01"
+    in_sample_end: str = "2023-12-31"
+    validation_start: str = "2024-01-01"
+    validation_end: str = "2024-12-31"
+    holdout_start: str = "2025-01-01"
+    holdout_end: str = None  # None = through whatever is the latest available candle
+
+
+@dataclass
+class WalkForwardConfig:
+    """
+    Rolling walk-forward parameters — Phase 2 of VALIDATION_REMEDIATION_PLAN.md.
+
+    Each fold optimizes on `train_years` of data and scores the result on the
+    following `test_months`, never touched during that fold's optimization.
+    Folds roll forward by `step_months` and are generated only inside the
+    development window (DataSplitConfig.in_sample_start -> holdout_start) —
+    see walk_forward.generate_folds() for the enforcement.
+
+    train_years:      length of each fold's optimization (in-sample) window.
+    test_months:      length of each fold's out-of-sample scoring window.
+    step_months:      how far the window rolls between folds. Equal to
+                       test_months by default so OOS windows tile the
+                       development period with no gap or overlap.
+    expanding:        if True, train_start stays fixed at the development
+                       start and the window grows each fold instead of
+                       sliding (anchored walk-forward). Default is the
+                       sliding window the remediation plan describes.
+    selection_metric: field on ParameterResult used to pick each fold's
+                       winning parameter set from the in-sample grid.
+    min_trades_for_selection: in-sample combos with fewer trades than this
+                       are excluded from fold-winner selection so a lucky
+                       near-zero-trade combo can't top the ranking on a
+                       near-zero, near-riskless "sharpe".
+    """
+    train_years: float = 2.0
+    test_months: int = 6
+    step_months: int = 6
+    expanding: bool = False
+    selection_metric: str = "sharpe_ratio"
+    min_trades_for_selection: int = 5
+
+
+@dataclass
+class CrossMarketLeg:
+    """One market to run the frozen rule set against, unchanged — Phase 4 of
+    VALIDATION_REMEDIATION_PLAN.md. 'source' is 'binance' or 'kraken';
+    'symbol' is that source's own ticker (data_fetcher.py's Binance symbols
+    vs. data_fetcher_kraken.py's PAIR_ALIASES keys)."""
+    label: str
+    source: str
+    symbol: str
+    timeframe: str
+
+
+@dataclass
+class CrossMarketConfig:
+    """
+    Phase 4 — cross-market validation. Goal: check whether V1's edge is
+    structural or a BTC-2017-2025-shaped coincidence, by running the exact
+    same StrategyParams (DEFAULT_PARAMS below, no re-fitting per market) on
+    a few other liquid assets/timeframes/sources and comparing.
+
+    reference: the strategy's own primary market (BTC/USDT 4h, Binance),
+        run through this same script for an apples-to-apples baseline
+        instead of quoting an old headline number computed a different way.
+    legs: one leg per axis the plan names as worth varying — a different
+        asset (ETH/USDT), a different timeframe (BTC/USDT 1h), and a
+        different data source (BTC/USD via Kraken, the source both live
+        bots already trade against).
+    """
+    reference: CrossMarketLeg = field(
+        default_factory=lambda: CrossMarketLeg(
+            "BTC/USDT 4h (Binance) - reference", "binance", "BTCUSDT", "4h"
+        )
+    )
+    legs: List[CrossMarketLeg] = field(default_factory=lambda: [
+        CrossMarketLeg("ETH/USDT 4h (Binance) - different asset", "binance", "ETHUSDT", "4h"),
+        CrossMarketLeg("BTC/USDT 1h (Binance) - different timeframe", "binance", "BTCUSDT", "1h"),
+        CrossMarketLeg("BTC/USD 4h (Kraken) - different data source", "kraken", "BTCUSD", "4h"),
+    ])
+
+
+@dataclass
+class GateThresholds:
+    """
+    Phase 5 pass/fail bar for readiness_<strategy>.json — see
+    build_readiness_gates.py. A strategy only clears the gate if ALL of these
+    hold against its OWN recorded paper-trading track record (trades.json /
+    trades_v4.json), not against a backtest or an in-sample number.
+
+    Missing or insufficient data is NOT READY, never "pass by default" — this
+    mirrors readiness_gate.py's fail-closed semantics (Phase 0). A strategy
+    with 0 trades (V1, as of this writing) fails min_trades, not because it's
+    bad, but because there isn't yet a track record to judge.
+
+    min_trades:            below this, there isn't enough of a sample to draw
+                            any conclusion, good or bad.
+    min_sharpe:             annualized, computed from realized per-trade
+                            returns on the paper equity curve (see
+                            build_readiness_gates.compute_paper_metrics).
+    min_total_return_pct:   must not be net negative over the paper window.
+                            0.0, not some positive hurdle — this is a floor,
+                            not a target.
+    max_drawdown_pct:       peak-to-trough on the paper equity curve.
+    """
+    min_trades: int = 30
+    min_sharpe: float = 0.5
+    min_total_return_pct: float = 0.0
+    max_drawdown_pct: float = 25.0
+
+
+DEFAULT_GATE_THRESHOLDS = GateThresholds()
+
 # Default instances
 DEFAULT_PARAMS = StrategyParams()
 DEFAULT_BACKTEST = BacktestConfig()
 DEFAULT_ROBUSTNESS = RobustnessRanges()
 DEFAULT_REGIMES = RegimeDefinition()
 DEFAULT_MONTE_CARLO = MonteCarloConfig()
+DEFAULT_BLOCK_BOOTSTRAP = BlockBootstrapConfig()
+DEFAULT_SPLIT = DataSplitConfig()
+DEFAULT_WALK_FORWARD = WalkForwardConfig()
+DEFAULT_CROSS_MARKET = CrossMarketConfig()

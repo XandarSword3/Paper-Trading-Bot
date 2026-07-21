@@ -8,6 +8,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
 from config import StrategyParams, DEFAULT_PARAMS
+from metrics_utils import infer_bars_per_year
 
 
 @dataclass
@@ -569,8 +570,14 @@ class TurtleDonchianStrategy:
                     recovery_time = (equity.index[i] - dd_start).total_seconds() / (24 * 3600)
                     recovery_times.append(recovery_time)
         
-        # Annualized metrics (assuming 4H bars = 6 bars per day)
-        bars_per_year = 365 * 6 if '4h' in str(equity.index.freq) else 365 * 24
+        # Annualized metrics. Inferred from actual median bar spacing rather
+        # than equity.index.freq — real fetched OHLCV data is essentially
+        # never freq-tagged even when perfectly evenly spaced, so the old
+        # '4h' in str(equity.index.freq) check always fell through to the
+        # hourly default (365*24) regardless of the real timeframe, inflating
+        # Sharpe/CAGR/Sortino/Calmar by ~2x for every 4h backtest. See
+        # metrics_utils.py for the full explanation.
+        bars_per_year = infer_bars_per_year(equity.index)
         total_return = (equity.iloc[-1] / initial_capital) - 1
         years = len(equity) / bars_per_year
         cagr = (1 + total_return) ** (1 / years) - 1 if years > 0 else 0
