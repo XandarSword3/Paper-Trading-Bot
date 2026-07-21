@@ -19,13 +19,23 @@ from config import DATA_DIR, DEFAULT_BACKTEST
 MANIFEST_PATH = os.path.join(DATA_DIR, "MANIFEST.json")
 
 
-def _update_manifest(filename: str, df: pd.DataFrame, parquet_path: str) -> None:
+def _update_manifest(
+    filename: str,
+    df: pd.DataFrame,
+    parquet_path: str,
+    source: str = "Binance api.binance.com/api/v3/klines",
+    symbol: str = "BTCUSDT",
+) -> None:
     """
     Record dataset provenance — Phase 1 of the remediation plan asks for a
     canonical, versioned dataset instead of silent re-fetches. This doesn't
     stop re-fetching, but it makes every snapshot on disk identifiable: exact
     row count, date range, fetch time, and a content hash, so it's possible
     to tell whether two runs actually used the same data.
+
+    source/symbol are parameters (not hardcoded to Binance/BTCUSDT) so Phase
+    4's cross-market/cross-source fetches (data_fetcher_kraken.py, other
+    Binance symbols) get accurate provenance too.
     """
     with open(parquet_path, "rb") as f:
         file_hash = hashlib.sha256(f.read()).hexdigest()
@@ -39,8 +49,8 @@ def _update_manifest(filename: str, df: pd.DataFrame, parquet_path: str) -> None
             manifest = {}
 
     manifest[filename] = {
-        "source": "Binance api.binance.com/api/v3/klines",
-        "symbol": "BTCUSDT",
+        "source": source,
+        "symbol": symbol,
         "rows": int(len(df)),
         "start": str(df.index[0]),
         "end": str(df.index[-1]),
@@ -172,7 +182,11 @@ class BinanceDataFetcher:
         
         df.to_csv(csv_path)
         df.to_parquet(parquet_path)
-        _update_manifest(filename, df, parquet_path)
+        _update_manifest(
+            filename, df, parquet_path,
+            source="Binance api.binance.com/api/v3/klines",
+            symbol=self.symbol,
+        )
 
         print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
         return csv_path
@@ -194,43 +208,49 @@ class BinanceDataFetcher:
             raise FileNotFoundError(f"No data file found: {filename}")
 
 
-def download_btc_data(
+def download_binance_data(
+    symbol: str = "BTCUSDT",
     timeframe: str = "4h",
     start_date: str = "2017-01-01",
     end_date: Optional[str] = None,
     force_refresh: bool = False
 ) -> pd.DataFrame:
     """
-    Main function to download or load BTC data.
-    
+    Download or load Binance OHLCV data for any symbol.
+
+    Generalizes what used to be BTC-only logic in download_btc_data() — Phase
+    4 of the remediation plan (cross-market validation) needs the exact same
+    fetch/cache/staleness-refresh behavior for other assets (e.g. ETHUSDT),
+    not a second parallel implementation. download_btc_data() below is now a
+    thin wrapper over this for backward compatibility.
+
     Args:
+        symbol: Binance symbol, e.g. 'BTCUSDT', 'ETHUSDT'
         timeframe: '1h' or '4h'
         start_date: Start date
         end_date: End date (default: today)
         force_refresh: Force re-download even if file exists
-    
+
     Returns:
         DataFrame with OHLCV data
     """
-    filename = f"BTCUSDT_{timeframe}"
-    fetcher = BinanceDataFetcher()
-    
-    # Check if data exists
+    filename = f"{symbol}_{timeframe}"
+    fetcher = BinanceDataFetcher(symbol=symbol)
+
     parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
-    
+
     if os.path.exists(parquet_path) and not force_refresh:
         print(f"Loading existing data from {parquet_path}")
         df = fetcher.load_data(filename)
-        
-        # Check if we need to update
+
         last_date = df.index[-1]
         today = pd.Timestamp.now()
         staleness_days = (today - last_date).days
-        
+
         if staleness_days > 7:
             print(f"\n⚠️  WARNING: Data is {staleness_days} days old (last candle: {last_date.strftime('%Y-%m-%d')})")
             print(f"   Attempting auto-refresh from Binance...")
-        
+
         if staleness_days > 1:
             try:
                 new_start = (last_date + timedelta(hours=1)).strftime("%Y-%m-%d")
@@ -245,14 +265,45 @@ def download_btc_data(
                 if staleness_days > 7:
                     print(f"   ⚠️  Proceeding with STALE data. Results may not reflect current market.")
                     print(f"   Run with force_refresh=True to force full re-download.")
-        
+
         return df
-    
+
     # Fresh download
     df = fetcher.fetch_klines(timeframe, start_date, end_date)
     fetcher.save_data(df, filename)
-    
+
     return df
+
+
+def download_btc_data(
+    timeframe: str = "4h",
+    start_date: str = "2017-01-01",
+    end_date: Optional[str] = None,
+    force_refresh: bool = False
+) -> pd.DataFrame:
+    """
+    Main function to download or load BTC data. Thin wrapper over
+    download_binance_data(symbol='BTCUSDT', ...) — kept as its own function
+    since it's the primary strategy's data path and imported by name all
+    over the repo (strategy.py, walk_forward_test.py, robustness_test.py,
+    main.py, etc.).
+
+    Args:
+        timeframe: '1h' or '4h'
+        start_date: Start date
+        end_date: End date (default: today)
+        force_refresh: Force re-download even if file exists
+
+    Returns:
+        DataFrame with OHLCV data
+    """
+    return download_binance_data(
+        symbol="BTCUSDT",
+        timeframe=timeframe,
+        start_date=start_date,
+        end_date=end_date,
+        force_refresh=force_refresh,
+    )
 
 
 if __name__ == "__main__":
