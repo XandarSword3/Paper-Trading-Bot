@@ -1,0 +1,45 @@
+name: Fetch Funding Rate Data
+
+on:
+  workflow_dispatch:      # manual trigger, or trigger via API
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal dependencies
+        run: pip install pandas numpy requests tqdm pyarrow
+
+      - name: Fetch BTCUSDT funding rate history
+        run: |
+          python -c "
+          from funding_rate_fetcher import download_funding_data
+
+          try:
+              df = download_funding_data(start_date='2019-09-01', force_refresh=True)
+              print(f'funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
+          except Exception as e:
+              print(f'funding fetch FAILED: {e}')
+              raise
+          "
+
+      - name: Commit and push data
+        if: always()
+        run: |
+          git config --local user.email "data-bot@github.com"
+          git config --local user.name "Data Fetch Bot"
+          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "data: fetch BTCUSDT perpetual funding rate history ($(date -u +'%Y-%m-%d'))"
+          git push origin HEAD:${{ github.ref_name }}
