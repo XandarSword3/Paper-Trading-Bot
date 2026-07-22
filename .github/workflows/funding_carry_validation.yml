@@ -1,0 +1,57 @@
+name: Funding Carry Validation
+
+# Validates the BTC Funding-Rate Carry strategy (funding_rate_carry.py):
+# a static, always-on long-spot/short-perp hedge with no signal logic and
+# no tunable parameters — so unlike walk_forward_validation.yml this needs
+# no grid search, no folds, and no matrix. One job, a couple of minutes.
+#
+# Refreshes funding-rate data first (same fetch_rate_history call the
+# standalone "Fetch Funding Rate Data" workflow uses) so the committed
+# results always reflect the latest available settlements, then runs the
+# backtest and commits funding_carry_results.json +
+# results/funding_carry_equity.csv.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/funding-rate-carry
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas numpy requests tqdm pyarrow
+
+      - name: Refresh BTCUSDT funding rate history
+        run: python -c "from funding_rate_fetcher import download_funding_data; download_funding_data(start_date='2019-09-01', force_refresh=True)"
+
+      - name: Run funding-carry backtest
+        run: python funding_rate_carry.py --out funding_carry_results.json
+
+      - name: Run regression tests
+        run: |
+          pip install pytest
+          pytest test_funding_carry.py -v
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config --local user.email "validation-bot@github.com"
+          git config --local user.name "Validation Bot"
+          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "funding carry validation: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push origin HEAD:${{ github.ref_name }}
