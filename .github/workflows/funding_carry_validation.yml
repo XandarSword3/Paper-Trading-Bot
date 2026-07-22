@@ -37,7 +37,21 @@ jobs:
         run: pip install pandas numpy requests tqdm pyarrow
 
       - name: Refresh BTCUSDT funding rate history
-        run: python -c "from funding_rate_fetcher import download_funding_data; download_funding_data(start_date='2019-09-01', force_refresh=True)"
+        run: |
+          set +e
+          python -c "
+          import traceback
+          from funding_rate_fetcher import download_funding_data
+          try:
+              df = download_funding_data(start_date='2019-09-01', force_refresh=True)
+              print(f'funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
+          except Exception as e:
+              print(f'funding fetch FAILED: {e}')
+              traceback.print_exc()
+              raise
+          " > funding_fetch_log.txt 2>&1
+          echo "exit_code=$?" >> funding_fetch_log.txt
+          cat funding_fetch_log.txt
 
       - name: Run funding-carry backtest
         run: python funding_rate_carry.py --out funding_carry_results.json
@@ -52,6 +66,6 @@ jobs:
         run: |
           git config --local user.email "validation-bot@github.com"
           git config --local user.name "Validation Bot"
-          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json 2>/dev/null || true
+          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "funding carry validation: $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push origin HEAD:${{ github.ref_name }}
