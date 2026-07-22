@@ -46,6 +46,7 @@ class ParameterResult:
     """Result of a single parameter combination test"""
     entry_len: int
     exit_len: int
+    atr_len: int
     trail_mult: float
     risk_percent: float
     pyramid_spacing: float
@@ -88,7 +89,13 @@ class RobustnessTester:
             self.ranges.exit_len[1] + 1,
             self.ranges.exit_len[2]
         ))
-        
+
+        atr_lens = list(range(
+            self.ranges.atr_len[0],
+            self.ranges.atr_len[1] + 1,
+            self.ranges.atr_len[2]
+        ))
+
         trail_mults = np.arange(
             self.ranges.trail_mult[0],
             self.ranges.trail_mult[1] + 0.01,
@@ -109,7 +116,7 @@ class RobustnessTester:
         
         # Generate all combinations
         combinations = list(product(
-            entry_lens, exit_lens, trail_mults, risk_pcts, pyramid_spacings
+            entry_lens, exit_lens, atr_lens, trail_mults, risk_pcts, pyramid_spacings
         ))
         
         # Filter invalid combinations (exit_len should be < entry_len)
@@ -117,9 +124,10 @@ class RobustnessTester:
             {
                 'entry_len': c[0],
                 'exit_len': c[1],
-                'trail_mult': c[2],
-                'risk_percent': c[3],
-                'pyramid_spacing_n': c[4]
+                'atr_len': c[2],
+                'trail_mult': c[3],
+                'risk_percent': c[4],
+                'pyramid_spacing_n': c[5]
             }
             for c in combinations
             if c[1] < c[0]  # exit_len < entry_len
@@ -142,8 +150,8 @@ class RobustnessTester:
             trail_mult=params_dict['trail_mult'],
             risk_percent=params_dict['risk_percent'],
             pyramid_spacing_n=params_dict['pyramid_spacing_n'],
+            atr_len=params_dict.get('atr_len', DEFAULT_PARAMS.atr_len),
             # Keep other defaults
-            atr_len=DEFAULT_PARAMS.atr_len,
             size_stop_mult=DEFAULT_PARAMS.size_stop_mult,
             max_units=DEFAULT_PARAMS.max_units,
             long_only=DEFAULT_PARAMS.long_only,
@@ -162,6 +170,7 @@ class RobustnessTester:
         return ParameterResult(
             entry_len=params_dict['entry_len'],
             exit_len=params_dict['exit_len'],
+            atr_len=params_dict.get('atr_len', DEFAULT_PARAMS.atr_len),
             trail_mult=params_dict['trail_mult'],
             risk_percent=params_dict['risk_percent'],
             pyramid_spacing=params_dict['pyramid_spacing_n'],
@@ -205,6 +214,7 @@ class RobustnessTester:
             {
                 'entry_len': r.entry_len,
                 'exit_len': r.exit_len,
+                'atr_len': r.atr_len,
                 'trail_mult': r.trail_mult,
                 'risk_pct': r.risk_percent,
                 'pyramid_spacing': r.pyramid_spacing,
@@ -241,7 +251,7 @@ class RobustnessTester:
         analysis['pct_strong'] = len(strong) / len(df) * 100
         
         # Parameter sensitivity analysis
-        for param in ['entry_len', 'exit_len', 'trail_mult', 'risk_pct', 'pyramid_spacing']:
+        for param in ['entry_len', 'exit_len', 'atr_len', 'trail_mult', 'risk_pct', 'pyramid_spacing']:
             param_groups = df.groupby(param)['return_pct'].agg(['mean', 'std', 'min', 'max'])
             
             # Check for cliffs (large drops in performance)
@@ -289,7 +299,7 @@ class RobustnessTester:
         report.append("PARAMETER SENSITIVITY ANALYSIS")
         report.append("-" * 80)
         
-        params = ['entry_len', 'exit_len', 'trail_mult', 'risk_pct', 'pyramid_spacing']
+        params = ['entry_len', 'exit_len', 'atr_len', 'trail_mult', 'risk_pct', 'pyramid_spacing']
         for param in params:
             is_plateau = analysis.get(f'{param}_is_plateau', False)
             mean_ret = analysis.get(f'{param}_mean_return', 0)
@@ -306,13 +316,13 @@ class RobustnessTester:
         report.append("-" * 80)
         
         top_10 = df.nlargest(10, 'sharpe')
-        report.append("\n{:>8} {:>8} {:>8} {:>8} {:>8} {:>10} {:>8} {:>8}".format(
-            "Entry", "Exit", "Trail", "Risk%", "PyramN", "Return%", "MaxDD%", "Sharpe"
+        report.append("\n{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>10} {:>8} {:>8}".format(
+            "Entry", "Exit", "ATR", "Trail", "Risk%", "PyramN", "Return%", "MaxDD%", "Sharpe"
         ))
         
         for _, row in top_10.iterrows():
-            report.append("{:>8d} {:>8d} {:>8.1f} {:>8.2f} {:>8.2f} {:>+10.1f} {:>8.1f} {:>8.2f}".format(
-                int(row['entry_len']), int(row['exit_len']), row['trail_mult'],
+            report.append("{:>8d} {:>8d} {:>8d} {:>8.1f} {:>8.2f} {:>8.2f} {:>+10.1f} {:>8.1f} {:>8.2f}".format(
+                int(row['entry_len']), int(row['exit_len']), int(row['atr_len']), row['trail_mult'],
                 row['risk_pct'], row['pyramid_spacing'], row['return_pct'],
                 row['max_dd_pct'], row['sharpe']
             ))

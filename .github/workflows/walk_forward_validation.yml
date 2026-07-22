@@ -1,0 +1,134 @@
+name: Walk-Forward Validation
+
+# Runs a real (or --fast sanity) walk-forward validation for any strategy
+# registered in strategy_registry.py. A full grid search is too large to fit
+# in one 6-hour GitHub Actions job (~30h single-threaded across all folds),
+# so this splits the 9 folds into a matrix of independent jobs — each one
+# optimizing only its own fold, in parallel with the others, and each also
+# parallelizing its own grid search across --jobs workers on that runner.
+# A final job stitches every fold's result together and commits the
+# standard walk_forward_results_<name>.json summary, exactly as if
+# walk_forward_test.py had been run as one process.
+#
+# To validate a NEW strategy: add an entry to strategy_registry.py, then
+# run this workflow with that name as the `strategy` input. Nothing in this
+# file needs to change.
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Strategy name from strategy_registry.py (e.g. v1, v4)"
+        required: true
+        type: string
+      fast:
+        description: "Use the small sanity-check grid instead of the full one"
+        required: false
+        type: boolean
+        default: false
+      jobs_per_fold:
+        description: "Parallel workers within each fold's own grid search (match runner core count)"
+        required: false
+        type: string
+        default: "4"
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: List folds for this strategy
+        id: list
+        run: |
+          MATRIX=$(python3 list_folds.py --strategy "${{ inputs.strategy }}")
+          echo "Folds: $MATRIX"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  fold:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        fold_index: ${{ fromJson(needs.setup.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Optimize and score fold ${{ matrix.fold_index }}
+        run: |
+          python3 run_single_fold.py \
+            --strategy "${{ inputs.strategy }}" \
+            --fold-index ${{ matrix.fold_index }} \
+            --jobs ${{ inputs.jobs_per_fold }} \
+            ${{ inputs.fast == true && '--fast' || '' }} \
+            --out "results/folds/${{ inputs.strategy }}/fold_${{ matrix.fold_index }}.json"
+
+      - name: Upload fold result
+        uses: actions/upload-artifact@v4
+        with:
+          name: fold-${{ inputs.strategy }}-${{ matrix.fold_index }}
+          path: results/folds/${{ inputs.strategy }}/fold_${{ matrix.fold_index }}.json
+          retention-days: 7
+
+  aggregate:
+    needs: [setup, fold]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download all fold results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fold-${{ inputs.strategy }}-*
+          path: results/folds/${{ inputs.strategy }}
+          merge-multiple: true
+
+      - name: Aggregate folds into final report
+        run: |
+          python3 aggregate_folds.py \
+            --strategy "${{ inputs.strategy }}" \
+            --fold-dir "results/folds/${{ inputs.strategy }}" \
+            ${{ inputs.fast == true && '--fast' || '' }}
+
+      - name: Commit results summary
+        run: |
+          git config --local user.email "validation-bot@github.com"
+          git config --local user.name "Walk-Forward Validation Bot"
+          git add walk_forward_results_*.json
+          git diff --staged --quiet || git commit -m "walk-forward validation: ${{ inputs.strategy }} (fast=${{ inputs.fast }}) $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin master
+          git push origin master

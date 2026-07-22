@@ -52,8 +52,14 @@ class BacktestConfig:
 @dataclass
 class RobustnessRanges:
     """Parameter ranges for robustness testing - NO OPTIMIZATION"""
-    entry_len: Tuple[int, int, int] = (15, 40, 5)  # min, max, step
+    # entry_len lower bound dropped 15 -> 8 and atr_len added as a tunable
+    # dimension (was fixed at DEFAULT_PARAMS.atr_len=20 for every grid combo)
+    # so V4's literal live configuration (entry_len=8, atr_len=14) falls
+    # inside the searched grid instead of only the strategy "family" around
+    # V1's params.
+    entry_len: Tuple[int, int, int] = (8, 40, 4)  # min, max, step
     exit_len: Tuple[int, int, int] = (7, 20, 3)
+    atr_len: Tuple[int, int, int] = (14, 20, 3)
     trail_mult: Tuple[float, float, float] = (2.0, 4.0, 0.5)
     risk_percent: Tuple[float, float, float] = (0.25, 1.0, 0.25)
     pyramid_spacing_n: Tuple[float, float, float] = (0.5, 1.5, 0.25)

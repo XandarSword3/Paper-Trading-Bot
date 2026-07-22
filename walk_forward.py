@@ -196,6 +196,7 @@ def optimize_fold(
     best_params = {
         "entry_len": best.entry_len,
         "exit_len": best.exit_len,
+        "atr_len": best.atr_len,
         "trail_mult": best.trail_mult,
         "risk_percent": best.risk_percent,
         "pyramid_spacing_n": best.pyramid_spacing,
@@ -221,7 +222,7 @@ def _build_params(best_params: dict) -> StrategyParams:
         trail_mult=best_params["trail_mult"],
         risk_percent=best_params["risk_percent"],
         pyramid_spacing_n=best_params["pyramid_spacing_n"],
-        atr_len=DEFAULT_PARAMS.atr_len,
+        atr_len=best_params.get("atr_len", DEFAULT_PARAMS.atr_len),
         size_stop_mult=DEFAULT_PARAMS.size_stop_mult,
         max_units=DEFAULT_PARAMS.max_units,
         long_only=DEFAULT_PARAMS.long_only,
@@ -368,7 +369,7 @@ def parameter_stability(fold_results: List[FoldResult]) -> Dict[str, dict]:
     """Per-parameter stability across fold winners. A parameter that changes
     on nearly every fold is being re-fit to noise, not settling on a value —
     that instability is itself a finding, per Phase 2 of the plan."""
-    param_names = ["entry_len", "exit_len", "trail_mult", "risk_percent", "pyramid_spacing_n"]
+    param_names = ["entry_len", "exit_len", "atr_len", "trail_mult", "risk_percent", "pyramid_spacing_n"]
     stability = {}
     for name in param_names:
         sequence = [fr.best_params[name] for fr in fold_results]
