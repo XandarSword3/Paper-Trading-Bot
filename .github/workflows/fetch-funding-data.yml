@@ -28,7 +28,9 @@ jobs:
 
       - name: Fetch BTCUSDT funding rate history
         run: |
+          set +e
           python -c "
+          import traceback
           from funding_rate_fetcher import download_funding_data
 
           try:
@@ -36,14 +38,17 @@ jobs:
               print(f'funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
           except Exception as e:
               print(f'funding fetch FAILED: {e}')
+              traceback.print_exc()
               raise
-          "
+          " > funding_fetch_log.txt 2>&1
+          echo "exit_code=$?" >> funding_fetch_log.txt
+          cat funding_fetch_log.txt
 
       - name: Commit and push data
         if: always()
         run: |
           git config --local user.email "data-bot@github.com"
           git config --local user.name "Data Fetch Bot"
-          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json 2>/dev/null || true
+          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "data: fetch BTCUSDT perpetual funding rate history ($(date -u +'%Y-%m-%d'))"
           git push origin HEAD:${{ github.ref_name }}
