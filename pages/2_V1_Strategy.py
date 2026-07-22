@@ -18,6 +18,22 @@ KRAKEN_API = "https://api.kraken.com/0/public"
 PAIR = "XBTUSD"
 STATE_FILE = Path("bot_state.json")
 TRADES_FILE = Path("trades.json")
+WALK_FORWARD_FILE = Path("walk_forward_results_v1.json")
+
+
+def load_walk_forward_summary():
+    """Load the real out-of-sample walk-forward summary if present. This is
+    the only performance number that should be shown as 'validated' — it was
+    never fit on the data it's scored on. Returns None if the file is
+    missing so callers can show an explicit 'not yet validated' state rather
+    than silently falling back to a stale hardcoded figure."""
+    if not WALK_FORWARD_FILE.exists():
+        return None
+    try:
+        with open(WALK_FORWARD_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 # V1 Parameters
 ENTRY_LEN = 40
@@ -234,13 +250,29 @@ with col1:
     """)
 
 with col2:
-    st.markdown("""
-    **Backtest Results:**
-    - Return: 855%
-    - Max Drawdown: -17%
-    - Win Rate: 35.4%
-    - Trades/Day: ~0.14
-    """)
+    wf = load_walk_forward_summary()
+    if wf and wf.get("oos_sharpe") is not None:
+        span_start = str(wf.get("oos_coverage_start", ""))[:10]
+        span_end = str(wf.get("oos_coverage_end", ""))[:10]
+        st.markdown(f"""
+        **Walk-Forward OOS Results** ({span_start} → {span_end}):
+        - Total return: {wf.get('oos_total_return_pct', 0):+.1f}%
+        - CAGR: {wf.get('oos_cagr_pct', 0):+.1f}%
+        - Max Drawdown: {wf.get('oos_max_drawdown_pct', 0):.1f}%
+        - Sharpe: {wf.get('oos_sharpe', 0):.2f}  |  Calmar: {wf.get('oos_calmar_ratio', 0):.2f}
+        - Win Rate: {wf.get('oos_win_rate_pct', 0):.1f}%  ({wf.get('total_oos_trades', 0)} OOS trades, {wf.get('num_folds', 0)} folds)
+        """)
+        st.caption(
+            "These are stitched out-of-sample walk-forward numbers — parameters "
+            "for each fold were chosen only on data before that fold's test "
+            "window. This is the number to trust, not an in-sample backtest."
+        )
+    else:
+        st.warning(
+            "No walk-forward validation file found (walk_forward_results_v1.json). "
+            "This strategy has NOT been out-of-sample validated — do not treat any "
+            "in-sample backtest number as expected live performance."
+        )
 
 with col3:
     last_run = state.get('last_run', 'Never')

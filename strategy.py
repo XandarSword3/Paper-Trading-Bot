@@ -142,6 +142,7 @@ class TurtleDonchianStrategy:
         avg_entry_price = 0.0
         units_count = 0
         last_add_price = 0.0
+        last_add_time = pd.Timestamp.min
         highest_since_entry = 0.0
         lowest_since_entry = float('inf')
         
@@ -317,6 +318,7 @@ class TurtleDonchianStrategy:
                 avg_entry_price = entry_price
                 units_count = 1
                 last_add_price = close
+                last_add_time = timestamp
                 highest_since_entry = high
                 
                 trade = TradeRecord(
@@ -362,6 +364,7 @@ class TurtleDonchianStrategy:
                 avg_entry_price = entry_price
                 units_count = 1
                 last_add_price = close
+                last_add_time = timestamp
                 lowest_since_entry = low
                 
                 trade = TradeRecord(
@@ -381,9 +384,18 @@ class TurtleDonchianStrategy:
                     print(f"{timestamp}: ENTER SHORT @ {entry_price:.2f}, Size: {unit_size:.4f}")
             
             # === Pyramiding Logic ===
+            # Gated to at most one add per bar, and never on the same bar as
+            # the position's most recent entry/add: last_add_price is set to
+            # this bar's own close, so pyramid_trigger can otherwise be
+            # cleared by this same bar's own high/low on a big breakout
+            # candle, stamping a second unit with an identical entry_time,
+            # entry_price, and quantity to the first (bug: see
+            # CRITICAL_WARNINGS.md / walk-forward audit, same-bar duplicate
+            # pyramiding). last_add_time enforces "a later bar than the last
+            # add" instead of relying on price movement alone.
             
             # Long pyramiding
-            if position_size > 0 and units_count < self.params.max_units:
+            if position_size > 0 and units_count < self.params.max_units and timestamp > last_add_time:
                 pyramid_trigger = last_add_price + (self.params.pyramid_spacing_n * atr)
                 if high >= pyramid_trigger:
                     unit_size = self.calculate_unit_size(equity, atr, close)
@@ -395,6 +407,7 @@ class TurtleDonchianStrategy:
                     avg_entry_price = total_cost / position_size
                     units_count += 1
                     last_add_price = close
+                    last_add_time = timestamp
                     
                     trade = TradeRecord(
                         entry_time=timestamp,
@@ -413,7 +426,7 @@ class TurtleDonchianStrategy:
                         print(f"{timestamp}: PYRAMID LONG #{units_count} @ {entry_price:.2f}")
             
             # Short pyramiding
-            if position_size < 0 and units_count < self.params.max_units:
+            if position_size < 0 and units_count < self.params.max_units and timestamp > last_add_time:
                 pyramid_trigger = last_add_price - (self.params.pyramid_spacing_n * atr)
                 if low <= pyramid_trigger:
                     unit_size = self.calculate_unit_size(equity, atr, close)
@@ -426,6 +439,7 @@ class TurtleDonchianStrategy:
                     avg_entry_price = total_cost / abs(position_size)
                     units_count += 1
                     last_add_price = close
+                    last_add_time = timestamp
                     
                     trade = TradeRecord(
                         entry_time=timestamp,
