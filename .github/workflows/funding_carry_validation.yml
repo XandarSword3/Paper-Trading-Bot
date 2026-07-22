@@ -54,7 +54,11 @@ jobs:
           cat funding_fetch_log.txt
 
       - name: Run funding-carry backtest
-        run: python funding_rate_carry.py --out funding_carry_results.json
+        run: |
+          set +e
+          python funding_rate_carry.py --out funding_carry_results.json > backtest_log.txt 2>&1
+          echo "exit_code=$?" >> backtest_log.txt
+          cat backtest_log.txt
 
       - name: Run regression tests
         run: |
@@ -66,6 +70,6 @@ jobs:
         run: |
           git config --local user.email "validation-bot@github.com"
           git config --local user.name "Validation Bot"
-          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt 2>/dev/null || true
+          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt backtest_log.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "funding carry validation: $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push origin HEAD:${{ github.ref_name }}
