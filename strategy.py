@@ -81,6 +81,9 @@ class TurtleDonchianStrategy:
         Returns:
             Position size in BTC
         """
+        if equity <= 0:
+            return 0.0
+
         unit_dollar_risk = equity * (self.params.risk_percent / 100)
         stop_usd = atr * self.params.size_stop_mult
         
@@ -145,6 +148,15 @@ class TurtleDonchianStrategy:
         last_add_time = pd.Timestamp.min
         highest_since_entry = 0.0
         lowest_since_entry = float('inf')
+        # No real account can carry negative equity or keep trading past a
+        # margin wipeout — a leveraged position gets liquidated at (or before)
+        # equity=0. Without this floor, the loop below kept sizing new units
+        # off `equity` even after it went negative (calculate_unit_size's
+        # lot_step floor guarantees a nonzero size regardless of sign), so
+        # losses could compound past -100% and produce nonsensical drawdowns
+        # like -121%. Once ruined, the account is done: equity clamps to 0
+        # and no further bars can open or add to a position.
+        ruined = False
         
         self.trades = []
         current_trades: List[TradeRecord] = []  # Open positions
@@ -180,6 +192,12 @@ class TurtleDonchianStrategy:
             if pd.isna(atr) or pd.isna(upper_entry):
                 equity_values.append(equity)
                 position_values.append(position_size * close if position_size != 0 else 0)
+                continue
+
+            # Account was wiped out on a prior bar — nothing left to trade with.
+            if ruined:
+                equity_values.append(0.0)
+                position_values.append(0.0)
                 continue
             
             # === Exit Logic First ===
@@ -465,7 +483,19 @@ class TurtleDonchianStrategy:
             else:
                 unrealized = 0.0
             
-            equity_values.append(equity + unrealized)
+            bar_equity = equity + unrealized
+            if bar_equity <= 0:
+                ruined = True
+                equity = 0.0
+                bar_equity = 0.0
+                position_size = 0.0
+                position_direction = None
+                current_trades = []
+                units_count = 0
+                if verbose:
+                    print(f"{timestamp}: ACCOUNT RUINED — equity hit 0, halting further trading")
+
+            equity_values.append(bar_equity)
             position_values.append(position_size * close if position_size != 0 else 0)
         
         # Close any remaining position at end
