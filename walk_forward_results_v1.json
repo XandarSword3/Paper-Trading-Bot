@@ -1,7 +1,7 @@
 {
   "strategy": "v1",
   "timeframe": "4h",
-  "generated_at": "2026-07-22T07:43:03.973247+00:00",
+  "generated_at": "2026-07-22T09:12:50.459215+00:00",
   "grid_mode": "full",
   "config": {
     "train_years": 2.0,
@@ -11,19 +11,19 @@
   },
   "acceptance_check_passed": true,
   "num_folds": 9,
-  "total_oos_trades": 362,
-  "oos_win_rate_pct": 43.370165745856355,
-  "oos_sharpe": 0.7388169082927186,
-  "oos_total_return_pct": 136.11338880802148,
-  "oos_cagr_pct": 21.017000852144285,
-  "oos_max_drawdown_pct": -57.26080749780284,
-  "oos_calmar_ratio": 0.36703989640646845,
+  "total_oos_trades": 321,
+  "oos_win_rate_pct": 41.74454828660436,
+  "oos_sharpe": 0.6920432256914562,
+  "oos_total_return_pct": 120.5453248664587,
+  "oos_cagr_pct": 19.1980231396369,
+  "oos_max_drawdown_pct": -61.66295962593287,
+  "oos_calmar_ratio": 0.3113380099835982,
   "oos_coverage_start": "2020-05-15 04:00:00",
   "oos_coverage_end": "2024-11-15 00:00:00",
   "parameter_stability": {
     "entry_len": {
-      "is_stable": false,
-      "distinct_values": 4,
+      "is_stable": true,
+      "distinct_values": 3,
       "sequence": [
         24,
         28,
@@ -31,9 +31,9 @@
         28,
         40,
         28,
-        24,
         40,
-        20
+        40,
+        40
       ]
     },
     "exit_len": {
@@ -46,7 +46,7 @@
         19,
         16,
         10,
-        16,
+        7,
         16,
         10
       ]
@@ -93,22 +93,22 @@
         1.0,
         0.25,
         0.25,
-        0.5
+        0.75
       ]
     },
     "pyramid_spacing_n": {
-      "is_stable": false,
+      "is_stable": true,
       "distinct_values": 4,
       "sequence": [
         0.75,
         0.75,
         0.75,
         0.75,
-        1.5,
+        0.5,
         1.25,
-        0.75,
         1.5,
-        1.0
+        1.5,
+        1.5
       ]
     }
   }
