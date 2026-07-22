@@ -55,7 +55,7 @@ jobs:
       - name: List folds for this strategy
         id: list
         run: |
-          MATRIX=$(python3 list_folds.py --strategy "${{ inputs.strategy }}")
+          MATRIX=$(python3 list_folds.py --strategy "${{ inputs.strategy }}" | tail -n 1)
           echo "Folds: $MATRIX"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
