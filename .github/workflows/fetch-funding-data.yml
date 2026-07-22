@@ -2,6 +2,10 @@ name: Fetch Funding Rate Data
 
 on:
   workflow_dispatch:      # manual trigger, or trigger via API
+  push:                   # workflow_dispatch needs the file on the default
+    branches:             # branch to be dispatchable via API - push works
+      - research/funding-rate-carry   # off any branch, so use that to fire
+                                       # this first run without touching master
 
 permissions:
   contents: write
