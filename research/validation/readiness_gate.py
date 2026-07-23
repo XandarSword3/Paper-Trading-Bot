@@ -21,6 +21,8 @@ default-to-running path.
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = ROOT_DIR / "data"
 
 MAX_GATE_AGE_HOURS = 24
 
@@ -28,19 +30,10 @@ MAX_GATE_AGE_HOURS = 24
 def check_gate(strategy_name: str):
     """
     Check whether `strategy_name` (e.g. "v1", "v4") is cleared to trade.
-
-    Looks for readiness_<strategy_name>.json in the current working directory,
-    expected shape:
-        {
-          "ready_for_live": true,
-          "generated_at": "2026-07-20T12:00:00+00:00",
-          ... (whatever supporting metrics the generator wants to record)
-        }
-
-    Returns (ready: bool, reason: str) — reason is always a human-readable
-    explanation, used for logging regardless of outcome.
     """
-    gate_path = Path(f"readiness_{strategy_name}.json")
+    gate_path = DATA_DIR / f"readiness_{strategy_name}.json"
+    if not gate_path.exists():
+        gate_path = Path(f"readiness_{strategy_name}.json")
 
     if not gate_path.exists():
         return False, f"no readiness_{strategy_name}.json present"

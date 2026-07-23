@@ -13,7 +13,8 @@ venv/
 # Data & Results
 data/*.csv
 data/*.parquet
-results/
+data/*.db
+research/results/
 *.png
 *.jpg
 
@@ -23,10 +24,15 @@ secrets.json
 *.key
 *.pem
 
-# Bot state & trade logs (contain sensitive trading data)
-bot_state*.json
-trades*.json
-paper_bot.log
+# Bot state & trade logs (now in data/)
+data/bot_state*.json
+data/trades*.json
+data/readiness_*.json
+data/paper_readiness.json
+data/walk_forward_results_*.json
+
+# Logs
+logs/
 
 # IDE
 .vscode/
@@ -38,3 +44,6 @@ paper_bot.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Streamlit (legacy)
+.streamlit/

@@ -15,36 +15,53 @@ This system transforms the classic Turtle Trading strategy into a modern cryptoc
 - ✅ **Live trading integration** with Telegram bot notifications
 - ✅ **Interactive Streamlit dashboard** for real-time analysis
 
+## 🏗️ Architecture & Restructure
+
+```
+Paper-Trading-Bot/
+├── backend/            FastAPI Application & SQLAlchemy DB Models (SQLite / PostgreSQL)
+│   ├── api_server.py             FastAPI endpoints (/overview, /strategies, /trades, /readiness)
+│   ├── db_models.py              ORM schemas (strategies, trades, equity_snapshots, readiness_gates)
+│   └── backfill_json_to_db.py    JSON-to-DB migration script
+├── frontend/           Modern Interactive Dashboard (HTML5 / JS / Glassmorphism UI)
+│   └── index.html                Real-time metrics, trade history table, execution controls
+├── research/           Relocated Validation & Strategy Core (Walk-Forward, Deflated Sharpe, Monte Carlo)
+│   ├── strategies/               strategy.py, strategy_registry.py
+│   ├── validation/               walk_forward.py, monte_carlo.py, robustness_test.py, readiness_gate.py
+│   └── bots/                     bot_runner.py (Unified parameterized runner for V1 & V4)
+├── infra/              Docker Compose & Infrastructure Setup
+│   └── docker-compose.yml        TimescaleDB & FastAPI service definition
+└── docs/               Consolidated documentation & historical guides
+```
+
 ## 🚀 Quick Start
 
-### Installation
-
+### 1. Database & Migration
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd "BTC Strategy"
-
-# Create virtual environment (recommended)
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Linux/Mac
-
-# Install dependencies
-pip install -r requirements.txt
+# Run one-time migration to backfill historical JSON trades into SQLite
+python backend/backfill_json_to_db.py
 ```
 
-### Run Your First Backtest
-
+### 2. Run Unified Bot Runner
 ```bash
-# Quick analysis with optimized parameters
-python quick_analysis.py
+# Run V4 Fast Strategy (1H)
+python bot_runner.py --strategy v4
 
-# Full analysis pipeline (all phases)
-python main.py
+# Run V1 Turtle Strategy (4H)
+python bot_runner.py --strategy v1
 
-# Interactive dashboard
-streamlit run dashboard.py
+# Run all registered strategies
+python bot_runner.py --strategy all
 ```
+
+### 3. Launch FastAPI Backend & Dashboard
+```bash
+# Start backend server
+uvicorn api_server:app --reload --port 8000
+
+# Open http://localhost:8000 in your browser for the dashboard UI!
+```
+
 
 ### Run Liquidation Hunter From This Repo
 
