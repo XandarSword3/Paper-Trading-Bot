@@ -25,13 +25,14 @@ Design notes:
   ready_for_live=False with the exception message as the reason, never a
   crash that could leave a stale (or absent-then-defaulted) file behind.
 """
-import argparse
-import json
-import sys
-from datetime import datetime, timezone
-from pathlib import Path
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-from config import GateThresholds, DEFAULT_GATE_THRESHOLDS
+DATA_DIR = ROOT_DIR / "data"
+DATA_DIR.mkdir(exist_ok=True)
+
+from research.strategies.config import GateThresholds, DEFAULT_GATE_THRESHOLDS
 
 
 def compute_paper_metrics(trades: list, initial_capital: float = 1000.0) -> dict:
@@ -117,14 +118,9 @@ def compute_paper_metrics(trades: list, initial_capital: float = 1000.0) -> dict
 
 
 def load_walk_forward_summary(strategy_name: str) -> dict | None:
-    """
-    Optional: walk_forward_test.py (Phase 2) can drop a summary at
-    walk_forward_results_<strategy>.json. If present and it has an
-    'oos_sharpe' field, degradation vs the paper Sharpe is recorded. Absence
-    is NOT an error and does NOT block the gate — it's reported as
-    unevaluated so the gate file is honest about what it did and didn't check.
-    """
-    path = Path(f"walk_forward_results_{strategy_name}.json")
+    path = DATA_DIR / f"walk_forward_results_{strategy_name}.json"
+    if not path.exists():
+        path = Path(f"walk_forward_results_{strategy_name}.json")
     if not path.exists():
         return None
     try:
@@ -199,8 +195,14 @@ def build_gate_file(strategy_name: str, trades_path: str, output_path: str,
     exception while loading/parsing trades yields ready_for_live=False rather
     than propagating and potentially leaving a stale file in place.
     """
+    t_path = DATA_DIR / trades_path if not Path(trades_path).is_absolute() else Path(trades_path)
+    if not t_path.exists() and Path(trades_path).exists():
+        t_path = Path(trades_path)
+
+    o_path = DATA_DIR / output_path if not Path(output_path).is_absolute() else Path(output_path)
+
     try:
-        with open(trades_path, "r") as f:
+        with open(t_path, "r") as f:
             trades = json.load(f)
         metrics = compute_paper_metrics(trades, initial_capital=initial_capital)
         walk_forward = load_walk_forward_summary(strategy_name)
@@ -208,7 +210,7 @@ def build_gate_file(strategy_name: str, trades_path: str, output_path: str,
     except Exception as e:
         metrics = {}
         ready = False
-        reasons = [f"failed to load/evaluate {trades_path}: {e}"]
+        reasons = [f"failed to load/evaluate {t_path}: {e}"]
 
     gate = {
         "ready_for_live": ready,
@@ -224,7 +226,7 @@ def build_gate_file(strategy_name: str, trades_path: str, output_path: str,
         },
     }
 
-    with open(output_path, "w") as f:
+    with open(o_path, "w") as f:
         json.dump(gate, f, indent=2)
 
     return gate

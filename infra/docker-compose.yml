@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg15
+    container_name: paper_trading_db
+    restart: always
+    environment:
+      POSTGRES_DB: paper_trading
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.backend
+    container_name: paper_trading_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://trader:secretpassword@db:5432/paper_trading
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

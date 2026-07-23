@@ -14,7 +14,7 @@ import pandas as pd
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import (
+from research.strategies.config import (
     DEFAULT_PARAMS, DEFAULT_BACKTEST, RESULTS_DIR, PLOTS_DIR,
     StrategyParams
 )
@@ -63,9 +63,9 @@ def phase_1_setup():
     print("PHASE 1: BUILD LOCAL BACKTEST ENVIRONMENT")
     print("=" * 80)
     
-    from data_fetcher import download_btc_data
-    from data_splits import get_development, describe_split
-    from strategy import TurtleDonchianStrategy
+    from research.data.data_fetcher import download_btc_data
+    from research.data.data_splits import get_development, describe_split
+    from research.strategies.strategy import TurtleDonchianStrategy
     
     # Download data
     print("\n[1.1] Downloading BTC historical data...")
@@ -138,7 +138,7 @@ def phase_1_setup():
 
 def phase_2_regime_analysis(df):
     """Phase 2: Regime Decomposition"""
-    from regime_analysis import RegimeAnalyzer
+    from research.analysis.regime_analysis import RegimeAnalyzer
     
     analyzer = RegimeAnalyzer(DEFAULT_PARAMS)
     analyzer.run_full_analysis(df)
@@ -154,7 +154,7 @@ def phase_2_regime_analysis(df):
 
 def phase_3_robustness_test(df):
     """Phase 3: Robustness Testing"""
-    from robustness_test import RobustnessTester
+    from research.validation.robustness_test import RobustnessTester
     
     tester = RobustnessTester()
     results_df = tester.run_full_test(df)
@@ -175,7 +175,7 @@ def phase_3_robustness_test(df):
 
 def phase_4_survivability(df):
     """Phase 4: Capital Survivability Analysis"""
-    from survivability import SurvivabilityAnalyzer
+    from research.analysis.survivability import SurvivabilityAnalyzer
     
     analyzer = SurvivabilityAnalyzer(DEFAULT_PARAMS)
     metrics = analyzer.analyze(df)
@@ -196,7 +196,7 @@ def phase_4_survivability(df):
 
 def phase_5_monte_carlo(df):
     """Phase 5: Monte Carlo Simulation"""
-    from monte_carlo import MonteCarloSimulator
+    from research.validation.monte_carlo import MonteCarloSimulator
     
     simulator = MonteCarloSimulator()
     results = simulator.run_simulation(df, n_simulations=1000)
@@ -220,7 +220,7 @@ def phase_5_monte_carlo(df):
 
 def phase_6_7_forward_test():
     """Phase 6-7: Forward Testing Framework"""
-    from forward_test import ForwardTestTracker, generate_deployment_checklist
+    from research.validation.forward_test import ForwardTestTracker, generate_deployment_checklist
     
     print("\n" + "=" * 80)
     print("PHASE 6-7: FORWARD TESTING & DEPLOYMENT")
@@ -339,7 +339,7 @@ def main():
     args = parse_args()
 
     if args.engine == "liquidation-hunter":
-        from liquidation_hunter_bridge import LiquidationHunterBridgeError, run_liquidation_hunter
+        from research.data.liquidation_hunter_bridge import LiquidationHunterBridgeError, run_liquidation_hunter
 
         try:
             result = run_liquidation_hunter(
@@ -402,7 +402,7 @@ def main():
     print("=" * 80)
     
     try:
-        from visualization import generate_all_plots
+        from research.data.visualization import generate_all_plots
         generate_all_plots(results, strategy, regime_df)
     except Exception as e:
         print(f"Could not generate some plots: {e}")

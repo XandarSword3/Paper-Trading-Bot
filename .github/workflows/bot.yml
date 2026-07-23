@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: write  # Allow pushing commits
+  contents: read
 
 jobs:
   trade:
@@ -23,8 +23,7 @@ jobs:
           python-version: '3.11'
       
       - name: Install dependencies
-        run: |
-          pip install requests
+        run: pip install requests sqlalchemy
       
       - name: Get current hour
         id: hour
@@ -36,7 +35,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           echo "===== V4 HIGH-FREQUENCY BOT ====="
-          python github_bot_v4.py
+          python -m research.bots.bot_runner --strategy v4
       
       - name: Run V1 Bot (every 4H - only at 0,4,8,12,16,20 UTC)
         if: contains('0,4,8,12,16,20', steps.hour.outputs.hour)
@@ -45,12 +44,4 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           echo "===== V1 TURTLE BOT ====="
-          python github_bot.py
-      
-      - name: Commit state changes
-        run: |
-          git config --local user.email "bot@github.com"
-          git config --local user.name "Trading Bot"
-          git add bot_state.json trades.json bot_state_v4.json trades_v4.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "Bot update: $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push origin master
+          python -m research.bots.bot_runner --strategy v1

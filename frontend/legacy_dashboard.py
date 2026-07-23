@@ -3,6 +3,7 @@
 Dual Strategy: V1 Turtle (4H) + V4 Fast (1H)
 Deploy free on Streamlit Cloud: https://share.streamlit.io
 """
+import os
 import streamlit as st
 import json
 import requests
@@ -113,52 +114,55 @@ st.markdown("""
 
 
 # === DATA LOADING ===
-@st.cache_data(ttl=30)
-def load_state():
-    """Load V1 bot state from GitHub"""
+from pathlib import Path
+
+def _load_json_source(local_file: str, raw_url: str):
+    """Load JSON data from local filesystem if available, falling back to raw GitHub URL."""
+    path = Path(local_file)
+    if path.exists():
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+
     try:
-        response = requests.get(STATE_URL + f"?t={int(time.time())}", timeout=10)
+        headers = {}
+        github_token = os.environ.get("GITHUB_TOKEN", "")
+        if github_token:
+            headers["Authorization"] = f"token {github_token}"
+        response = requests.get(raw_url + f"?t={int(time.time())}", headers=headers, timeout=10)
         if response.status_code == 200:
             return response.json()
-    except Exception as e:
-        st.error(f"Failed to load state: {e}")
+    except Exception:
+        pass
     return None
+
+@st.cache_data(ttl=30)
+def load_state():
+    """Load V1 bot state from local file or GitHub"""
+    return _load_json_source("bot_state.json", STATE_URL)
 
 
 @st.cache_data(ttl=30)
 def load_trades():
-    """Load V1 trade history from GitHub"""
-    try:
-        response = requests.get(TRADES_URL + f"?t={int(time.time())}", timeout=10)
-        if response.status_code == 200:
-            return response.json()
-    except:
-        pass
-    return []
+    """Load V1 trade history from local file or GitHub"""
+    data = _load_json_source("trades.json", TRADES_URL)
+    return data if isinstance(data, list) else []
 
 
 @st.cache_data(ttl=30)
 def load_state_v4():
-    """Load V4 bot state from GitHub"""
-    try:
-        response = requests.get(STATE_V4_URL + f"?t={int(time.time())}", timeout=10)
-        if response.status_code == 200:
-            return response.json()
-    except:
-        pass
-    return None
+    """Load V4 bot state from local file or GitHub"""
+    return _load_json_source("bot_state_v4.json", STATE_V4_URL)
 
 
 @st.cache_data(ttl=30)
 def load_trades_v4():
-    """Load V4 trade history from GitHub"""
-    try:
-        response = requests.get(TRADES_V4_URL + f"?t={int(time.time())}", timeout=10)
-        if response.status_code == 200:
-            return response.json()
-    except:
-        pass
-    return []
+    """Load V4 trade history from local file or GitHub"""
+    data = _load_json_source("trades_v4.json", TRADES_V4_URL)
+    return data if isinstance(data, list) else []
+
 
 
 @st.cache_data(ttl=10)
