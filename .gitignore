@@ -24,12 +24,15 @@ secrets.json
 *.key
 *.pem
 
-# Bot state & trade logs (now in data/)
-data/bot_state*.json
-data/trades*.json
-data/readiness_*.json
-data/paper_readiness.json
-data/walk_forward_results_*.json
+# NOTE: bot_state*.json / trades*.json / readiness_*.json / paper_readiness.json /
+# walk_forward_results_*.json under data/ are NOT ignored. research/bots/bot_runner.py
+# writes them locally and CI (bot.yml, refresh_gates.yml) commits them back to master —
+# they ARE the persistence layer for now. Do not re-add them here until bot_runner.py
+# is actually migrated to write through backend/models.py to a durable external DB
+# (a GitHub Actions runner's local filesystem, including any local SQLite file, is
+# destroyed at the end of every job — gitignoring these without that migration means
+# every run starts from a blank slate and readiness_gate.py's fail-closed check can
+# never pass).
 
 # Logs
 logs/

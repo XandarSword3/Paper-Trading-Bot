@@ -1,0 +1,115 @@
+{
+  "strategy": "v1",
+  "timeframe": "4h",
+  "generated_at": "2026-07-22T09:12:50.459215+00:00",
+  "grid_mode": "full",
+  "config": {
+    "train_years": 2.0,
+    "test_months": 6,
+    "step_months": 6,
+    "expanding": false
+  },
+  "acceptance_check_passed": true,
+  "num_folds": 9,
+  "total_oos_trades": 321,
+  "oos_win_rate_pct": 41.74454828660436,
+  "oos_sharpe": 0.6920432256914562,
+  "oos_total_return_pct": 120.5453248664587,
+  "oos_cagr_pct": 19.1980231396369,
+  "oos_max_drawdown_pct": -61.66295962593287,
+  "oos_calmar_ratio": 0.3113380099835982,
+  "oos_coverage_start": "2020-05-15 04:00:00",
+  "oos_coverage_end": "2024-11-15 00:00:00",
+  "parameter_stability": {
+    "entry_len": {
+      "is_stable": true,
+      "distinct_values": 3,
+      "sequence": [
+        24,
+        28,
+        28,
+        28,
+        40,
+        28,
+        40,
+        40,
+        40
+      ]
+    },
+    "exit_len": {
+      "is_stable": false,
+      "distinct_values": 4,
+      "sequence": [
+        7,
+        7,
+        19,
+        19,
+        16,
+        10,
+        7,
+        16,
+        10
+      ]
+    },
+    "atr_len": {
+      "is_stable": true,
+      "distinct_values": 2,
+      "sequence": [
+        17,
+        17,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    "trail_mult": {
+      "is_stable": true,
+      "distinct_values": 1,
+      "sequence": [
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "risk_percent": {
+      "is_stable": true,
+      "distinct_values": 3,
+      "sequence": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.25,
+        0.25,
+        0.75
+      ]
+    },
+    "pyramid_spacing_n": {
+      "is_stable": true,
+      "distinct_values": 4,
+      "sequence": [
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.5,
+        1.25,
+        1.5,
+        1.5,
+        1.5
+      ]
+    }
+  }
+}

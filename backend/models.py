@@ -128,29 +128,43 @@ class ExecutionPipelineStep(Base):
 
 
 class StrategyHealthSnapshot(Base):
+    """
+    NOTE: nothing currently computes these values — no job populates this
+    table yet. Columns are nullable with no default on purpose: a missing
+    row (or a null field) should read as "not yet computed" in the API/UI,
+    not silently show a plausible-looking placeholder number. Previously
+    these had hardcoded defaults (core_stability_pct=98.0, confidence_level_pct=81.0,
+    market_regime="TRENDING", etc.) that had no real computation behind them.
+    """
     __tablename__ = "strategy_health_snapshots"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     strategy_id = Column(String, ForeignKey("strategies.id"), nullable=False, index=True)
-    core_stability_pct = Column(Float, default=98.0)
-    confidence_level_pct = Column(Float, default=81.0)
-    market_regime = Column(String, default="TRENDING")
-    volatility_regime = Column(String, default="MEDIUM")
-    liquidity_regime = Column(String, default="HIGH")
+    core_stability_pct = Column(Float, nullable=True)
+    confidence_level_pct = Column(Float, nullable=True)
+    market_regime = Column(String, nullable=True)
+    volatility_regime = Column(String, nullable=True)
+    liquidity_regime = Column(String, nullable=True)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
 
 class CapitalAllocation(Base):
+    """
+    NOTE: same caveat as StrategyHealthSnapshot — nothing populates this
+    table yet. total_equity should come from a real EquitySnapshot, and the
+    per-asset percentages need a real computation once/if the bot trades
+    more than one asset. No defaults on purpose.
+    """
     __tablename__ = "capital_allocations"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     strategy_id = Column(String, ForeignKey("strategies.id"), nullable=False, index=True)
-    btc_pct = Column(Float, default=46.3)
-    eth_pct = Column(Float, default=22.7)
-    sol_pct = Column(Float, default=13.1)
-    usdt_pct = Column(Float, default=9.4)
-    others_pct = Column(Float, default=8.5)
-    total_equity = Column(Float, default=713.30)
+    btc_pct = Column(Float, nullable=True)
+    eth_pct = Column(Float, nullable=True)
+    sol_pct = Column(Float, nullable=True)
+    usdt_pct = Column(Float, nullable=True)
+    others_pct = Column(Float, nullable=True)
+    total_equity = Column(Float, nullable=True)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
 
