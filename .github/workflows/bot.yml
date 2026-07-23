@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: read
+  contents: write  # Allow pushing commits (state/trades under data/ are the persistence layer — see .gitignore note)
 
 jobs:
   trade:
@@ -45,3 +45,11 @@ jobs:
         run: |
           echo "===== V1 TURTLE BOT ====="
           python -m research.bots.bot_runner --strategy v1
+
+      - name: Commit state changes
+        run: |
+          git config --local user.email "bot@github.com"
+          git config --local user.name "Trading Bot"
+          git add data/bot_state.json data/trades.json data/bot_state_v4.json data/trades_v4.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "Bot update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push origin master

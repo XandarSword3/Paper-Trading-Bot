@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: paper_trading
       POSTGRES_USER: trader
-      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in a local .env file, see infra/.env.example}
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
     container_name: paper_trading_backend
     restart: always
     environment:
-      DATABASE_URL: postgresql://trader:secretpassword@db:5432/paper_trading
+      DATABASE_URL: postgresql://trader:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in a local .env file, see infra/.env.example}@db:5432/paper_trading
     ports:
       - "8000:8000"
     depends_on:

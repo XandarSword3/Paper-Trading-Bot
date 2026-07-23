@@ -30,13 +30,16 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       - name: Rebuild both gate files
-        run: python build_readiness_gates.py --all
+        run: python -m research.validation.build_readiness_gates --all
 
       - name: Commit gate files
         run: |
           git config --local user.email "bot@github.com"
           git config --local user.name "Trading Bot"
-          git add readiness_v1.json readiness_v4.json
+          git add data/readiness_v1.json data/readiness_v4.json
           git diff --staged --quiet || git commit -m "Refresh readiness gates: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master
