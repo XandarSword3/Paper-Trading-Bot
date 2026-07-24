@@ -1,5 +1,18 @@
 # ⚠️ CRITICAL WARNINGS - READ BEFORE TRADING ⚠️
 
+> **Note on the "855%" baseline used throughout this document:** that number
+> is the in-sample backtest headline, not a validated result. Walk-forward
+> out-of-sample testing (data the optimizer never saw) already shows a
+> materially worse picture before any of the real-world degradation below is
+> even applied — V1's OOS Sharpe is 0.69 (vs. 1.98 in-sample) with a -61.7%
+> max drawdown, and V4's OOS Sharpe is **negative** (-0.39) with a max
+> drawdown past -100%. V4 additionally has a confirmed *losing* real
+> paper-trading track record. See
+> [TESTING_AND_OPTIMIZATION_GUIDE.md](TESTING_AND_OPTIMIZATION_GUIDE.md) for
+> the full numbers. Everything below should be read as "additional
+> degradation on top of an already-optimistic in-sample number" — the true
+> starting point before applying it is the OOS figures, not 855%/1572%.
+
 ## 🚨 THIS SIMULATION IS OPTIMISTIC - REALITY WILL BE WORSE
 
 ### What the Simulation DOES NOT Include:
@@ -298,6 +311,6 @@ CIRCUIT_BREAKER = -30%      # STOP ALL TRADING, reassess strategy
 
 ---
 
-*Last Updated: December 21, 2025*
+*Body text last updated: December 21, 2025 (baseline-correction banner added July 24, 2026)*
 *Based on 8 years historical data (2017-2025)*
 *NOT FINANCIAL ADVICE - For educational purposes only*

@@ -4,25 +4,29 @@ A comprehensive algorithmic trading system implementing a Turtle-inspired Donchi
 
 ## 📊 Overview
 
-This system transforms the classic Turtle Trading strategy into a modern cryptocurrency trading bot with extensive backtesting and risk analysis. Starting from TradingView parameters that **lost 84%**, we optimized to achieve **855%+ returns** through rigorous testing and validation.
+This system transforms the classic Turtle Trading strategy into a modern cryptocurrency trading bot with extensive backtesting and risk analysis. Starting from TradingView parameters that **lost 84%**, we optimized to achieve **855%+ returns** — but that number is an **in-sample backtest headline**, not a validated result. See the callout below before trusting any return figure in this README.
+
+> ⚠️ **Read this before trusting any return number in this document.** The 855% (V1) / 1572% (V4) figures throughout this README come from a single in-sample backtest — the same data used to pick parameters is used to score them. Walk-forward testing on data the optimizer never saw tells a different story: V1's out-of-sample Sharpe is 0.69 (vs. 1.98 in-sample) with a -61.7% drawdown, and V4's out-of-sample Sharpe is **negative** with a drawdown past -100%. V4 additionally has a **confirmed losing real paper-trading track record**. Neither strategy is currently authorized to trade live (`ready_for_live: false` for both). Full details: **[TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md)**.
 
 ### Key Achievements
-- ✅ **8+ years of historical backtesting** (Aug 2017 - Dec 2025)
+- ✅ **8+ years of historical backtesting** (Aug 2017 - Dec 2025) — in-sample
 - ✅ **Multiple strategy versions** (V1: 4H timeframe, V4: 1H high-frequency)
-- ✅ **Parameter optimization** across 2,800+ combinations
-- ✅ **Monte Carlo simulations** with 1,000+ paths over 20 years
-- ✅ **Automated paper trading** on Binance testnet
+- ✅ **Parameter optimization** across 2,800+ combinations — in-sample only, see walk-forward results for the validated numbers
+- ✅ **Walk-forward out-of-sample validation** across 9 rolling folds per strategy
+- ✅ **Monte Carlo & deflated-Sharpe testing** on out-of-sample returns, correcting for how many parameter combinations were tried
+- ✅ **Fail-closed live-trading gate** — bots default to log-only unless a strategy's own paper-trading record clears explicit thresholds
+- ✅ **Automated paper trading** via a scheduled GitHub Actions runner (Kraken data)
 - ✅ **Live trading integration** with Telegram bot notifications
-- ✅ **Interactive Streamlit dashboard** for real-time analysis
+- ✅ **Interactive web dashboard** for real-time analysis
 
 ## 🏗️ Architecture & Restructure
 
 ```
 Paper-Trading-Bot/
 ├── backend/            FastAPI Application & SQLAlchemy DB Models (SQLite / PostgreSQL)
-│   ├── api_server.py             FastAPI endpoints (/overview, /strategies, /trades, /readiness)
-│   ├── db_models.py              ORM schemas (strategies, trades, equity_snapshots, readiness_gates)
-│   └── backfill_json_to_db.py    JSON-to-DB migration script
+│   ├── main.py                   FastAPI app + endpoints (dashboard data, trades, readiness)
+│   ├── models.py                 ORM schemas (Strategy, Trade, EquitySnapshot, ReadinessGate, BacktestRun)
+│   └── backfill.py               One-time JSON-to-DB migration script
 ├── frontend/           Modern Interactive Dashboard (HTML5 / JS / Glassmorphism UI)
 │   └── index.html                Real-time metrics, trade history table, execution controls
 ├── research/           Relocated Validation & Strategy Core (Walk-Forward, Deflated Sharpe, Monte Carlo)
@@ -39,27 +43,29 @@ Paper-Trading-Bot/
 ### 1. Database & Migration
 ```bash
 # Run one-time migration to backfill historical JSON trades into SQLite
-python backend/backfill_json_to_db.py
+python backend/backfill.py
 ```
 
 ### 2. Run Unified Bot Runner
 ```bash
-# Run V4 Fast Strategy (1H)
-python bot_runner.py --strategy v4
+# Run V4 Fast Strategy (1H) — single cycle, checks the readiness gate first
+python -m research.bots.bot_runner --strategy v4
 
 # Run V1 Turtle Strategy (4H)
-python bot_runner.py --strategy v1
+python -m research.bots.bot_runner --strategy v1
 
 # Run all registered strategies
-python bot_runner.py --strategy all
+python -m research.bots.bot_runner --strategy all
 ```
+In production this runs on a GitHub Actions schedule (`.github/workflows/bot.yml`),
+not as a local always-on loop — see [BOT_GUIDE.md](docs/BOT_GUIDE.md).
 
 ### 3. Launch FastAPI Backend & Dashboard
 ```bash
 # Start backend server
-uvicorn api_server:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 
-# Open http://localhost:8000 in your browser for the dashboard UI!
+# Open frontend/index.html (or http://localhost:8000 if the backend serves it) for the dashboard UI
 ```
 
 
@@ -88,88 +94,70 @@ When a bridge run completes, key artifacts are synced into `results/liquidation_
 
 ## 📁 Project Structure
 
+This is the actual current layout — earlier revisions of this README described
+a flat root-level layout (`paper_bot.py`, `dashboard.py`, `github_bot.py`,
+`pages/`) that was consolidated away; those files no longer exist.
+
 ```
-BTC Strategy/
-├── 📊 Core Strategy Files
-│   ├── strategy.py              # V1: Core Turtle-Donchian implementation (4H) — the
-│   │                             #     one canonical, tested module (walk_forward.py,
-│   │                             #     monte_carlo.py, cross_market_validation.py all
-│   │                             #     run against this); github_bot.py's live params
-│   │                             #     match config.py's DEFAULT_PARAMS
-│   └── config.py                # V1 optimized parameters
-#
-# V2/V3/V4 experimental variants (strategy_v2/v3/v4*.py, config_v2.py,
-# config_v4_optimal.py, enhanced_strategy.py) moved to backups/ in Phase 6 —
-# none were imported by any live bot, the dashboard, or the validation
-# pipeline. V4's old "1572% backtest return" headline was an in-sample
-# number (same flaw this whole remediation plan exists to fix); its real
-# paper track record is a confirmed loss — see readiness_v4.json and
-# backups/README.md.
+Paper-Trading-Bot/
+├── main.py                        # Legacy 7-phase in-sample pipeline (NOT the validation pipeline — see docs/TESTING_AND_OPTIMIZATION_GUIDE.md)
 │
-├── 🔬 Analysis & Testing
-│   ├── data_fetcher.py          # Downloads BTCUSDT data from Binance
-│   ├── robustness_test.py       # Parameter grid optimization (2,800 combos)
-│   ├── regime_analysis.py       # Market regime decomposition
-│   ├── regime_simulation.py     # 20-year Monte Carlo (optimistic)
-│   ├── realistic_regime_simulation.py  # With trading costs & slippage
-│   ├── monte_carlo.py           # Standard Monte Carlo simulation
-│   ├── survivability.py         # Capital survivability analysis
-│   ├── detailed_analysis.py     # Deep performance metrics
-│   └── validate_all.py          # Full system validation suite
-│
-├── 🤖 Trading Bots
-│   ├── paper_bot.py             # Paper trading bot (Binance testnet)
-│   ├── simple_paper_bot.py      # Simplified paper trading version
-│   ├── telegram_bot.py          # Telegram notification bot
-│   ├── github_bot.py            # Live trading bot (Binance mainnet)
-│   ├── github_bot_v4.py         # V4 live trading bot
-│   └── get_chat_id.py           # Get Telegram chat ID utility
-│
-├── 📈 Visualization & Dashboard
-│   ├── dashboard.py             # Main Streamlit dashboard
-│   ├── visualization.py         # Plotting utilities
-│   └── pages/
-│       ├── 1_Candle_Analysis.py
-│       ├── 2_V1_Strategy.py
-│       └── 3_V4_Strategy.py
-│
-├── 📊 Comparative Analysis
-│   ├── sp500_reinvest.py        # Compare: $1K + $300/mo in S&P 500
-│   ├── strategy_analysis.py     # Strategy comparison tools
-│   └── forward_test.py          # Forward testing framework
-│
-├── 📚 Documentation
-│   ├── README.md                # This file
-│   ├── SYSTEM_SUMMARY.md        # Complete system overview
-│   ├── BOT_GUIDE.md             # How to run trading bots
-│   ├── CRITICAL_WARNINGS.md     # Risk disclosures & limitations
-│   └── PAPER_TRADING_CHECKLIST.md
-│
-├── 💾 Data & Results
+├── research/
+│   ├── strategies/
+│   │   ├── strategy.py            # V1: canonical Turtle-Donchian implementation (4H) — the one module
+│   │   │                          #     walk_forward.py, monte_carlo.py, cross_market_validation.py all run against
+│   │   ├── strategy_registry.py
+│   │   └── config.py              # DEFAULT_PARAMS, DataSplitConfig, GateThresholds, WalkForwardConfig, etc.
+│   │
 │   ├── data/
-│   │   ├── BTCUSDT_4h.csv       # Historical 4H candle data
-│   │   └── SP500.csv            # S&P 500 comparison data
-│   ├── results/
-│   │   ├── all_trades.csv       # Full trade history
-│   │   ├── backtest_results.csv
-│   │   ├── robustness_results.csv
-│   │   └── plots/               # Generated charts
-│   └── backups/                 # Archived/non-authoritative — see backups/README.md
-│       ├── strategy_v1_winning.py, config_v1_winning.py, sp500_reinvest_v1.py
-│       └── strategy_v2/v3/v3_fast/v4/v4_fast.py, v3_strategy.py,
-│           enhanced_strategy.py, config_v2.py, config_v4_optimal.py
+│   │   ├── data_fetcher.py        # Binance BTCUSDT data
+│   │   ├── data_fetcher_kraken.py # Kraken data (used by cross-market validation & live bots)
+│   │   ├── data_splits.py         # Enforces the one frozen in-sample/validation/holdout boundary
+│   │   └── metrics_utils.py
+│   │
+│   ├── validation/                 # ⭐ The corrected validation pipeline — see docs/TESTING_AND_OPTIMIZATION_GUIDE.md
+│   │   ├── readiness_gate.py       # Phase 0: fail-closed live-trading gate
+│   │   ├── walk_forward.py / walk_forward_test.py   # Phase 2: rolling walk-forward OOS
+│   │   ├── monte_carlo.py          # Phase 3: OOS block-bootstrap (+ legacy in-sample sequence-risk MC)
+│   │   ├── deflated_sharpe.py      # Phase 3: Probabilistic/Deflated Sharpe Ratio
+│   │   ├── cross_market_validation.py  # Phase 4: same rules on ETH/1h/Kraken
+│   │   ├── build_readiness_gates.py    # Phase 5: generates readiness_<strategy>.json from real paper trades
+│   │   ├── final_holdout_validation.py # Only script allowed to touch 2025-01-01→latest
+│   │   ├── robustness_test.py      # In-sample plateau check only — not a performance claim
+│   │   └── validate_all.py         # Regression test for backtest code, not a validity check
+│   │
+│   ├── analysis/                   # regime_analysis.py, regime_simulation.py, survivability.py, sp500_reinvest.py
+│   └── bots/
+│       ├── bot_runner.py           # Unified V1/V4 runner — checks readiness_gate before trading
+│       └── telegram_bot.py
 │
-└── 🔧 Configuration Files
-    ├── requirements.txt          # Python dependencies
-    ├── requirements_dashboard.txt
-    ├── bot_state.json           # Bot state persistence
-    ├── trades.json              # Trade log
-    └── .env                     # API keys (not committed)
+├── backend/                        # FastAPI app (main.py), SQLAlchemy models (models.py), JSON→DB migration (backfill.py)
+├── frontend/                       # index.html dashboard
+├── infra/                          # docker-compose.yml
+│
+├── docs/
+│   ├── README.md                   # This file
+│   ├── TESTING_AND_OPTIMIZATION_GUIDE.md  # ⭐ Authoritative validation workflow + current pass/fail status
+│   ├── SYSTEM_SUMMARY.md
+│   ├── BOT_GUIDE.md
+│   ├── CRITICAL_WARNINGS.md
+│   ├── PAPER_TRADING_CHECKLIST.md
+│   └── archive/backups/            # Superseded V2/V3/old-V4 strategy variants — see backups/README.md
+│
+├── data/
+│   ├── BTCUSDT_4h.csv / .parquet, BTCUSDT_1h.csv / .parquet
+│   ├── readiness_v1.json, readiness_v4.json           # Live-trading gate state (currently both false)
+│   ├── walk_forward_results_v1.json, _v4.json          # Out-of-sample walk-forward summaries
+│   ├── trades.json, trades_v4.json                     # Real paper-trading trade logs
+│   └── bot_state.json, bot_state_v4.json
+│
+├── tests/                          # pytest suite (readiness gates, no-negative-equity, no-same-bar-pyramid, etc.)
+└── requirements.txt / .env         # Dependencies / API keys (not committed)
 ```
 
 ## 🎯 Strategy Versions
 
-### V1: 4-Hour Optimized Strategy (855% Return)
+### V1: 4-Hour Optimized Strategy (855% in-sample backtest)
 **Best for:** Swing trading, lower trade frequency, easier to manage
 
 | Parameter | Value | Why |
@@ -181,14 +169,18 @@ BTC Strategy/
 | Risk % | 1.0% | Conservative position sizing |
 | Direction | Long Only | Shorts historically unprofitable in BTC |
 
-**Results (Aug 2017 - Dec 2025):**
+**In-sample backtest results (Aug 2017 - Dec 2023, optimizer's own data):**
 - Total Return: **+855%** ($1,000 → $9,550)
 - Max Drawdown: **-39.3%**
 - Win Rate: **45.5%**
 - Profit Factor: **1.60**
 - Total Trades: **442** (~0.14 trades/day)
 
-### V4: 1-Hour High-Frequency Strategy (1572% Return)
+**Walk-forward out-of-sample (2020-05 → 2024-11, 9 folds, data the optimizer never saw):**
+- Total Return: **+120.5%** — Sharpe **0.69** — Max Drawdown **-61.7%** — 321 OOS trades
+- **Paper-trading gate: NOT READY** (0 completed real paper trades logged yet)
+
+### V4: 1-Hour High-Frequency Strategy (1572% in-sample backtest)
 **Best for:** Active traders, higher capital efficiency, more opportunities
 
 | Parameter | Value | Difference from V1 |
@@ -200,16 +192,30 @@ BTC Strategy/
 | Risk % | 1.0% | Same conservative sizing |
 | Direction | Long Only | Same as V1 |
 
-**Results:**
+**In-sample backtest results (optimizer's own data):**
 - Total Return: **+1572%** ($1,000 → $16,720)
 - Max Drawdown: **-65%** (higher volatility)
 - Win Rate: **44%**
 - Profit Factor: **1.27**
 - Total Trades: **~3,900** (~1.33 trades/day)
 
-**Trade-off:** Higher returns but more drawdown and requires more active monitoring.
+**Walk-forward out-of-sample (2020-05 → 2024-11, 9 folds):**
+- Sharpe **-0.39 (negative)** — Max Drawdown **-121.3%** (equity curve went negative in at least one fold)
+- **Real paper-trading track record: confirmed loss** — -28.7% return, Sharpe -1.36, 39.8% max drawdown, 20.2% win rate over 104 trades (Dec 2025–Jul 2026)
+- **Paper-trading gate: NOT READY**
+
+**Bottom line:** the "1572%" headline is not representative of V4's validated
+performance. See [TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md)
+for full numbers and methodology before drawing conclusions from either table above.
 
 ## 🔬 Research & Development Journey
+
+> **This section documents the original in-sample optimization history** (how
+> V1/V4's parameters were arrived at). It predates, and does not replace, the
+> out-of-sample validation pipeline. The "phases" below are `main.py`'s
+> phases, numbered separately from the corrected `research/validation/`
+> pipeline's Phase 0–7 in [TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md) —
+> don't conflate the two. Everything here is in-sample unless stated otherwise.
 
 ### Phase 1: Original TradingView Parameters (FAILED ❌)
 ```
@@ -268,46 +274,51 @@ Included realistic trading costs:
 
 ## 🤖 Trading Bot Features
 
-### Paper Trading Bot (`paper_bot.py`)
-- Connects to **Binance Testnet** (fake money, real execution)
-- Monitors 4H BTC candles in real-time
-- Automatically executes V1 strategy
-- Logs all trades to `paper_bot.log`
-- **Emergency Killswitch:** Create `KILLSWITCH.txt` to stop gracefully
+> `paper_bot.py` and `github_bot.py` (referenced in older versions of this
+> README) no longer exist. Both were consolidated into a single unified
+> runner. Full details: [BOT_GUIDE.md](docs/BOT_GUIDE.md).
+
+### Unified Bot Runner (`research/bots/bot_runner.py`)
+- Connects to **Kraken's public API** (candle data, no keys required to run)
+- One cycle per invocation, scheduled hourly (V4) / every 4H (V1) via
+  `.github/workflows/bot.yml` — not a local always-on loop
+- **Checks `readiness_gate.check_gate()` before every run.** If the gate is
+  blocked, it still logs price/ATR/signal state and saves state, but takes no
+  trading action ("log-only mode")
+- State persists to `data/bot_state.json` / `data/bot_state_v4.json`, trades
+  to `data/trades.json` / `data/trades_v4.json`
+- Telegram notifications via `research/bots/telegram_bot.py`
 
 ```bash
-# Start paper trading
-python paper_bot.py
-
-# Monitor in real-time
-tail -f paper_bot.log  # Linux/Mac
-Get-Content paper_bot.log -Wait  # Windows
+# Run one cycle for either strategy (or both)
+python -m research.bots.bot_runner --strategy v1
+python -m research.bots.bot_runner --strategy v4
+python -m research.bots.bot_runner --strategy all
 ```
 
-### Live Trading Bot (`github_bot.py`)
-⚠️ **WARNING:** Uses real money on Binance mainnet!
+⚠️ Both strategies currently sit behind a blocked gate
+(`ready_for_live: false` in `data/readiness_v1.json` / `readiness_v4.json`) —
+every scheduled run is currently log-only. See
+[TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md)
+for why and what has to change first.
 
-Features:
-- Telegram notifications for every trade
-- State persistence (`bot_state.json`)
-- Position tracking and P&L monitoring
-- Automatic reconnection and error handling
-
-Required setup:
+Required setup (Telegram notifications only — no exchange keys needed for
+paper/log-only operation):
 ```bash
-# Create .env file with:
-BINANCE_API_KEY=your_api_key
-BINANCE_API_SECRET=your_secret_key
-TELEGRAM_BOT_TOKEN=your_bot_token
+# Repo secrets (GitHub Actions) or .env for local runs:
+TELEGRAM_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
+DATABASE_URL=your_db_url   # optional, for backend/ persistence
 ```
 
 ## 📊 Interactive Dashboard
 
-Launch the Streamlit dashboard for real-time analysis:
+The Streamlit dashboard (`dashboard.py`) referenced in older docs was
+replaced by a FastAPI backend + static frontend:
 
 ```bash
-streamlit run dashboard.py
+uvicorn backend.main:app --reload --port 8000
+# then open frontend/index.html
 ```
 
 Features:
@@ -351,7 +362,7 @@ This simulation is **optimistic**. Real trading will face:
    - Past performance ≠ future results
    - Strategy optimized on limited data
 
-**See [CRITICAL_WARNINGS.md](CRITICAL_WARNINGS.md) for full risk disclosure.**
+**See [CRITICAL_WARNINGS.md](docs/CRITICAL_WARNINGS.md) for full risk disclosure.**
 
 ## 🎓 What You'll Learn
 
@@ -398,19 +409,25 @@ pyarrow>=14.0.0         # Fast data serialization
 
 | File | Purpose |
 |------|---------|
-| `strategy.py` | Core V1 strategy class with Donchian logic |
-| `config.py` | Optimized V1 parameters (Entry=40, Exit=16, etc.) |
-| `data_fetcher.py` | Downloads historical data from Binance |
-| `robustness_test.py` | Grid search over 2,800 parameter combos |
-| `realistic_regime_simulation.py` | 20-year Monte Carlo with costs |
-| `paper_bot.py` | Safe testnet trading bot |
-| `github_bot.py` | Live trading bot (REAL MONEY) |
-| `dashboard.py` | Streamlit interactive interface |
-| `validate_all.py` | Run all tests to verify system integrity |
+| `research/strategies/strategy.py` | Core V1 strategy class with Donchian logic |
+| `research/strategies/config.py` | `DEFAULT_PARAMS`, `DataSplitConfig`, `GateThresholds` |
+| `research/data/data_fetcher.py` | Downloads historical data from Binance |
+| `research/validation/robustness_test.py` | In-sample grid search over 2,800 combos — plateau check only, not a performance claim |
+| `research/validation/walk_forward.py` / `walk_forward_test.py` | Rolling out-of-sample validation — the actual "is this real" test |
+| `research/validation/readiness_gate.py` | Fail-closed check that blocks live trading by default |
+| `research/validation/build_readiness_gates.py` | Computes real readiness from paper-trading trade logs |
+| `research/bots/bot_runner.py` | Unified V1/V4 bot — gated by `readiness_gate.py` |
+| `backend/main.py` + `frontend/index.html` | FastAPI backend + dashboard (replaced the old Streamlit `dashboard.py`) |
+| `research/validation/validate_all.py` | Regression test that a backtest reproduces expected in-sample numbers — **not** a validity check for the strategy |
 
 ## 🔥 Performance Highlights
 
-### V1 Strategy (4H Timeframe)
+⚠️ These are the **in-sample** backtest numbers. See
+[TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md)
+for the out-of-sample numbers that actually matter for judging whether the
+edge is real.
+
+### V1 Strategy (4H Timeframe) — In-Sample
 - **Initial Capital:** $1,000
 - **Final Equity:** $9,550
 - **Return:** **+855%**
@@ -420,7 +437,10 @@ pyarrow>=14.0.0         # Fast data serialization
 - **Profit Factor:** 1.60
 - **Win Rate:** 45.5%
 
-### Yearly Breakdown
+### Walk-Forward Out-of-Sample (validated)
+- **Return:** +120.5% | **Sharpe:** 0.69 | **Max Drawdown:** -61.7% | 321 OOS trades across 9 folds
+
+### Yearly Breakdown (in-sample)
 | Year | Return | Status |
 |------|--------|--------|
 | 2018 | -2.9% | 📉 Bear market |
@@ -436,76 +456,83 @@ pyarrow>=14.0.0         # Fast data serialization
 
 ## 🎯 Usage Examples
 
-### Run a Quick Backtest
-```python
-# Using V1 optimized parameters
-python quick_analysis.py
-
-# Output:
-# Final Equity: $9,550
-# Total Return: +855%
-# Max Drawdown: -39.3%
-# Win Rate: 45.5%
+### Run a Quick In-Sample Backtest
+```bash
+# Legacy 7-phase pipeline — in-sample only, useful as a code sanity check
+python main.py
 ```
 
-### Parameter Optimization
-```python
-# Test 2,800 parameter combinations
-python robustness_test.py
+### Walk-Forward Out-of-Sample Validation (the number that matters)
+```bash
+cd research/validation
+python walk_forward_test.py --fast     # quick sanity run
+python walk_forward_test.py --jobs 8   # full grid per fold
+```
 
+### Parameter Robustness Check (in-sample plateau, not a performance claim)
+```bash
+python research/validation/robustness_test.py
 # Results saved to: results/robustness_results.csv
 ```
 
-### Monte Carlo Simulation
-```python
-# 20-year forward simulation with realistic costs
-python realistic_regime_simulation.py
-
-# Output:
-# Median 20-year outcome: $220,210
-# 95% confidence interval: $17,846 - $4.3M
-# Probability of profit: 100%
+### Cross-Market Validation
+```bash
+python research/validation/cross_market_validation.py
 ```
 
-### Paper Trading (Safe Testing)
-```python
-# Start paper trading bot on Binance testnet
-python paper_bot.py
+### Rebuild Live-Trading Readiness Gates
+```bash
+python research/validation/build_readiness_gates.py --all
+```
 
-# Monitor logs
-tail -f paper_bot.log
+### Run the Bot (Single Cycle, Gated)
+```bash
+python -m research.bots.bot_runner --strategy v1
 ```
 
 ### Compare vs S&P 500
-```python
-# What if you invested $1K + $300/month in S&P 500?
-python sp500_reinvest.py
-
-# Compares strategy performance vs traditional investing
+```bash
+python research/analysis/sp500_reinvest.py
 ```
 
 ## 🧪 Testing & Validation
 
-### Run All Validation Tests
+**Full methodology, current pass/fail status, and every script's role:**
+[TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md) —
+this is the doc to read, not the summary below.
+
+### Code regression check (not a strategy-validity check)
 ```bash
-python validate_all.py
+python research/validation/validate_all.py
+```
+This verifies a backtest reproduces expected in-sample numbers (e.g. "Total
+Return > 800%"). It's a regression test for the backtest engine — a strategy
+that's badly overfit would still pass every check in this file.
+
+### Actual strategy-validity pipeline
+```bash
+python research/validation/walk_forward_test.py --fast   # Phase 2: OOS folds
+python research/validation/edge_validation_test.py        # Phase 3: bootstrap + deflated Sharpe
+python research/validation/cross_market_validation.py     # Phase 4: does it hold on ETH/1h/Kraken?
+python research/validation/build_readiness_gates.py --all # Phase 5: real paper-trading gate
 ```
 
-This runs:
-- ✅ Data integrity checks
-- ✅ Strategy logic validation
-- ✅ Parameter range verification
-- ✅ Backtest reproducibility
-- ✅ Bot state persistence
-- ✅ API connection tests
+**Current status for both strategies: `ready_for_live: false`.** V1 has zero
+recorded paper trades; V4 has a confirmed losing paper-trading track record.
+Neither is authorized to trade live right now.
 
 ## 📈 Comparison: Strategy vs Buy-and-Hold Bitcoin
 
 ### The Uncomfortable Truth
 
-**This is the most important comparison you need to see:**
+**This is the most important comparison you need to see** — though note the
+V1/V4 columns below are the in-sample backtest, which walk-forward testing
+shows is optimistic (V1's validated OOS return is +120.5%, not 855%; V4's
+validated OOS Sharpe is negative). The underperformance-vs-buy-and-hold
+conclusion below holds regardless — it gets *more* true with the honest
+numbers, not less.
 
-| Metric | BTC Buy-Hold | V1 Strategy | V4 Strategy |
+| Metric | BTC Buy-Hold | V1 Strategy (in-sample) | V4 Strategy (in-sample) |
 |--------|--------------|-------------|-------------|
 | Period | Jan 2017 - Dec 2025 | Same | Same |
 | Starting Price | $998 | $1,000 capital | $1,000 capital |
@@ -588,26 +615,29 @@ They struggle in:
 
 ## 🔒 Security & API Setup
 
-### Environment Variables (.env)
-```bash
-# Binance API (get from binance.com)
-BINANCE_API_KEY=your_api_key_here
-BINANCE_API_SECRET=your_secret_key_here
+> Older versions of this README described Binance API keys as required for
+> paper trading. The current `bot_runner.py` uses **Kraken's public API** for
+> candle data — no exchange API key or secret is needed to run either bot in
+> its current (log-only/gated) form. Binance keys would only become relevant
+> if live order execution against Binance were added later; nothing in this
+> repo currently places live orders.
 
-# Telegram Bot (get from @BotFather)
-TELEGRAM_BOT_TOKEN=your_bot_token
+### Environment Variables (.env / GitHub Actions secrets)
+```bash
+# Telegram Bot (get from @BotFather) — matches bot_runner.py's actual variable names
+TELEGRAM_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 
-# Optional: Use testnet for paper trading
-USE_TESTNET=true
+# Optional: backend/ database persistence
+DATABASE_URL=your_db_url
 ```
 
 ### Security Best Practices
 - ✅ Never commit `.env` file to GitHub
-- ✅ Use API keys with trade-only permissions (no withdrawals)
-- ✅ Enable IP whitelisting on Binance
+- ✅ If/when exchange keys are added, use trade-only permissions (no withdrawals)
+- ✅ Enable IP whitelisting on any exchange account used
 - ✅ Use 2FA on exchange account
-- ✅ Regularly rotate API keys
+- ✅ Regularly rotate any keys in use
 - ✅ Monitor unusual activity via Telegram alerts
 
 ## 📊 Performance Metrics Explained
@@ -634,34 +664,34 @@ USE_TESTNET=true
 
 ### Common Issues
 
-**Issue:** `ModuleNotFoundError: No module named 'vectorbt'`
+**Issue:** `ModuleNotFoundError` for a missing package
 ```bash
-# Solution: Install missing dependencies
+# Solution: Install dependencies
 pip install -r requirements.txt
 ```
 
-**Issue:** `binance.exceptions.BinanceAPIException: Invalid API-key`
+**Issue:** Bot shows `GATE BLOCKED — log-only mode` and isn't trading
 ```bash
-# Solution: Check .env file has correct keys
-# Verify keys are active on binance.com
+# This is expected right now — both strategies are gated NOT READY.
+# Check why:
+cat data/readiness_v1.json   # or readiness_v4.json
+# See docs/TESTING_AND_OPTIMIZATION_GUIDE.md for what has to change first.
 ```
 
-**Issue:** Bot not executing trades
+**Issue:** Bot run fails with no candle data
 ```bash
-# Check logs for errors
-cat paper_bot.log
-
-# Verify data is updating
-python data_fetcher.py
+# Kraken's public API may be temporarily unavailable, or the runner's
+# network access failed. Check the GitHub Actions run log for bot.yml.
+# Verify data fetching independently:
+python -c "from research.data.data_fetcher_kraken import *"
 ```
 
 **Issue:** Dashboard won't load
 ```bash
-# Install dashboard requirements
-pip install -r requirements_dashboard.txt
-
-# Run with verbose logging
-streamlit run dashboard.py --logger.level=debug
+# The dashboard is now FastAPI + static HTML, not Streamlit.
+uvicorn backend.main:app --reload --port 8000
+# then open frontend/index.html directly, or check the backend logs
+# for errors if it's meant to serve the frontend itself
 ```
 
 ## 🤝 Contributing
@@ -770,15 +800,16 @@ If maximizing returns is your goal, this system finished second. But if managing
 
 ## 📚 Additional Resources
 
-- [SYSTEM_SUMMARY.md](SYSTEM_SUMMARY.md) - Complete technical overview
-- [BOT_GUIDE.md](BOT_GUIDE.md) - How to run trading bots
-- [CRITICAL_WARNINGS.md](CRITICAL_WARNINGS.md) - Must-read before trading
-- [PAPER_TRADING_CHECKLIST.md](PAPER_TRADING_CHECKLIST.md) - Pre-flight checklist
+- [TESTING_AND_OPTIMIZATION_GUIDE.md](docs/TESTING_AND_OPTIMIZATION_GUIDE.md) - **Start here** for validation methodology and current pass/fail status
+- [SYSTEM_SUMMARY.md](docs/SYSTEM_SUMMARY.md) - Complete technical overview
+- [BOT_GUIDE.md](docs/BOT_GUIDE.md) - How to run trading bots
+- [CRITICAL_WARNINGS.md](docs/CRITICAL_WARNINGS.md) - Must-read before trading
+- [PAPER_TRADING_CHECKLIST.md](docs/PAPER_TRADING_CHECKLIST.md) - Pre-flight checklist
 
 ---
 
 
-**Last Updated:** April 2026
+**Last Updated:** July 24, 2026 (validation-workflow documentation corrected — see TESTING_AND_OPTIMIZATION_GUIDE.md)
 
 **Built with ❤️ for algorithmic trading education**
 

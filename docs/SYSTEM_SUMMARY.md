@@ -1,206 +1,121 @@
-# BTC Turtle-Donchian Strategy - Complete System Summary
+# BTC Turtle-Donchian Strategy — System Summary
 
-## 📊 Executive Summary
+## Executive Summary
 
-A complete backtesting and simulation framework for a Turtle-inspired Donchian breakout strategy on BTC/USDT 4H timeframe.
+A backtesting, walk-forward validation, and paper-trading framework for a
+Turtle-inspired Donchian breakout strategy, in two variants: V1 (4H
+timeframe) and V4 (1H, higher frequency). This doc is a short orientation —
+for the full validation methodology and current pass/fail status, see
+**[TESTING_AND_OPTIMIZATION_GUIDE.md](TESTING_AND_OPTIMIZATION_GUIDE.md)**,
+which is the authoritative source and is kept current with the actual gate
+files in `data/`.
 
-### Key Results
-- **Backtest Period:** Aug 2017 - Dec 2025 (8.34 years)
-- **Initial Capital:** $1,000
-- **Final Equity:** $9,550 (855% return)
-- **Max Drawdown:** 39.3%
-- **Win Rate:** 45.5%
-- **Profit Factor:** 1.60
-- **Total Trades:** 442
+## Two numbers exist for each strategy — know which one you're looking at
 
-### 20-Year Forward Simulation (Monte Carlo, 1000 paths)
+**In-sample backtest** (from `main.py`'s flat grid search over 2017–2023,
+same data used to pick parameters as to score them):
 
-| Scenario | Median | 5th Percentile | 95th Percentile |
-|----------|--------|----------------|-----------------|
-| **Optimistic** (no costs) | $634,225 | $48,118 | $13.6M |
-| **Realistic** (with costs) | $220,210 | $17,846 | $4.3M |
+| | V1 (4H) | V4 (1H) |
+|---|---|---|
+| Total Return | 855% | 1572% |
+| Sharpe | 1.98 | 1.20 |
+| Max Drawdown | -39.3% | -65% |
 
-**Probability Table (Realistic):**
-- 100% chance of profit (no paths lost money)
-- 97.9% chance of exceeding $10,000
-- 66.9% chance of exceeding $100,000
-- 18.3% chance of exceeding $1,000,000
+**Walk-forward out-of-sample** (`data/walk_forward_results_v1.json` /
+`_v4.json` — each fold scored only on data its optimizer never saw):
 
----
+| | V1 (4H) | V4 (1H) |
+|---|---|---|
+| Total Return | +120.5% | +489.4% |
+| Sharpe | **0.69** | **-0.39** |
+| Max Drawdown | -61.7% | **-121.3%** |
 
-## 🔧 Optimized Strategy Parameters
+The OOS numbers are the ones that matter for deciding whether the edge is
+real. V4's negative OOS Sharpe and a max drawdown past -100% (meaning the
+stitched equity curve went negative in at least one fold) are why V4 is not
+currently trusted — consistent with its confirmed losing real paper-trading
+record (see below).
 
-| Parameter | Original (TradingView) | Optimized V1 | Improvement |
-|-----------|------------------------|--------------|-------------|
-| Entry Length | 20 | 40 | ✅ Fewer false breakouts |
-| Exit Length | 10 | 16 | ✅ Better trend capture |
-| Trail Multiplier | 2.5 | 4.0 | ✅ Wider trailing stop |
-| Risk % | 1.5% | 1.0% | ✅ More conservative |
-| Direction | Both | Long Only | ✅ Shorts lose money |
+## Current live-trading readiness
 
-The original TradingView parameters had **-84.4% return** - the optimization was critical!
+| Strategy | Paper trades logged | Gate status | Reason |
+|---|---|---|---|
+| V1 | 0 | ❌ NOT READY | No paper track record yet — nothing to evaluate |
+| V4 | 104 | ❌ NOT READY | Confirmed loss: -28.7% return, Sharpe -1.36, 39.8% max drawdown, 20.2% win rate |
 
----
+Both `data/readiness_v1.json` and `data/readiness_v4.json` currently set
+`ready_for_live: false`. `research/bots/bot_runner.py` checks this gate
+before every run and will not trade either strategy live until it flips.
 
-## 📁 Project File Structure
+## Optimized parameters (V1, canonical: `research/strategies/config.py`)
+
+| Parameter | Original (TradingView) | Optimized V1 |
+|-----------|------------------------|--------------|
+| Entry Length | 20 | 40 |
+| Exit Length | 10 | 16 |
+| Trail Multiplier | 2.5 | 4.0 |
+| Risk % | 1.5% | 1.0% |
+| Direction | Both | Long Only |
+
+The original TradingView parameters returned **-84.4%** in-sample — the
+optimization step was necessary, but "beats -84%" is a low bar and doesn't
+by itself establish the optimized version is robust; that's what walk-forward
+testing checks.
+
+## Actual current project structure
 
 ```
-BTC Strategy/
-├── config.py              # Strategy parameters (optimized V1)
-├── strategy.py            # Core TurtleDonchianStrategy class
-├── data_fetcher.py        # Downloads BTC 4H data from Binance
-├── main.py                # Quick backtest runner
-│
-├── robustness_test.py     # Parameter grid optimization
-├── detailed_analysis.py   # Deep strategy analysis
-├── sp500_reinvest.py      # $1K + 30% monthly → S&P 500
-│
-├── regime_simulation.py   # 20-year Monte Carlo (optimistic)
-├── realistic_regime_simulation.py  # With trading costs
-├── validate_all.py        # System validation suite
-│
-├── CRITICAL_WARNINGS.md   # Risk disclosure document
-├── README.md              # This summary
-│
-├── data/                  # BTC 4H candle data
-├── results/               # Charts and analysis outputs
-├── backups/               # V1 winning strategy backup
-└── .venv/                 # Python virtual environment
+Paper-Trading-Bot/
+├── main.py                       # Legacy 7-phase in-sample pipeline (NOT the validation pipeline)
+├── research/
+│   ├── strategies/                config.py (DEFAULT_PARAMS, DataSplitConfig, GateThresholds), strategy.py
+│   ├── data/                      data_fetcher.py, data_fetcher_kraken.py, data_splits.py, metrics_utils.py
+│   ├── validation/                walk_forward.py, monte_carlo.py, deflated_sharpe.py, cross_market_validation.py,
+│   │                               readiness_gate.py, build_readiness_gates.py, final_holdout_validation.py
+│   ├── analysis/                  regime_analysis.py, regime_simulation.py, survivability.py, sp500_reinvest.py
+│   └── bots/                      bot_runner.py (unified V1/V4 runner, checks readiness gate), telegram_bot.py
+├── backend/                       FastAPI app (main.py), SQLAlchemy models (models.py), JSON→DB migration (backfill.py)
+├── frontend/                      index.html dashboard
+├── data/                          readiness_v1.json, readiness_v4.json, walk_forward_results_*.json, trades*.json
+├── docs/                          This file, TESTING_AND_OPTIMIZATION_GUIDE.md, CRITICAL_WARNINGS.md, etc.
+└── docs/archive/backups/          Superseded strategy variants (V2/V3, old V4 modules) — see backups/README.md
 ```
 
----
+Note: `paper_bot.py`, `github_bot.py`, `github_bot_v4.py`, and `dashboard.py`
+referenced in older documentation and commit history no longer exist — they
+were consolidated into `research/bots/bot_runner.py` and `frontend/index.html`.
 
-## 💰 Trading Cost Assumptions (Realistic Simulation)
-
-| Cost Type | Assumption | Justification |
-|-----------|------------|---------------|
-| Exchange Fees | 0.15% per trade | Binance maker/taker average |
-| Slippage | 0.05% per trade | Limit orders on 4H timeframe |
-| Total per Trade | 0.20% | Applied to each entry/exit |
-| Annual Errors | 1% loss | Automated execution reduces mistakes |
-| Taxes | 0% | User is in Lebanon (no crypto tax) |
-
----
-
-## 📈 Yearly Performance Breakdown
+## Yearly performance breakdown (V1, in-sample)
 
 | Year | Return | Status |
 |------|--------|--------|
-| 2018 | -2.9% | 📉 Minor loss (bear market) |
-| 2019 | +101.4% | ✅ Excellent |
-| 2020 | +81.7% | ✅ Great |
-| 2021 | -7.7% | 📉 Choppy (bull top) |
-| 2022 | -22.6% | 📉 Bear market |
-| 2023 | +74.7% | ✅ Recovery |
-| 2024 | +32.2% | ✅ Good |
-| 2025 | +6.9% | ⏳ Partial year |
+| 2018 | -2.9% | Bear market |
+| 2019 | +101.4% | Best year |
+| 2020 | +81.7% | Strong bull |
+| 2021 | -7.7% | Choppy top |
+| 2022 | -22.6% | Bear market |
+| 2023 | +74.7% | Recovery |
+| 2024 | +32.2% | Solid growth |
+| 2025 | +6.9% | Partial year |
 
-**Winning Years:** 5  |  **Losing Years:** 3
+This breakdown is computed the same in-sample way as the 855% headline
+(one backtest over the whole period) — useful for seeing which regimes the
+rules struggled in, not as a forward-looking return estimate.
 
----
+## Not modeled by any of the above
 
-## 🎯 Strategy Improvements Attempted
+- Black swan events (exchange failures, delistings)
+- Regulatory/market-structure change
+- Psychological trading errors
+- Extended bear markets beyond what's in the 2017–2025 window
+- Full execution slippage/costs beyond the fixed assumptions baked into the backtest
 
-### V2 Strategy (Regime Filter)
-- Added 200 SMA filter, RSI filter, volatility check
-- **Result:** Underperformed V1 (-20% returns)
-- **Conclusion:** Filters hurt more than help
-
-### V3 Strategy (Multi-Factor)
-- Complex factor scoring, dynamic sizing
-- **Result:** Underperformed V1 (-15% returns)
-- **Conclusion:** Simplicity wins
-
-### Final Decision: **V1 is optimal** (backed up to `backups/`)
+See [CRITICAL_WARNINGS.md](CRITICAL_WARNINGS.md) for the full risk
+disclosure and [TESTING_AND_OPTIMIZATION_GUIDE.md](TESTING_AND_OPTIMIZATION_GUIDE.md)
+for how to run every phase yourself and verify the numbers above.
 
 ---
 
-## 🔮 9 Market Regimes Identified
-
-Based on monthly BTC price returns and volatility:
-
-1. **Strong Bull** (+30-50% monthly) - Best strategy performance
-2. **Mild Bull** (+10-30% monthly) - Good performance
-3. **Euphoria** (+50%+ monthly) - Rare, exceptional gains
-4. **Consolidation** (-5% to +5%) - Poor, mostly sideways
-5. **Neutral** (+5% to +10%) - Modest gains
-6. **Recovery** (after capitulation) - Good opportunities
-7. **Mild Bear** (-10% to -20%) - Losses controlled
-8. **Strong Bear** (-20% to -40%) - Significant losses
-9. **Capitulation** (-40%+ monthly) - Rare, large losses
-
-The simulation uses **Markov chain transitions** between regimes.
-
----
-
-## ⚠️ Critical Warnings
-
-**NOT MODELED (could cause actual performance to differ):**
-- 🦢 Black swan events (exchange hacks, delistings)
-- 🔄 Market structure changes (regulation, adoption)
-- 🧠 Psychological trading errors
-- 📉 Extended bear markets (>2 years)
-- 💔 Curve fitting risk (optimization on limited data)
-
-**See `CRITICAL_WARNINGS.md` for full risk disclosure.**
-
----
-
-## 🚀 Next Steps for Live Trading
-
-### Before Going Live:
-1. ✅ Paper trade for 3-6 months
-2. Set up automated execution (reduce errors)
-3. Start with 50% of intended capital
-4. Keep 6-month expenses in stablecoins
-5. Review monthly - don't overtrade
-
-### Recommended Setup:
-- **Exchange:** Binance (lowest fees)
-- **Order Type:** Limit orders (reduce slippage)
-- **Automation:** Trading bot or alerts
-- **Position Sizing:** 1% risk per trade
-- **Max Positions:** 4 pyramided units
-
----
-
-## 📊 Validation Status
-
-```
-✓ Backtest Results      - PASSED (855% return verified)
-✓ Trade Statistics      - PASSED (442 trades, 45.5% win rate)
-✓ Regime Simulation     - PASSED (100+ paths complete)
-✓ Realistic Costs       - PASSED (~50% reduction applied)
-✓ Yearly Performance    - PASSED (5/3 winning years)
-✓ S&P Reinvestment      - PASSED (combined strategy works)
-
-ALL VALIDATIONS PASSED ✓
-```
-
----
-
-## 📝 How to Run
-
-```bash
-# Quick backtest
-python main.py
-
-# Full robustness test
-python robustness_test.py
-
-# 20-year simulation (optimistic)
-python regime_simulation.py
-
-# 20-year simulation (realistic with costs)
-python realistic_regime_simulation.py
-
-# Validate everything
-python validate_all.py
-```
-
----
-
-*Generated: December 2025*
-*Strategy: Turtle-Inspired Donchian Breakout*
-*Timeframe: 4H BTC/USDT*
-*Optimization Window: 2017-2025*
+*Last updated: July 24, 2026, cross-checked against `data/readiness_v1.json`,
+`data/readiness_v4.json`, `data/walk_forward_results_v1.json`, and
+`data/walk_forward_results_v4.json`.*
