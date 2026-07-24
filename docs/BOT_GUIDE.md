@@ -1,154 +1,111 @@
-# Paper Trading Bot - Quick Start Guide
+# Trading Bot Guide
 
-## What It Does
-- Monitors BTC/USDT 4H candles in real-time
-- Executes V1 Turtle-Donchian strategy automatically
-- Places real orders on Binance **TESTNET** (fake money)
-- Logs all trades and performance to `paper_bot.log`
+> This replaces an older version of this doc that described a standalone
+> `paper_bot.py` script polling Binance testnet in a loop. That script no
+> longer exists — it was consolidated into a single gated runner. If you have
+> notes or muscle memory from the old workflow (`python paper_bot.py`,
+> `KILLSWITCH.txt`), they no longer apply.
 
-## Starting Capital
-- $1,000 USDT (simulated)
-- Uses testnet funds (no real money risk)
+## What actually runs today
 
-## How to Run
+**Script:** `research/bots/bot_runner.py` — one unified runner for both V1
+and V4, invoked as a single cycle per run (not a long-lived loop).
 
-### Start the Bot
-```powershell
-.venv\Scripts\python.exe paper_bot.py
+```bash
+python -m research.bots.bot_runner --strategy v1     # single V1 cycle
+python -m research.bots.bot_runner --strategy v4     # single V4 cycle
+python -m research.bots.bot_runner --strategy all    # both, V4 then V1
 ```
 
-### Stop the Bot
-- **Option 1:** Press `Ctrl+C` (graceful shutdown, closes positions)
-- **Option 2:** Create a file named `KILLSWITCH.txt` in the project folder
+**How it's actually scheduled:** GitHub Actions (`.github/workflows/bot.yml`),
+not a local always-on process:
+- V4 runs every hour (`5 * * * *`)
+- V1 runs every 4 hours (at 0, 4, 8, 12, 16, 20 UTC)
+- State (`data/bot_state.json`, `data/bot_state_v4.json`) and trade logs
+  (`data/trades.json`, `data/trades_v4.json`) are committed back to the repo
+  after each run — that's the persistence layer.
 
-### Monitor Progress
-- Watch the terminal output for real-time updates
-- Check `paper_bot.log` for full trade history
+**Data source:** Kraken's public API (`XBTUSD`), not Binance testnet. No API
+keys are required to fetch candles for either bot.
 
-## What to Expect
+## The gate check happens on every single run
 
-### Checking Interval
-- Bot checks every **1 hour**
-- 4H candles update every 4 hours
-- Will execute trades when signals trigger
+Before any entry/exit logic executes, `bot_runner.py` calls
+`research.validation.readiness_gate.check_gate(strategy)`:
 
-### Typical Output
-```
-======================================================================
-🤖 PAPER TRADING BOT STARTED
-======================================================================
-Initial Capital: $1,000.00
-Check Interval: 3600s (1.0h)
-Testnet: True
-Killswitch: Create 'KILLSWITCH.txt' to stop
-======================================================================
+- **Gate passes** → normal entry/pyramiding/exit logic runs against
+  live candles.
+- **Gate blocked** → the run still fetches candles, logs the current
+  price/ATR/entry-high/exit-low, and saves state — but takes **no trading
+  action**. This is "log-only mode," visible in the run logs as
+  `GATE BLOCKED — log-only mode: <reason>`.
 
-======================================================================
-Checking signals - 2025-12-22 15:30:00
-BTC Price: $89,416.32
-ATR: $2,145.50
-Entry High: $90,500.00
-Exit Low: $85,200.00
-Current Equity: $1,000.00
-Position: 0.00000 BTC (0 units)
-Total Trades: 0
-======================================================================
-Sleeping 3600s until next check...
-```
+Right now, both `data/readiness_v1.json` and `data/readiness_v4.json` set
+`ready_for_live: false`, so every scheduled run of either bot is currently in
+log-only mode. See
+[TESTING_AND_OPTIMIZATION_GUIDE.md](TESTING_AND_OPTIMIZATION_GUIDE.md) for
+why, and what has to happen (30+ real paper trades meeting the Phase 5
+thresholds) before that flips.
 
-### When a Trade Triggers
-```
-🟢 LONG ENTRY #1
-   Price: $89,500.00
-   Quantity: 0.01234 BTC
-   Total Position: 0.01234 BTC
-   Trailing Stop: $81,918.00
+The gate file itself expires after 24 hours (`MAX_GATE_AGE_HOURS` in
+`readiness_gate.py`), so it has to be refreshed regularly — see
+`.github/workflows/refresh_gates.yml`, which reruns
+`build_readiness_gates.py --all` on a schedule.
 
-🔴 LONG EXIT - Donchian Exit
-   Exit Price: $91,200.00
-   Quantity: 0.01234 BTC
-   P&L: $20.96 (+2.35%)
-   New Equity: $1,020.96
-```
+## Strategy parameters actually used by the runner
 
-## Safety Features
+These are hardcoded in `research/bots/bot_runner.py`'s `STRATEGY_SPECS`, not
+read from `research/strategies/config.py` — worth knowing if you're comparing
+live behavior to the validation pipeline's `DEFAULT_PARAMS`.
 
-### Killswitch
-Create a file to emergency stop:
-```powershell
-New-Item -Path KILLSWITCH.txt -ItemType File
-```
+| | V1 | V4 |
+|---|---|---|
+| Interval | 240 min (4H) | 60 min (1H) |
+| Entry length | 40 | 8 |
+| Exit length | 16 | 16 |
+| ATR length | 20 | 14 |
+| Trail multiplier | 4.0 | 3.5 |
+| Risk % | 1% | 1% |
+| Max pyramid units | 4 | 4 |
 
-Bot will:
-1. Detect the file
-2. Close all positions
-3. Shut down gracefully
+V1's parameters match `config.py`'s `DEFAULT_PARAMS`. V4's live parameters
+are a separately-maintained copy — see `docs/archive/backups/README.md` for
+the open question about V4 not sharing a canonical, tested strategy module
+with the validation pipeline.
 
-### Testnet Protection
-- All trades use **fake money** on testnet
-- No real funds at risk
-- Can't withdraw or lose actual money
+## Monitoring
 
-### Logging
-- Every action logged to `paper_bot.log`
-- Includes timestamps, prices, P&L
-- Can review trade history anytime
-
-## Expected Performance
-
-Based on backtest (2017-2025):
-- Win rate: ~45%
-- Profit factor: ~1.6
-- Avg trade: ~2-3 days
-- Max drawdown: ~40%
-
-Paper trading may differ from backtest due to:
-- Real-time execution
-- Market conditions
-- Slippage on testnet
-
-## Monitoring Checklist
-
-### Daily
-- [ ] Check bot is still running
-- [ ] Review any new trades in log
-- [ ] Verify equity is tracking correctly
-
-### Weekly
-- [ ] Calculate weekly return
-- [ ] Compare to backtest expectations
-- [ ] Note any execution issues
-
-### Monthly
-- [ ] Full performance review
-- [ ] Update tracking spreadsheet
-- [ ] Decide if ready for live trading
+- **Logs:** GitHub Actions run logs for `bot.yml` (each scheduled run is a
+  separate job log), not a local `paper_bot.log` file.
+- **State:** `data/bot_state.json` (V1) / `data/bot_state_v4.json` (V4) —
+  current equity, open position, trade count.
+- **Trades:** `data/trades.json` (V1) / `data/trades_v4.json` (V4) — full
+  ENTRY/EXIT history, the same files `build_readiness_gates.py` reads to
+  compute the paper-trading readiness metrics.
+- **Telegram:** set `TELEGRAM_TOKEN` / `TELEGRAM_CHAT_ID` as repo secrets to
+  get trade notifications (see `research/bots/telegram_bot.py`).
 
 ## Troubleshooting
 
-### Bot Not Starting
-- Check .env file has testnet keys
-- Run `python test_binance_keys.py` first
-- Check internet connection
+**Bot shows "GATE BLOCKED" every run** — expected right now for both
+strategies. It's not a bug; it means Phase 5's paper-trading thresholds
+haven't been met yet. Check `data/readiness_<strategy>.json` for the current
+`reasons` list.
 
-### No Trades Executing
-- BTC may not be in a trending phase
-- Strategy waits for clear breakouts
-- Check signals match TradingView chart
+**No candle data / "Aborting strategy run"** — Kraken's public API had an
+issue, or the workflow's network access failed. Check the Actions run log.
 
-### API Errors
-- Testnet may have temporary outages
-- Check binance testnet status
-- Restart bot after connection restored
+**Want to check readiness manually:**
+```bash
+python -c "from research.validation.readiness_gate import check_gate; print(check_gate('v1'))"
+python -c "from research.validation.readiness_gate import check_gate; print(check_gate('v4'))"
+```
 
-## Next Steps
+## Before going live
 
-After 3-6 months of successful paper trading:
-1. Review all trades and compare to backtest
-2. If results match expectations (±20%)
-3. Consider transitioning to live with small capital
-4. See `PAPER_TRADING_CHECKLIST.md` for criteria
-
----
-
-**Remember:** This is practice. Take it seriously but don't stress about losses - it's fake money!
+Live capital is a separate, larger decision than clearing the paper-trading
+gate — see [PAPER_TRADING_CHECKLIST.md](PAPER_TRADING_CHECKLIST.md) and
+[CRITICAL_WARNINGS.md](CRITICAL_WARNINGS.md). Clearing Phase 5's gate makes
+`ready_for_live: true`, which only means `bot_runner.py` will stop
+suppressing trades — it is not itself a recommendation to fund the bot with
+real money.
