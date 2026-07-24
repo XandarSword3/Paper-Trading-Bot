@@ -17,6 +17,9 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from dotenv import load_dotenv
+load_dotenv(ROOT_DIR / ".env")  # picks up DATABASE_URL, TELEGRAM_*, BINANCE_* for local runs
+
 from backend.models import init_db, get_db, Strategy, Trade, EquitySnapshot, ReadinessGate, BacktestRun
 from research.bots.bot_runner import run_strategy
 
@@ -36,9 +39,17 @@ app.add_middleware(
 )
 
 from fastapi.staticfiles import StaticFiles
-frontend_dir = ROOT_DIR / "frontend"
-if frontend_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
+
+# The new React (Vite) frontend builds to frontend/dist. Until that build
+# exists (first `npm run build` in frontend/), fall back to the old
+# hand-rolled static app so `/` never 404s.
+FRONTEND_DIST_DIR = ROOT_DIR / "frontend" / "dist"
+LEGACY_STATIC_DIR = ROOT_DIR / "frontend" / "legacy_static"
+
+if FRONTEND_DIST_DIR.exists() and (FRONTEND_DIST_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST_DIR / "assets")), name="assets")
+elif LEGACY_STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(LEGACY_STATIC_DIR)), name="static")
 
 
 # === PYDANTIC SCHEMAS ===
@@ -112,14 +123,18 @@ def startup():
 
 @app.get("/", response_class=FileResponse)
 def root():
-    index_path = ROOT_DIR / "frontend" / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
+    dist_index = FRONTEND_DIST_DIR / "index.html"
+    if dist_index.exists():
+        return FileResponse(dist_index)
+    legacy_index = LEGACY_STATIC_DIR / "index.html"
+    if legacy_index.exists():
+        return FileResponse(legacy_index)
     return {
         "status": "online",
         "service": "Paper-Trading-Bot API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
+        "note": "React frontend not built yet — run `npm run build` in frontend/"
     }
 
 
@@ -400,13 +415,11 @@ def get_equity_curve(strategy_id: str, db: Session = Depends(get_db)):
 @app.get("/api/v1/terrain/{strategy_id}")
 def get_drawdown_terrain(strategy_id: str, db: Session = Depends(get_db)):
     """Return 3D Drawdown terrain vertices matrix (Duration x Depth x Time)"""
-    res = compute_strategy_analytics(strategy_id, db)
+    from backend.analytics import compute_drawdown_terrain_matrix
+    res = compute_drawdown_terrain_matrix(strategy_id, db)
     if not res:
         raise HTTPException(status_code=404, detail="Strategy not found")
-    return {
-        "strategy_id": strategy_id,
-        "terrain_matrix": res.get("terrain_matrix", [])
-    }
+    return res
 
 
 from backend.analytics import compute_command_center_telemetry
@@ -440,5 +453,107 @@ def get_event_logs(
         }
         for l in logs
     ]
+
+
+# === WALK-FORWARD VALIDATION (real data already produced by walk_forward_validation.yml) ===
+DATA_DIR = ROOT_DIR / "data"
+
+@app.get("/api/v1/walkforward/{strategy_id}")
+def get_walk_forward_results(strategy_id: str):
+    """
+    Thin wrapper around the walk-forward validation output already committed
+    to data/walk_forward_results_{id}.json by the CI workflow. No new
+    computation — just exposes what's already real.
+    """
+    path = DATA_DIR / f"walk_forward_results_{strategy_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"No walk-forward results found for '{strategy_id}'")
+    with open(path, "r") as f:
+        raw = json.load(f)
+
+    # Build an honest per-fold view from the real parameter_stability sequences.
+    # NOTE: the walk-forward output only records aggregate OOS stats plus the
+    # per-fold *parameter* values chosen at each re-optimization — it does not
+    # record a per-fold PnL/return breakdown. We surface exactly that, and
+    # nothing invented in between.
+    num_folds = raw.get("num_folds", 0)
+    param_stability = raw.get("parameter_stability", {})
+    folds = []
+    for i in range(num_folds):
+        fold_params = {}
+        for param_name, info in param_stability.items():
+            seq = info.get("sequence", [])
+            if i < len(seq):
+                fold_params[param_name] = seq[i]
+        folds.append({"fold_index": i + 1, "params": fold_params})
+
+    return {
+        "strategy_id": strategy_id,
+        "timeframe": raw.get("timeframe"),
+        "generated_at": raw.get("generated_at"),
+        "acceptance_check_passed": raw.get("acceptance_check_passed"),
+        "num_folds": num_folds,
+        "total_oos_trades": raw.get("total_oos_trades"),
+        "oos_win_rate_pct": raw.get("oos_win_rate_pct"),
+        "oos_sharpe": raw.get("oos_sharpe"),
+        "oos_total_return_pct": raw.get("oos_total_return_pct"),
+        "oos_cagr_pct": raw.get("oos_cagr_pct"),
+        "oos_max_drawdown_pct": raw.get("oos_max_drawdown_pct"),
+        "oos_calmar_ratio": raw.get("oos_calmar_ratio"),
+        "oos_coverage_start": raw.get("oos_coverage_start"),
+        "oos_coverage_end": raw.get("oos_coverage_end"),
+        "folds": folds,
+        "parameter_stability": param_stability,
+    }
+
+
+# === CI / GITHUB ACTIONS STATUS ===
+GITHUB_REPO = "XandarSword3/Paper-Trading-Bot"
+_ci_cache = {"data": None, "fetched_at": 0.0}
+
+@app.get("/api/v1/ci/status")
+def get_ci_status():
+    """
+    Real GitHub Actions run status for the repo's workflows, cached for 60s
+    to stay well within GitHub's unauthenticated rate limit.
+    """
+    import time
+    now = time.time()
+    if _ci_cache["data"] is not None and (now - _ci_cache["fetched_at"]) < 60:
+        return _ci_cache["data"]
+
+    try:
+        resp = requests.get(
+            f"https://api.github.com/repos/{GITHUB_REPO}/actions/runs",
+            params={"per_page": 30},
+            headers={"Accept": "application/vnd.github+json"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        runs = resp.json().get("workflow_runs", [])
+
+        latest_by_workflow = {}
+        for run in runs:
+            name = run.get("name") or run.get("path", "unknown")
+            if name not in latest_by_workflow:
+                latest_by_workflow[name] = {
+                    "workflow_name": name,
+                    "status": run.get("status"),          # queued | in_progress | completed
+                    "conclusion": run.get("conclusion"),   # success | failure | cancelled | None
+                    "run_number": run.get("run_number"),
+                    "html_url": run.get("html_url"),
+                    "created_at": run.get("created_at"),
+                    "updated_at": run.get("updated_at"),
+                    "head_branch": run.get("head_branch"),
+                }
+
+        result = {"repo": GITHUB_REPO, "workflows": list(latest_by_workflow.values())}
+        _ci_cache["data"] = result
+        _ci_cache["fetched_at"] = now
+        return result
+    except Exception as e:
+        # Never fake a status — surface the failure explicitly instead of
+        # showing a plausible-looking green checkmark.
+        return {"repo": GITHUB_REPO, "workflows": [], "error": str(e)}
 
 

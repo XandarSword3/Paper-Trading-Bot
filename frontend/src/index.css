@@ -1,0 +1,1452 @@
+/* ==========================================================================
+   QUANT ALPHA TERMINAL — GLOBAL CSS TOKENS
+   Ported from style.css
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+
+:root {
+  --bg-deep: #050811;
+  --bg-panel: rgba(8, 14, 26, 0.85);
+  --bg-card: rgba(12, 20, 36, 0.9);
+
+  --border-subtle: rgba(0, 245, 212, 0.14);
+  --border-glow: rgba(0, 245, 212, 0.4);
+  --border-bright: rgba(0, 245, 212, 0.7);
+
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
+  --text-muted: #475569;
+
+  --accent-cyan: #00f5d4;
+  --accent-blue: #00d2ff;
+  --accent-emerald: #00f5a0;
+  --accent-amber: #ffb800;
+  --accent-crimson: #ff3366;
+  --accent-purple: #a855f7;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-title: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-panel: 0 12px 36px -10px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 245, 212, 0.08);
+  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* New tokens for motion */
+  --motion-fast: 120ms;
+  --motion-base: 240ms;
+  --motion-slow: 600ms;
+
+  /* Glow intensity tiers */
+  --glow-strong: 0 0 25px rgba(0, 245, 212, 0.8);
+  --glow-soft: 0 0 15px rgba(0, 245, 212, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-deep);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: rgba(0, 245, 212, 0.35); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+
+/* ==========================================================================
+   SHELL LAYOUT
+   ========================================================================== */
+
+.qat-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-deep);
+}
+
+.qat-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(5, 8, 17, 0.95);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.qat-shell__header-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.qat-shell__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-main);
+}
+
+.qat-shell__logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.qat-shell__logo-subtitle {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.qat-shell__logo-icon {
+  color: var(--accent-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.5));
+}
+
+.qat-shell__header-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qat-shell__stat-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 6px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.qat-shell__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qat-shell__stat-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.qat-shell__stat-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qat-shell__stat-delta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.qat-shell__stat-delta.is-good { color: var(--accent-emerald); }
+.qat-shell__stat-delta.is-bad { color: var(--accent-crimson); }
+
+.qat-shell__strategy-select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
+}
+
+.qat-shell__strategy-select:hover {
+  border-color: var(--border-glow);
+}
+
+.qat-shell__run-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--bg-deep);
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+  transition: var(--transition);
+}
+
+.qat-shell__run-btn:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(0, 245, 212, 0.6);
+  transform: translateY(-1px);
+}
+
+.qat-shell__run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.qat-shell__body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.qat-shell__sidebar {
+  width: 220px;
+  background: rgba(8, 14, 26, 0.6);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.qat-shell__nav-cluster {
+  margin-bottom: 24px;
+}
+
+.qat-shell__nav-cluster-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+.qat-shell__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: var(--transition);
+  margin-bottom: 2px;
+}
+
+.qat-shell__nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+}
+
+.qat-shell__nav-item.is-active {
+  background: rgba(0, 245, 212, 0.12);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 245, 212, 0.25);
+}
+
+.qat-shell__sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.qat-shell__operator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.qat-shell__operator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 8px var(--accent-emerald);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.qat-shell__main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* ==========================================================================
+   COMMAND PAGE
+   ========================================================================== */
+
+.qat-command__gauge-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.qat-command__regime-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.qat-command__regime-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.qat-command__regime-value {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+}
+
+.qat-command__regime-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qat-command__regime-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qat-command__regime-stat-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-command__regime-stat-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qat-command__donut-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.qat-command__donut-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+
+.qat-command__donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+
+.qat-command__donut-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.qat-command__donut-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.qat-command__donut-legend-name {
+  color: var(--text-dim);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qat-command__donut-legend-pct {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qat-command__donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.qat-command__donut-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-command__donut-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qat-globe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+}
+
+.qat-globe__canvas {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(0, 245, 212, 0.15) 0%, rgba(0, 245, 212, 0.05) 45%, transparent 70%);
+}
+
+.qat-globe__node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(8, 14, 26, 0.95);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  border-radius: 10px;
+  font-size: 10px;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: qat-globe__node-pulse 3s ease-in-out infinite;
+}
+
+.qat-globe__node:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.4), 0 0 40px rgba(0, 245, 212, 0.2);
+  transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px))) scale(1.08);
+  z-index: 10;
+}
+
+@keyframes qat-globe__node-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 245, 212, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 245, 212, 0.25);
+  }
+}
+
+.qat-globe__node-icon {
+  color: var(--accent-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.6));
+}
+
+.qat-globe__node-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.qat-command__ai-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-anchor: none;
+  padding: 2px 2px 2px 0;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+
+.qat-command__ai-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: var(--transition);
+}
+
+.qat-command__ai-item.is-highlight {
+  background: rgba(255, 184, 0, 0.1);
+  border-color: rgba(255, 184, 0, 0.3);
+}
+
+.qat-command__ai-icon {
+  color: var(--accent-purple);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.qat-command__ai-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qat-command__ai-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.qat-command__ai-text {
+  font-size: 12px;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.qat-pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 14px 4px 6px;
+  overflow-x: auto;
+}
+
+.qat-pipeline__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 74px;
+  position: relative;
+}
+
+.qat-pipeline__node-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  border: 2px solid var(--border-subtle);
+  color: var(--text-muted);
+  z-index: 1;
+  transition: var(--transition);
+}
+
+.qat-pipeline__node.done .qat-pipeline__node-icon {
+  border-color: var(--accent-emerald);
+  color: var(--accent-emerald);
+  box-shadow: 0 0 14px rgba(0, 245, 160, 0.4);
+}
+
+.qat-pipeline__node.pending .qat-pipeline__node-icon {
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.qat-pipeline__node-label {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.qat-pipeline__node.done .qat-pipeline__node-label {
+  color: var(--text-main);
+}
+
+.qat-pipeline__node-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.qat-pipeline__connector {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border-subtle);
+  z-index: 0;
+}
+
+.qat-pipeline__node.done .qat-pipeline__connector {
+  background: linear-gradient(90deg, var(--accent-emerald), rgba(0, 245, 160, 0.15));
+  background-size: 200% 100%;
+  animation: pipeline-flow 2.4s linear infinite;
+}
+
+.qat-pipeline__node:last-child .qat-pipeline__connector {
+  display: none;
+}
+
+@keyframes pipeline-flow {
+  0% { background-position: 200% 0; }
+  100% { background-position: 0 0; }
+}
+
+.qat-command__event-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.qat-command__event-filter {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.qat-command__event-filter:hover {
+  border-color: var(--border-glow);
+  color: var(--text-main);
+}
+
+.qat-command__event-filter.is-active {
+  background: rgba(0, 245, 212, 0.12);
+  border-color: var(--border-glow);
+  color: var(--accent-cyan);
+}
+
+.qat-command__events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-anchor: none;
+}
+
+.qat-command__event-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11px;
+}
+
+.qat-command__event-time {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.qat-command__event-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.qat-command__event-category {
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.qat-command__event-message {
+  color: var(--text-dim);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qat-command__ticker-card {
+  padding: 12px 16px;
+}
+
+.qat-command__ticker {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  overflow-x: auto;
+}
+
+.qat-command__ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.qat-command__ticker-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  min-width: 50px;
+}
+
+/* ==========================================================================
+   LIVE TERMINAL PAGE
+   ========================================================================== */
+
+.qat-live-terminal__chart {
+  width: 100%;
+  height: 400px;
+}
+
+.qat-live-terminal__telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qat-live-terminal__indicators {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.qat-live-terminal__indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.qat-live-terminal__indicator-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-live-terminal__indicator-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   PAPER TRADING PAGE
+   ========================================================================== */
+
+.qat-paper-trading__position {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-paper-trading__position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.qat-paper-trading__position-symbol {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+}
+
+.qat-paper-trading__position-main {
+  display: flex;
+  gap: 20px;
+}
+
+.qat-paper-trading__position-size,
+.qat-paper-trading__position-equity {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qat-paper-trading__position-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-paper-trading__position-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qat-paper-trading__position-stats {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.qat-paper-trading__equity-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qat-paper-trading__equity-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.qat-paper-trading__equity-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qat-paper-trading__equity-stat-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-paper-trading__equity-stat-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qat-paper-trading__equity-stat-value.is-bad {
+  color: var(--accent-crimson);
+}
+
+.qat-paper-trading__ledger {
+  display: flex;
+  flex-direction: column;
+}
+
+.qat-paper-trading__ledger-header {
+  display: grid;
+  grid-template-columns: 140px 80px 120px 100px 100px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.qat-paper-trading__ledger-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.qat-paper-trading__ledger-row {
+  display: grid;
+  grid-template-columns: 140px 80px 120px 100px 100px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.qat-paper-trading__ledger-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.qat-paper-trading__ledger-time {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.qat-paper-trading__ledger-type {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.qat-paper-trading__ledger-type.buy {
+  color: var(--accent-emerald);
+}
+
+.qat-paper-trading__ledger-type.sell {
+  color: var(--accent-crimson);
+}
+
+.qat-paper-trading__ledger-price,
+.qat-paper-trading__ledger-qty {
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.qat-paper-trading__ledger-pnl {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.qat-paper-trading__ledger-pnl.is-good {
+  color: var(--accent-emerald);
+}
+
+.qat-paper-trading__ledger-pnl.is-bad {
+  color: var(--accent-crimson);
+}
+
+.qat-paper-trading__ledger-reason {
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   STRATEGIES PAGE
+   ========================================================================== */
+
+.qat-strategies__card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-strategies__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.qat-strategies__card-timeframe {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.qat-strategies__card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qat-strategies__card-footer {
+  display: flex;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.qat-strategies__card-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-cyan);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.qat-strategies__card-link:hover {
+  color: var(--accent-blue);
+}
+
+.qat-strategies__select-btn {
+  padding: 6px 14px;
+  background: rgba(0, 245, 212, 0.15);
+  border: 1px solid rgba(0, 245, 212, 0.4);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.qat-strategies__select-btn:hover {
+  background: rgba(0, 245, 212, 0.25);
+  border-color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   BACKTESTS PAGE
+   ========================================================================== */
+
+.qat-backtests__wf-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-backtests__wf-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.qat-backtests__wf-status {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ==========================================================================
+   RISK PAGE
+   ========================================================================== */
+
+.qat-risk__var-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.qat-risk__exposure,
+.qat-risk__leverage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   LIVE TERMINAL PAGE
+   ========================================================================== */
+
+.qat-live-terminal__price-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(0, 245, 212, 0.05);
+  border: 1px solid rgba(0, 245, 212, 0.15);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.qat-live-terminal__price-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.qat-live-terminal__price-symbol {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.qat-live-terminal__price-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qat-live-terminal__price-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.qat-live-terminal__price-change.is-up {
+  background: rgba(0, 245, 160, 0.15);
+  color: var(--accent-emerald);
+}
+
+.qat-live-terminal__price-change.is-down {
+  background: rgba(255, 51, 102, 0.15);
+  color: var(--accent-crimson);
+}
+
+.qat-live-terminal__time-range {
+  display: flex;
+  gap: 6px;
+}
+
+.qat-live-terminal__time-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.qat-live-terminal__time-btn:hover {
+  border-color: var(--border-glow);
+  color: var(--text-main);
+}
+
+.qat-live-terminal__time-btn.is-active {
+  background: rgba(0, 245, 212, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.qat-live-terminal__chart {
+  height: 500px;
+  width: 100%;
+  min-height: 500px;
+}
+
+.qat-live-terminal__telemetry-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-live-terminal__tele-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.qat-live-terminal__tele-icon {
+  color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+
+.qat-live-terminal__tele-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.qat-live-terminal__tele-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.qat-live-terminal__tele-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qat-live-terminal__tele-value.is-good {
+  color: var(--accent-emerald);
+}
+
+.qat-live-terminal__tele-value.is-bad {
+  color: var(--accent-crimson);
+}
+
+.qat-live-terminal__tele-value.is-neutral {
+  color: var(--accent-amber);
+}
+
+.qat-live-terminal__tele-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+.qat-live-terminal__tele-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.qat-live-terminal__tele-row-label {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.qat-live-terminal__tele-row-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qat-live-terminal__tele-row-value.is-good {
+  color: var(--accent-emerald);
+}
+
+.qat-live-terminal__tele-row-value.is-bad {
+  color: var(--accent-crimson);
+}
+
+.qat-live-terminal__indicators {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.qat-live-terminal__ind-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.qat-live-terminal__ind-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.qat-live-terminal__ind-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qat-live-terminal__ind-value.is-good {
+  color: var(--accent-emerald);
+}
+
+.qat-live-terminal__ind-value.is-bad {
+  color: var(--accent-crimson);
+}
+
+.qat-live-terminal__regime {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-live-terminal__regime-badge {
+  align-self: flex-start;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+
+.qat-live-terminal__regime-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qat-live-terminal__regime-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.qat-live-terminal__regime-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.qat-live-terminal__signal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qat-live-terminal__signal-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0, 245, 212, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 245, 212, 0.2);
+}
+
+.qat-live-terminal__signal-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+}
+
+.qat-live-terminal__signal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qat-live-terminal__signal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.qat-live-terminal__signal-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   GAUGE RING ANIMATIONS
+   ========================================================================== */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.7;
+    filter: brightness(1.3);
+  }
+}
+
+/* ==========================================================================
+   VERTICAL CAPSULE (CONFIDENCE GAUGE)
+   ========================================================================== */
+
+.qat-capsule {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.qat-capsule__readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.qat-capsule__value {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 40px;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.qat-capsule__tier {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+}
+
+.qat-capsule__label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
