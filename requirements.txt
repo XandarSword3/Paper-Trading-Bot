@@ -3,6 +3,11 @@ requests>=2.28
 pandas>=1.5
 numpy>=1.23
 
+# Research / walk-forward validation (research/data, research/validation, research/strategies)
+tqdm>=4.65
+scipy>=1.10
+pyarrow>=14.0
+
 # Backend (FastAPI + DB)
 fastapi>=0.100
 uvicorn>=0.20
