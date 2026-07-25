@@ -25,6 +25,7 @@ class MRParameterResult:
     rsi_overbought: float
     stop_atr_mult: float
     max_hold_bars: int
+    adx_threshold: float
     total_return_pct: float
     max_drawdown_pct: float
     sharpe_ratio: float
@@ -45,6 +46,7 @@ class MRRobustnessRanges:
     rsi_pairs: List[tuple] = None       # (oversold, overbought)
     stop_atr_mult: List[float] = None
     max_hold_bars: List[int] = None
+    adx_threshold: List[float] = None
 
     def __post_init__(self):
         self.ma_len = self.ma_len or [15, 20, 30]
@@ -52,6 +54,11 @@ class MRRobustnessRanges:
         self.rsi_pairs = self.rsi_pairs or [(25.0, 75.0), (30.0, 70.0)]
         self.stop_atr_mult = self.stop_atr_mult or [1.5, 2.5, 3.5]
         self.max_hold_bars = self.max_hold_bars or [10, 20, 40]
+        # 100 = filter effectively off; 20/25/30 are the conventional
+        # "range-bound" ADX bands. Letting the search choose means we find
+        # out honestly whether the regime filter helps, rather than
+        # assuming it does.
+        self.adx_threshold = self.adx_threshold or [20.0, 25.0, 30.0, 100.0]
 
 
 DEFAULT_MR_ROBUSTNESS = MRRobustnessRanges()
@@ -64,6 +71,7 @@ FAST_MR_RANGES = MRRobustnessRanges(
     rsi_pairs=[(30.0, 70.0)],
     stop_atr_mult=[2.5],
     max_hold_bars=[20],
+    adx_threshold=[100.0],
 )
 
 
@@ -78,6 +86,7 @@ class MRRobustnessTester:
             self.ranges.rsi_pairs,
             self.ranges.stop_atr_mult,
             self.ranges.max_hold_bars,
+            self.ranges.adx_threshold,
         ))
         return [
             {
@@ -87,6 +96,7 @@ class MRRobustnessTester:
                 "rsi_overbought": c[2][1],
                 "stop_atr_mult": c[3],
                 "max_hold_bars": c[4],
+                "adx_threshold": c[5],
             }
             for c in combos
         ]
@@ -100,9 +110,11 @@ class MRRobustnessTester:
             rsi_overbought=params_dict["rsi_overbought"],
             stop_atr_mult=params_dict["stop_atr_mult"],
             max_hold_bars=params_dict["max_hold_bars"],
+            adx_threshold=params_dict["adx_threshold"],
             # repo-standard defaults for everything else, same as V1/V4 use:
             rsi_len=14,
             atr_len=14,
+            adx_len=14,
             risk_percent=1.0,
             long_only=False,
             lot_step=0.001,
@@ -121,6 +133,7 @@ class MRRobustnessTester:
             rsi_overbought=params_dict["rsi_overbought"],
             stop_atr_mult=params_dict["stop_atr_mult"],
             max_hold_bars=params_dict["max_hold_bars"],
+            adx_threshold=params_dict["adx_threshold"],
             total_return_pct=equity_stats.get("total_return_pct", 0.0),
             max_drawdown_pct=abs(equity_stats.get("max_drawdown_pct", 0.0)),
             sharpe_ratio=equity_stats.get("sharpe_ratio", 0.0),
