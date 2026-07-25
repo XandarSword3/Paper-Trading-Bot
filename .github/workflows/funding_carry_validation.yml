@@ -65,12 +65,25 @@ jobs:
           pip install pytest
           pytest tests/test_funding_carry.py -v
 
+      - name: Debug dump (temporary — diagnosing CI failures)
+        if: always()
+        run: |
+          {
+            echo "=== pwd ==="; pwd
+            echo "=== ls -la workspace root ==="; ls -la
+            echo "=== find any *_log.txt ==="; find . -name "*_log.txt" -not -path "./.git/*" -exec echo "--{}--" \; -exec cat {} \;
+            echo "=== find funding_carry_results.json ==="; find . -name "funding_carry_results.json" -not -path "./.git/*"
+            echo "=== research/strategies/data listing ==="; ls -la research/strategies/data 2>&1
+            echo "=== python version ==="; python --version
+            echo "=== PYTHONPATH ==="; echo "$PYTHONPATH"
+          } > ci_debug.txt 2>&1
+
       - name: Commit results
         if: always()
         run: |
           git config --local user.email "validation-bot@github.com"
           git config --local user.name "Validation Bot"
-          git add -f funding_carry_results.json research/strategies/results/funding_carry_equity.csv research/strategies/data/BTCUSDT_funding_rate.parquet research/strategies/data/BTCUSDT_funding_rate.csv research/strategies/data/MANIFEST.json funding_fetch_log.txt backtest_log.txt 2>/dev/null || true
+          git add -A
           git diff --staged --quiet || git commit -m "funding carry validation: $(date -u +'%Y-%m-%d %H:%M') UTC"
           git pull --rebase origin master
           git push origin HEAD:${{ github.ref_name }}
