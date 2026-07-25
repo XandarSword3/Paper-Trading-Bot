@@ -1,7 +1,7 @@
 {
   "strategy": "mr_4h",
   "timeframe": "4h",
-  "generated_at": "2026-07-25T07:38:05.114341+00:00",
+  "generated_at": "2026-07-25T12:58:58.942880+00:00",
   "grid_mode": "full",
   "config": {
     "train_years": 2.0,
@@ -11,42 +11,42 @@
   },
   "acceptance_check_passed": true,
   "num_folds": 9,
-  "total_oos_trades": 110,
-  "oos_win_rate_pct": 52.72727272727272,
-  "oos_sharpe": -1.3168877005686048,
-  "oos_total_return_pct": -24.48890701637779,
-  "oos_cagr_pct": -6.046289027491591,
-  "oos_max_drawdown_pct": -25.758526558766004,
-  "oos_calmar_ratio": -0.23472961520906369,
+  "total_oos_trades": 49,
+  "oos_win_rate_pct": 48.97959183673469,
+  "oos_sharpe": -0.9999038881105163,
+  "oos_total_return_pct": -12.670509056852419,
+  "oos_cagr_pct": -2.963398018330532,
+  "oos_max_drawdown_pct": -14.566249385105126,
+  "oos_calmar_ratio": -0.2034427627856479,
   "oos_coverage_start": "2020-05-15 04:00:00",
   "oos_coverage_end": "2024-11-15 00:00:00",
   "parameter_stability": {
     "ma_len": {
-      "is_stable": true,
+      "is_stable": false,
       "distinct_values": 3,
       "sequence": [
         15,
+        30,
         20,
         15,
         15,
-        15,
-        30,
+        20,
         30,
         30,
         30
       ]
     },
     "band_mult": {
-      "is_stable": true,
+      "is_stable": false,
       "distinct_values": 3,
       "sequence": [
-        2.5,
-        2.5,
         1.5,
-        2.5,
         2.0,
         2.5,
         2.5,
+        2.0,
+        2.5,
+        1.5,
         2.5,
         2.5
       ]
@@ -55,9 +55,9 @@
       "is_stable": true,
       "distinct_values": 2,
       "sequence": [
-        25.0,
-        25.0,
-        25.0,
+        30.0,
+        30.0,
+        30.0,
         25.0,
         25.0,
         25.0,
@@ -70,9 +70,9 @@
       "is_stable": true,
       "distinct_values": 2,
       "sequence": [
-        75.0,
-        75.0,
-        75.0,
+        70.0,
+        70.0,
+        70.0,
         75.0,
         75.0,
         75.0,
@@ -85,11 +85,11 @@
       "is_stable": true,
       "distinct_values": 2,
       "sequence": [
-        3.5,
-        3.5,
+        2.5,
+        2.5,
         2.5,
         3.5,
-        2.5,
+        3.5,
         3.5,
         3.5,
         3.5,
@@ -97,18 +97,33 @@
       ]
     },
     "max_hold_bars": {
-      "is_stable": true,
-      "distinct_values": 2,
+      "is_stable": false,
+      "distinct_values": 3,
       "sequence": [
         20,
         20,
         20,
-        20,
-        20,
+        10,
+        10,
         20,
         40,
-        40,
+        20,
         40
+      ]
+    },
+    "adx_threshold": {
+      "is_stable": false,
+      "distinct_values": 3,
+      "sequence": [
+        20.0,
+        25.0,
+        25.0,
+        30.0,
+        30.0,
+        25.0,
+        30.0,
+        20.0,
+        20.0
       ]
     }
   }
