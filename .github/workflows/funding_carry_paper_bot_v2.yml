@@ -1,0 +1,70 @@
+name: Funding Carry Paper Track v2
+
+# v2 of the forward paper-track: adds fee/slippage drag on open+close,
+# a real OKX mark-price feed, and an isolated/cross margin + liquidation
+# simulation on top of the same real, non-fabricatable OKX funding-rate
+# feed v1 uses. See research/bots/funding_carry_paper_bot_v2.py for the
+# full writeup of what this adds and what it still approximates.
+#
+# Runs ALONGSIDE v1 (funding_carry_paper_bot.yml), not instead of it —
+# separate state/trades files, separate commit step — so the two can be
+# compared directly on the same real settlements going forward. Disable
+# the v1 workflow yourself once you've seen enough side-by-side data to
+# be comfortable retiring it.
+#
+# Same non-gating rationale as v1: this never places an order, so it
+# doesn't call research/validation/readiness_gate.py.
+
+on:
+  workflow_dispatch:
+    inputs:
+      notional:
+        description: 'Target notional per leg (USD). Set to your real deployment size.'
+        required: false
+        default: '100000'
+      leverage:
+        description: 'Perp leg leverage'
+        required: false
+        default: '1.0'
+      margin_mode:
+        description: 'isolated or cross'
+        required: false
+        default: 'isolated'
+  schedule:
+    - cron: '10 0,8,16 * * *'  # 5 min after v1, to keep the two runs' log ordering clear
+
+permissions:
+  contents: write
+
+jobs:
+  paper-track-v2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas requests
+
+      - name: Poll settlement, mark price, and update paper track
+        run: >
+          python -m research.bots.funding_carry_paper_bot_v2
+          --notional "${{ github.event.inputs.notional || '100000' }}"
+          --leverage "${{ github.event.inputs.leverage || '1.0' }}"
+          --margin-mode "${{ github.event.inputs.margin_mode || 'isolated' }}"
+
+      - name: Commit updated state/trades
+        if: always()
+        run: |
+          git config --local user.email "funding-carry-paper-bot-v2@github.com"
+          git config --local user.name "Funding Carry Paper Bot v2"
+          git add -A
+          git diff --staged --quiet || git commit -m "funding carry paper track v2: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase origin master
+          git push origin HEAD:${{ github.ref_name }}
