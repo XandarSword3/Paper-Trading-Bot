@@ -1,0 +1,14 @@
+=== Binance fapi ===
+451
+=== Bybit v5 ===
+403
+=== OKX v5 ===
+200
+=== Deribit ===
+200
+=== bybit body sample ===
+{
+    error:The Amazon CloudFront distribution is configured to block access from your country
+}
+=== okx body sample ===
+{"code":"0","data":[{"formulaType":"withRate","fundingRate":"0.0000285540115723","fundingTime":"1784966400000","instId":"BTC-USDT-SWAP","instType":"SWAP","method":"current_period","realizedRate":"0.0000285540115723"},{"formulaType":"withRate","fundingRate":"0.0000297244816893","fundingTime":"1784937600000","instId":"BTC-USDT-SWAP","instType":"SWAP","method":"current_period","realizedRate":"0.0000297244816893"},{"formulaType":"withRate","fundingRate":"0.0000463556429945","fundingTime":"1784908800000","instId":"BTC-USDT-SWAP","instType":"SWAP","method":"current_period","realizedRate":"0.0000463556429945"}],"msg":""}
