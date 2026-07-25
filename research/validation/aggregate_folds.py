@@ -66,6 +66,22 @@ def main():
     fold_results = [load_fold_result(p) for p in paths]
     fold_results.sort(key=lambda fr: fr.fold.index)
 
+    provenances = []
+    for p in paths:
+        with open(p) as f:
+            raw = json.load(f)
+        provenances.append(raw.get("data_provenance", {"error": "no data_provenance field (older run)"}))
+    sources = {pv.get("source") for pv in provenances}
+    row_counts = {pv.get("rows") for pv in provenances}
+    data_provenance_summary = {
+        "per_fold": provenances,
+        "all_folds_same_source": len(sources) <= 1,
+        "sources_seen": sorted(s for s in sources if s is not None),
+        "all_folds_same_row_count": len(row_counts) <= 1,
+    }
+    if not data_provenance_summary["all_folds_same_source"]:
+        print(f"WARNING: fold jobs did not all use the same data source: {sources}")
+
     expected = fold_results[0].fold.index  # sanity: indices should be 0..N-1 contiguous
     for fr in fold_results:
         if fr.fold.index != expected:
@@ -137,6 +153,7 @@ def main():
             "expanding": DEFAULT_WALK_FORWARD.expanding,
         },
         "acceptance_check_passed": not leaked,
+        "data_provenance": data_provenance_summary,
         "num_folds": len(fold_results),
         "total_oos_trades": total_trades,
         "oos_win_rate_pct": win_rate,

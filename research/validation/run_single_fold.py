@@ -50,7 +50,29 @@ def main():
     print(f"[{args.strategy}] family={family} timeframe={timeframe} fold_index={args.fold_index} "
           f"fast={args.fast} jobs={args.jobs}")
 
-    df = get_development(download_btc_data(timeframe=timeframe))
+    df_full = download_btc_data(timeframe=timeframe)
+    data_provenance = {
+        "rows": len(df_full),
+        "start": str(df_full.index.min()),
+        "end": str(df_full.index.max()),
+    }
+    manifest_path = os.path.join(os.path.dirname(_path_bootstrap.__file__), "..", "strategies", "data", "MANIFEST.json")
+    manifest_path = os.path.normpath(manifest_path)
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+            key = f"BTCUSDT_{timeframe}"
+            if key in manifest:
+                data_provenance["source"] = manifest[key].get("source")
+                data_provenance["fetched_at"] = manifest[key].get("fetched_at")
+        except Exception as e:
+            data_provenance["manifest_read_error"] = str(e)
+    else:
+        data_provenance["manifest_read_error"] = f"no MANIFEST.json at {manifest_path}"
+    print(f"DATA PROVENANCE: {data_provenance}")
+
+    df = get_development(df_full)
     folds = generate_folds(df, DEFAULT_WALK_FORWARD, DEFAULT_SPLIT)
 
     if args.fold_index >= len(folds):
@@ -76,6 +98,7 @@ def main():
         "strategy": args.strategy,
         "timeframe": timeframe,
         "fast": args.fast,
+        "data_provenance": data_provenance,
         "fold_index": fold.index,
         "fold_train_start": str(fold.train_start),
         "fold_test_start": str(fold.test_start),
