@@ -1,0 +1,115 @@
+{
+  "strategy": "mr_1h",
+  "timeframe": "1h",
+  "generated_at": "2026-07-25T07:47:00.547351+00:00",
+  "grid_mode": "full",
+  "config": {
+    "train_years": 2.0,
+    "test_months": 6,
+    "step_months": 6,
+    "expanding": false
+  },
+  "acceptance_check_passed": true,
+  "num_folds": 9,
+  "total_oos_trades": 375,
+  "oos_win_rate_pct": 48.53333333333333,
+  "oos_sharpe": -2.911293429165807,
+  "oos_total_return_pct": -63.46785366702542,
+  "oos_cagr_pct": -20.03536839359603,
+  "oos_max_drawdown_pct": -64.68160111475079,
+  "oos_calmar_ratio": -0.3097537483348865,
+  "oos_coverage_start": "2020-05-15 06:00:00",
+  "oos_coverage_end": "2024-11-15 05:00:00",
+  "parameter_stability": {
+    "ma_len": {
+      "is_stable": true,
+      "distinct_values": 2,
+      "sequence": [
+        15,
+        15,
+        15,
+        15,
+        15,
+        30,
+        15,
+        30,
+        30
+      ]
+    },
+    "band_mult": {
+      "is_stable": false,
+      "distinct_values": 3,
+      "sequence": [
+        2.5,
+        2.5,
+        1.5,
+        1.5,
+        2.5,
+        2.0,
+        2.5,
+        2.5,
+        1.5
+      ]
+    },
+    "rsi_oversold": {
+      "is_stable": true,
+      "distinct_values": 1,
+      "sequence": [
+        25.0,
+        25.0,
+        25.0,
+        25.0,
+        25.0,
+        25.0,
+        25.0,
+        25.0,
+        25.0
+      ]
+    },
+    "rsi_overbought": {
+      "is_stable": true,
+      "distinct_values": 1,
+      "sequence": [
+        75.0,
+        75.0,
+        75.0,
+        75.0,
+        75.0,
+        75.0,
+        75.0,
+        75.0,
+        75.0
+      ]
+    },
+    "stop_atr_mult": {
+      "is_stable": true,
+      "distinct_values": 1,
+      "sequence": [
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5
+      ]
+    },
+    "max_hold_bars": {
+      "is_stable": false,
+      "distinct_values": 3,
+      "sequence": [
+        10,
+        10,
+        40,
+        20,
+        20,
+        40,
+        20,
+        40,
+        40
+      ]
+    }
+  }
+}
