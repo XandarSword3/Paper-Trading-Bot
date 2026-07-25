@@ -40,7 +40,7 @@ jobs:
         run: pip install pandas requests
 
       - name: Poll settlement and update paper track
-        run: python funding_carry_paper_bot.py
+        run: python -m research.bots.funding_carry_paper_bot
 
       - name: Commit updated state/trades
         if: always()
