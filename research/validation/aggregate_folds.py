@@ -13,6 +13,7 @@ import glob
 import json
 import os
 
+import _path_bootstrap  # noqa: F401  (must run before the flat imports below)
 import pandas as pd
 
 from config import DEFAULT_SPLIT, DEFAULT_WALK_FORWARD, RESULTS_DIR
