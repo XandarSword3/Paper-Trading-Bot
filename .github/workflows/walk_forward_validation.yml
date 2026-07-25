@@ -55,7 +55,12 @@ jobs:
       - name: List folds for this strategy
         id: list
         run: |
-          MATRIX=$(python3 list_folds.py --strategy "${{ inputs.strategy }}" | tail -n 1)
+          set -euo pipefail
+          MATRIX=$(python3 research/validation/list_folds.py --strategy "${{ inputs.strategy }}" | tail -n 1)
+          if ! echo "$MATRIX" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
+            echo "list_folds.py did not produce valid JSON — got: $MATRIX" >&2
+            exit 1
+          fi
           echo "Folds: $MATRIX"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
@@ -81,7 +86,7 @@ jobs:
 
       - name: Optimize and score fold ${{ matrix.fold_index }}
         run: |
-          python3 run_single_fold.py \
+          python3 research/validation/run_single_fold.py \
             --strategy "${{ inputs.strategy }}" \
             --fold-index ${{ matrix.fold_index }} \
             --jobs ${{ inputs.jobs_per_fold }} \
@@ -119,7 +124,7 @@ jobs:
 
       - name: Aggregate folds into final report
         run: |
-          python3 aggregate_folds.py \
+          python3 research/validation/aggregate_folds.py \
             --strategy "${{ inputs.strategy }}" \
             --fold-dir "results/folds/${{ inputs.strategy }}" \
             ${{ inputs.fast == true && '--fast' || '' }}

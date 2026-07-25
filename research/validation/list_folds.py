@@ -11,6 +11,7 @@ Usage:
 import argparse
 import json
 
+import _path_bootstrap  # noqa: F401  (must run before the flat imports below)
 from config import DEFAULT_SPLIT, DEFAULT_WALK_FORWARD
 from data_fetcher import download_btc_data
 from data_splits import get_development
