@@ -1,0 +1,10 @@
+NOTE: trimming 100 settlement(s) at/after holdout_start (2025-01-01 00:00:00) — not used in the numbers below.
+Wrote funding_carry_results.json
+Traceback (most recent call last):
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/funding_rate_carry.py", line 145, in <module>
+    main()
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/funding_rate_carry.py", line 139, in main
+    print(f"CAGR={stats.get('cagr_pct'):.2f}% Sharpe={stats.get('sharpe_ratio'):.2f} "
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__
+exit_code=1
