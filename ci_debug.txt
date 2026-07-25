@@ -1,0 +1,112 @@
+=== pwd ===
+/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot
+=== ls -la workspace root ===
+total 144
+drwxr-xr-x 13 runner runner  4096 Jul 25 13:40 .
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:40 ..
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 .devcontainer
+drwxr-xr-x  7 runner runner  4096 Jul 25 13:40 .git
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:40 .github
+-rw-r--r--  1 runner runner  1080 Jul 25 13:40 .gitignore
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 .streamlit
+-rw-r--r--  1 runner runner 33880 Jul 25 13:40 README.md
+-rw-r--r--  1 runner runner   317 Jul 25 13:40 _inspect_db.py
+-rw-r--r--  1 runner runner   351 Jul 25 13:40 _inspect_strategies.py
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 backend
+-rw-r--r--  1 runner runner    96 Jul 25 13:40 ci_debug.txt
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 data
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:40 docs
+drwxr-xr-x  5 runner runner  4096 Jul 25 13:40 frontend
+-rw-r--r--  1 runner runner  6716 Jul 25 13:40 funding_fetch_log.txt
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 infra
+-rw-r--r--  1 runner runner 14981 Jul 25 13:40 main.py
+-rw-r--r--  1 runner runner   399 Jul 25 13:40 requirements.txt
+drwxr-xr-x  7 runner runner  4096 Jul 25 13:40 research
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:40 tests
+-rw-r--r--  1 runner runner  2039 Jul 25 13:40 walk_forward_results_mr_1h.json
+-rw-r--r--  1 runner runner  4984 Jul 25 13:40 walk_forward_results_mr_4h.json
+=== find any *_log.txt ===
+--./funding_fetch_log.txt--
+Fetching BTCUSDT funding rate history from 2019-09-01 to 2026-07-25...
+Downloading funding rates:   0%|          | 0/8 [00:00<?, ?it/s]Downloading funding rates:  12%|█▎        | 1/8 [00:00<00:02,  2.65it/s]Downloading funding rates:  25%|██▌       | 2/8 [00:00<00:02,  2.73it/s]Downloading funding rates:  38%|███▊      | 3/8 [00:01<00:01,  2.74it/s]Downloading funding rates:  50%|█████     | 4/8 [00:01<00:01,  2.72it/s]Downloading funding rates:  62%|██████▎   | 5/8 [00:01<00:01,  2.57it/s]Downloading funding rates:  75%|███████▌  | 6/8 [00:02<00:00,  2.62it/s]Downloading funding rates:  88%|████████▊ | 7/8 [00:02<00:00,  2.69it/s]Downloading funding rates: 100%|██████████| 8/8 [00:02<00:00,  2.76it/s]Downloading funding rates: 100%|██████████| 8/8 [00:03<00:00,  2.41it/s]
+Traceback (most recent call last):
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
+    df = download_funding_data(start_date="2019-09-01", force_refresh=True)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 128, in download_funding_data
+    df = fetcher.fetch_funding_history(start_date=start_date)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 94, in fetch_funding_history
+    df["mark_price"] = df.get("markPrice", pd.Series(dtype=float)).astype(float) if "markPrice" in df else float("nan")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/generic.py", line 6529, in astype
+    new_data = self._mgr.astype(dtype=dtype, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 627, in astype
+    return self.apply("astype", dtype=dtype, errors=errors)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 445, in apply
+    applied = getattr(b, f)(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 607, in astype
+    new_values = astype_array_safe(values, dtype, errors=errors)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 240, in astype_array_safe
+    new_values = astype_array(values, dtype, copy=copy)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 182, in astype_array
+    values = values.astype(dtype, copy=copy)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/string_arrow.py", line 336, in astype
+    return self.to_numpy(dtype=dtype, na_value=np.nan)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 1746, in to_numpy
+    result = result.astype(dtype, copy=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: ''
+funding fetch FAILED: could not convert string to float: ''
+Traceback (most recent call last):
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
+    df = download_funding_data(start_date="2019-09-01", force_refresh=True)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 128, in download_funding_data
+    df = fetcher.fetch_funding_history(start_date=start_date)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 94, in fetch_funding_history
+    df["mark_price"] = df.get("markPrice", pd.Series(dtype=float)).astype(float) if "markPrice" in df else float("nan")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/generic.py", line 6529, in astype
+    new_data = self._mgr.astype(dtype=dtype, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 627, in astype
+    return self.apply("astype", dtype=dtype, errors=errors)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 445, in apply
+    applied = getattr(b, f)(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 607, in astype
+    new_values = astype_array_safe(values, dtype, errors=errors)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 240, in astype_array_safe
+    new_values = astype_array(values, dtype, copy=copy)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 182, in astype_array
+    values = values.astype(dtype, copy=copy)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/string_arrow.py", line 336, in astype
+    return self.to_numpy(dtype=dtype, na_value=np.nan)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 1746, in to_numpy
+    result = result.astype(dtype, copy=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: ''
+exit_code=1
+=== find funding_carry_results.json ===
+=== research/strategies/data listing ===
+total 8
+drwxr-xr-x 2 runner runner 4096 Jul 25 13:40 .
+drwxr-xr-x 5 runner runner 4096 Jul 25 13:40 ..
+=== python version ===
+Python 3.11.15
+=== PYTHONPATH ===
+
