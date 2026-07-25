@@ -1,74 +1,47 @@
 Fetching BTCUSDT funding rate history from 2019-09-01 to 2026-07-25...
-Downloading funding rates:   0%|          | 0/8 [00:00<?, ?it/s]Downloading funding rates:  12%|█▎        | 1/8 [00:00<00:02,  2.65it/s]Downloading funding rates:  25%|██▌       | 2/8 [00:00<00:02,  2.73it/s]Downloading funding rates:  38%|███▊      | 3/8 [00:01<00:01,  2.74it/s]Downloading funding rates:  50%|█████     | 4/8 [00:01<00:01,  2.72it/s]Downloading funding rates:  62%|██████▎   | 5/8 [00:01<00:01,  2.57it/s]Downloading funding rates:  75%|███████▌  | 6/8 [00:02<00:00,  2.62it/s]Downloading funding rates:  88%|████████▊ | 7/8 [00:02<00:00,  2.69it/s]Downloading funding rates: 100%|██████████| 8/8 [00:02<00:00,  2.76it/s]Downloading funding rates: 100%|██████████| 8/8 [00:03<00:00,  2.41it/s]
+Downloading funding rates:   0%|          | 0/8 [00:00<?, ?it/s]Downloading funding rates:   0%|          | 0/8 [00:30<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 65, in fetch_funding_history
+    response.raise_for_status()
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+
+The above exception was the direct cause of the following exception:
+
 Traceback (most recent call last):
   File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
     df = download_funding_data(start_date="2019-09-01", force_refresh=True)
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 128, in download_funding_data
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 135, in download_funding_data
     df = fetcher.fetch_funding_history(start_date=start_date)
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 94, in fetch_funding_history
-    df["mark_price"] = df.get("markPrice", pd.Series(dtype=float)).astype(float) if "markPrice" in df else float("nan")
-                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/generic.py", line 6529, in astype
-    new_data = self._mgr.astype(dtype=dtype, errors=errors)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 627, in astype
-    return self.apply("astype", dtype=dtype, errors=errors)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 445, in apply
-    applied = getattr(b, f)(**kwargs)
-              ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 607, in astype
-    new_values = astype_array_safe(values, dtype, errors=errors)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 240, in astype_array_safe
-    new_values = astype_array(values, dtype, copy=copy)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 182, in astype_array
-    values = values.astype(dtype, copy=copy)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/string_arrow.py", line 336, in astype
-    return self.to_numpy(dtype=dtype, na_value=np.nan)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 1746, in to_numpy
-    result = result.astype(dtype, copy=False)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: could not convert string to float: ''
-funding fetch FAILED: could not convert string to float: ''
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 81, in fetch_funding_history
+    raise ConnectionError(
+ConnectionError: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Error fetching funding rate (1/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Error fetching funding rate (2/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Error fetching funding rate (3/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Error fetching funding rate (4/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Error fetching funding rate (5/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+funding fetch FAILED: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+Traceback (most recent call last):
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 65, in fetch_funding_history
+    response.raise_for_status()
+  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+
+The above exception was the direct cause of the following exception:
+
 Traceback (most recent call last):
   File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
     df = download_funding_data(start_date="2019-09-01", force_refresh=True)
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 128, in download_funding_data
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 135, in download_funding_data
     df = fetcher.fetch_funding_history(start_date=start_date)
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 94, in fetch_funding_history
-    df["mark_price"] = df.get("markPrice", pd.Series(dtype=float)).astype(float) if "markPrice" in df else float("nan")
-                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/generic.py", line 6529, in astype
-    new_data = self._mgr.astype(dtype=dtype, errors=errors)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 627, in astype
-    return self.apply("astype", dtype=dtype, errors=errors)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 445, in apply
-    applied = getattr(b, f)(**kwargs)
-              ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 607, in astype
-    new_values = astype_array_safe(values, dtype, errors=errors)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 240, in astype_array_safe
-    new_values = astype_array(values, dtype, copy=copy)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 182, in astype_array
-    values = values.astype(dtype, copy=copy)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/string_arrow.py", line 336, in astype
-    return self.to_numpy(dtype=dtype, na_value=np.nan)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 1746, in to_numpy
-    result = result.astype(dtype, copy=False)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: could not convert string to float: ''
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 81, in fetch_funding_history
+    raise ConnectionError(
+ConnectionError: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
 exit_code=1
