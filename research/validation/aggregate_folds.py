@@ -18,6 +18,7 @@ import pandas as pd
 from config import DEFAULT_SPLIT, DEFAULT_WALK_FORWARD, RESULTS_DIR
 from strategy_registry import get_strategy_config
 from walk_forward import Fold, FoldResult, compute_equity_stats, parameter_stability, stitch_oos_equity
+from mr_walk_forward import mr_parameter_stability
 
 
 def load_fold_result(path: str) -> FoldResult:
@@ -55,6 +56,7 @@ def main():
 
     cfg = get_strategy_config(args.strategy)
     timeframe = cfg["timeframe"]
+    family = cfg["family"]
 
     paths = sorted(glob.glob(os.path.join(args.fold_dir, "*.json")))
     if not paths:
@@ -71,7 +73,10 @@ def main():
 
     stitched = stitch_oos_equity(fold_results, args.initial_capital)
     overall_stats = compute_equity_stats(stitched, args.initial_capital)
-    stability = parameter_stability(fold_results)
+    stability = (
+        mr_parameter_stability(fold_results) if family == "mean_reversion"
+        else parameter_stability(fold_results)
+    )
 
     all_pnls = [p for fr in fold_results for p in fr.oos_trade_pnls]
     total_trades = len(all_pnls)
@@ -112,7 +117,13 @@ def main():
         })
     pd.DataFrame(rows).to_csv(folds_path, index=False)
 
-    strategy_name = {"4h": "v1", "1h": "v4"}.get(timeframe, args.strategy)
+    # Named after the registry key itself (not remapped by timeframe) so a
+    # new strategy sharing v1's/v4's timeframe — e.g. this mean-reversion
+    # strategy on 4h — writes its own walk_forward_results_mr_4h.json instead
+    # of silently overwriting walk_forward_results_v1.json. In existing usage
+    # args.strategy is already "v1"/"v4", so this is behavior-preserving for
+    # both of those.
+    strategy_name = args.strategy
     summary = {
         "strategy": strategy_name,
         "timeframe": timeframe,

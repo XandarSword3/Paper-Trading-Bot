@@ -26,6 +26,8 @@ from data_splits import get_development
 from strategy_registry import get_strategy_config
 from walk_forward import generate_folds, run_fold
 from walk_forward_test import FAST_RANGES
+from mr_robustness import FAST_MR_RANGES
+from mr_walk_forward import run_fold_mr
 
 
 def main():
@@ -33,16 +35,18 @@ def main():
     ap.add_argument("--strategy", required=True, help="Key in strategy_registry.STRATEGY_REGISTRY")
     ap.add_argument("--fold-index", type=int, required=True)
     ap.add_argument("--fast", action="store_true", help="Use the small sanity-check grid instead of the full one")
-    ap.add_argument("--jobs", type=int, default=1, help="Parallel workers within this fold's own grid search")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="Parallel workers within this fold's own grid search (turtle family only; "
+                         "mean_reversion's grid search is not yet parallelized across processes)")
     ap.add_argument("--initial-capital", type=float, default=100_000.0)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
     cfg = get_strategy_config(args.strategy)
     timeframe = cfg["timeframe"]
-    ranges = FAST_RANGES if args.fast else cfg["ranges"]
+    family = cfg["family"]
 
-    print(f"[{args.strategy}] timeframe={timeframe} fold_index={args.fold_index} "
+    print(f"[{args.strategy}] family={family} timeframe={timeframe} fold_index={args.fold_index} "
           f"fast={args.fast} jobs={args.jobs}")
 
     df = get_development(download_btc_data(timeframe=timeframe))
@@ -57,10 +61,15 @@ def main():
     print(f"Fold {fold.index}: train {fold.train_start} -> {fold.test_start}, "
           f"test {fold.test_start} -> {fold.test_end}")
 
-    fr = run_fold(
-        df, fold, ranges, DEFAULT_WALK_FORWARD, args.initial_capital,
-        n_jobs=args.jobs, show_progress=True,
-    )
+    if family == "mean_reversion":
+        ranges = FAST_MR_RANGES if args.fast else cfg["ranges"]
+        fr = run_fold_mr(df, fold, ranges, DEFAULT_WALK_FORWARD, args.initial_capital)
+    else:
+        ranges = FAST_RANGES if args.fast else cfg["ranges"]
+        fr = run_fold(
+            df, fold, ranges, DEFAULT_WALK_FORWARD, args.initial_capital,
+            n_jobs=args.jobs, show_progress=True,
+        )
 
     payload = {
         "strategy": args.strategy,
