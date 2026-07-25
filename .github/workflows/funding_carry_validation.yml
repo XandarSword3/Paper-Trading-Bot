@@ -41,17 +41,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/research/strategies:${{ github.workspace }}/research/data
         run: |
           set +e
-          python -c "
-          import traceback
-          from funding_rate_fetcher import download_funding_data
-          try:
-              df = download_funding_data(start_date='2019-09-01', force_refresh=True)
-              print(f'funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
-          except Exception as e:
-              print(f'funding fetch FAILED: {e}')
-              traceback.print_exc()
-              raise
-          " > funding_fetch_log.txt 2>&1
+          python research/data/_ci_fetch_funding.py > funding_fetch_log.txt 2>&1
           ec=$?
           cat funding_fetch_log.txt
           echo "exit_code=$ec" >> funding_fetch_log.txt
