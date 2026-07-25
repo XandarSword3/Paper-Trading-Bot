@@ -16,8 +16,8 @@ st.set_page_config(page_title="V4 Strategy", page_icon="⚡", layout="wide")
 # === CONFIGURATION ===
 KRAKEN_API = "https://api.kraken.com/0/public"
 PAIR = "XBTUSD"
-STATE_FILE = Path("bot_state_v4.json")
-TRADES_FILE = Path("trades_v4.json")
+STATE_FILE = Path("data/bot_state_v4.json")
+TRADES_FILE = Path("data/trades_v4.json")
 
 # V4 Parameters
 ENTRY_LEN = 8
