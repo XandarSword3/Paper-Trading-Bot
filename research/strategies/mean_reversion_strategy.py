@@ -34,6 +34,14 @@ Position sizing and cost model mirror strategy.py's (equity-at-risk / ATR
 stop distance, then commission+slippage on both legs) so results are
 comparable on the same footing, not because this reuses that strategy's
 logic.
+Regime filter (optional, off by default — see `adx_threshold`):
+  - ADX(`adx_len`) measures trend strength regardless of direction. Entries
+    only fire when ADX <= `adx_threshold`, i.e. the market is range-bound
+    rather than trending — mean-reversion's actual edge case. The grid
+    search (mr_robustness.py) includes both filtered and effectively
+    unfiltered (threshold=100) values, so whether this filter genuinely
+    helps out-of-sample is something the walk-forward harness decides per
+    fold, not something hand-picked in advance.
 """
 
 import numpy as np
@@ -56,6 +64,8 @@ class MeanReversionParams:
     max_hold_bars: int = 20     # force-exit if reversion hasn't happened
     risk_percent: float = 1.0   # % of equity risked per trade (to the stop)
     long_only: bool = False
+    adx_len: int = 14
+    adx_threshold: float = 100.0  # >=100 = filter effectively off (ADX rarely exceeds ~60-70)
     lot_step: float = 0.001
     commission_pct: float = 0.08
     slippage_pct: float = 0.05
@@ -109,6 +119,17 @@ class BollingerRSIMeanReversion:
         true_range = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
         df['atr'] = true_range.rolling(p.atr_len).mean()
 
+        # ADX (Wilder's smoothing) — trend-strength regime filter
+        up_move = df['high'].diff()
+        down_move = -df['low'].diff()
+        plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+        minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+        atr_wilder = true_range.ewm(alpha=1.0 / p.adx_len, adjust=False).mean()
+        plus_di = 100 * pd.Series(plus_dm, index=df.index).ewm(alpha=1.0 / p.adx_len, adjust=False).mean() / atr_wilder.replace(0, np.nan)
+        minus_di = 100 * pd.Series(minus_dm, index=df.index).ewm(alpha=1.0 / p.adx_len, adjust=False).mean() / atr_wilder.replace(0, np.nan)
+        dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
+        df['adx'] = dx.ewm(alpha=1.0 / p.adx_len, adjust=False).mean().fillna(0.0)
+
         return df
 
     def calculate_size(self, equity: float, atr: float) -> float:
@@ -145,7 +166,7 @@ class BollingerRSIMeanReversion:
         self.trades = []
         equity_values = []
 
-        warmup = max(p.ma_len, p.rsi_len, p.atr_len) + 1
+        warmup = max(p.ma_len, p.rsi_len, p.atr_len, p.adx_len) + 1
 
         for i in range(len(df)):
             row = df.iloc[i]
@@ -158,6 +179,7 @@ class BollingerRSIMeanReversion:
             close, high, low = row['close'], row['high'], row['low']
             basis, upper, lower = row['basis'], row['upper'], row['lower']
             rsi, atr = row['rsi'], row['atr']
+            adx = row['adx']
 
             if pd.isna(atr) or pd.isna(basis) or pd.isna(rsi):
                 equity_values.append(equity + (
@@ -219,7 +241,7 @@ class BollingerRSIMeanReversion:
 
             # === New entry (only if flat) ===
             if position_size == 0:
-                if close <= lower and rsi <= p.rsi_oversold:
+                if close <= lower and rsi <= p.rsi_oversold and adx <= p.adx_threshold:
                     size = self.calculate_size(equity, atr)
                     if size > 0:
                         entry_price = self.apply_costs(close, 'long', True)
@@ -229,7 +251,7 @@ class BollingerRSIMeanReversion:
                         bars_held = 0
                         if verbose:
                             print(f"{ts}: ENTER LONG @ {entry_price:.2f}")
-                elif not p.long_only and close >= upper and rsi >= p.rsi_overbought:
+                elif not p.long_only and close >= upper and rsi >= p.rsi_overbought and adx <= p.adx_threshold:
                     size = self.calculate_size(equity, atr)
                     if size > 0:
                         entry_price = self.apply_costs(close, 'short', True)

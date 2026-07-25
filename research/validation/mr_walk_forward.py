@@ -46,7 +46,7 @@ from walk_forward import (
 )
 
 MR_PARAM_NAMES = ["ma_len", "band_mult", "rsi_oversold", "rsi_overbought",
-                  "stop_atr_mult", "max_hold_bars"]
+                  "stop_atr_mult", "max_hold_bars", "adx_threshold"]
 
 
 def _build_mr_params(best_params: dict) -> MeanReversionParams:
@@ -57,8 +57,10 @@ def _build_mr_params(best_params: dict) -> MeanReversionParams:
         rsi_overbought=best_params["rsi_overbought"],
         stop_atr_mult=best_params["stop_atr_mult"],
         max_hold_bars=best_params["max_hold_bars"],
+        adx_threshold=best_params["adx_threshold"],
         rsi_len=14,
         atr_len=14,
+        adx_len=14,
         risk_percent=1.0,
         long_only=False,
         lot_step=0.001,
