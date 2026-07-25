@@ -1,0 +1,53 @@
+name: Funding Carry Paper Track
+
+# Forward paper-track for the funding-rate carry strategy. This is a
+# diagnostic data collector, not a live/paper trading bot — it never
+# places an order. It polls OKX (confirmed reachable from GitHub-hosted
+# runners; Binance/Bybit are not) for new funding settlements every 8h
+# and applies them to a virtual, honestly-capitalized position
+# (funding_carry_paper_bot.py), so real forward performance accumulates
+# instead of another backtest variant on the same historical file.
+#
+# Deliberately does NOT check research/validation/readiness_gate.py —
+# that gate blocks a bot from ACTING on an unvalidated strategy. This
+# script has no action path at all; it's the source of the eventual
+# Phase 5 readiness data, not a consumer of it.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Funding settles at 00:00 / 08:00 / 16:00 UTC on Binance & OKX.
+    # Run a few minutes after each to avoid any settlement-boundary race.
+    - cron: '5 0,8,16 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  paper-track:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas requests
+
+      - name: Poll settlement and update paper track
+        run: python funding_carry_paper_bot.py
+
+      - name: Commit updated state/trades
+        if: always()
+        run: |
+          git config --local user.email "funding-carry-paper-bot@github.com"
+          git config --local user.name "Funding Carry Paper Bot"
+          git add -A
+          git diff --staged --quiet || git commit -m "funding carry paper track: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase origin master
+          git push origin HEAD:${{ github.ref_name }}
