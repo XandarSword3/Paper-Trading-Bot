@@ -1,85 +1,63 @@
 === pwd ===
 /home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot
 === ls -la workspace root ===
-total 148
-drwxr-xr-x 13 runner runner  4096 Jul 25 13:46 .
-drwxr-xr-x  3 runner runner  4096 Jul 25 13:45 ..
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 .devcontainer
-drwxr-xr-x  7 runner runner  4096 Jul 25 13:45 .git
-drwxr-xr-x  3 runner runner  4096 Jul 25 13:45 .github
--rw-r--r--  1 runner runner  1080 Jul 25 13:45 .gitignore
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 .streamlit
--rw-r--r--  1 runner runner 33880 Jul 25 13:45 README.md
--rw-r--r--  1 runner runner   317 Jul 25 13:45 _inspect_db.py
--rw-r--r--  1 runner runner   351 Jul 25 13:45 _inspect_strategies.py
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 backend
--rw-r--r--  1 runner runner    96 Jul 25 13:46 ci_debug.txt
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 data
-drwxr-xr-x  3 runner runner  4096 Jul 25 13:45 docs
-drwxr-xr-x  5 runner runner  4096 Jul 25 13:45 frontend
--rw-r--r--  1 runner runner  4780 Jul 25 13:46 funding_fetch_log.txt
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 infra
--rw-r--r--  1 runner runner 14981 Jul 25 13:45 main.py
--rw-r--r--  1 runner runner   399 Jul 25 13:45 requirements.txt
-drwxr-xr-x  7 runner runner  4096 Jul 25 13:45 research
--rw-r--r--  1 runner runner   853 Jul 25 13:46 source_probe.txt
-drwxr-xr-x  2 runner runner  4096 Jul 25 13:45 tests
--rw-r--r--  1 runner runner  2039 Jul 25 13:45 walk_forward_results_mr_1h.json
--rw-r--r--  1 runner runner  4984 Jul 25 13:45 walk_forward_results_mr_4h.json
+total 152
+drwxr-xr-x 13 runner runner  4096 Jul 25 13:49 .
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:48 ..
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 .devcontainer
+drwxr-xr-x  7 runner runner  4096 Jul 25 13:48 .git
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:48 .github
+-rw-r--r--  1 runner runner  1080 Jul 25 13:48 .gitignore
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 .streamlit
+-rw-r--r--  1 runner runner 33880 Jul 25 13:48 README.md
+-rw-r--r--  1 runner runner   317 Jul 25 13:48 _inspect_db.py
+-rw-r--r--  1 runner runner   351 Jul 25 13:48 _inspect_strategies.py
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 backend
+-rw-r--r--  1 runner runner   697 Jul 25 13:49 backtest_log.txt
+-rw-r--r--  1 runner runner    96 Jul 25 13:49 ci_debug.txt
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 data
+drwxr-xr-x  3 runner runner  4096 Jul 25 13:48 docs
+drwxr-xr-x  5 runner runner  4096 Jul 25 13:48 frontend
+-rw-r--r--  1 runner runner   200 Jul 25 13:49 funding_carry_results.json
+-rw-r--r--  1 runner runner   861 Jul 25 13:49 funding_fetch_log.txt
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 infra
+-rw-r--r--  1 runner runner 14981 Jul 25 13:48 main.py
+-rw-r--r--  1 runner runner   399 Jul 25 13:48 requirements.txt
+drwxr-xr-x  7 runner runner  4096 Jul 25 13:48 research
+-rw-r--r--  1 runner runner   853 Jul 25 13:49 source_probe.txt
+drwxr-xr-x  2 runner runner  4096 Jul 25 13:48 tests
+-rw-r--r--  1 runner runner  2039 Jul 25 13:48 walk_forward_results_mr_1h.json
+-rw-r--r--  1 runner runner  4984 Jul 25 13:48 walk_forward_results_mr_4h.json
 === find any *_log.txt ===
---./funding_fetch_log.txt--
-Fetching BTCUSDT funding rate history from 2019-09-01 to 2026-07-25...
-Downloading funding rates:   0%|          | 0/8 [00:00<?, ?it/s]Downloading funding rates:   0%|          | 0/8 [00:30<?, ?it/s]
+--./backtest_log.txt--
+NOTE: trimming 100 settlement(s) at/after holdout_start (2025-01-01 00:00:00) — not used in the numbers below.
+Wrote funding_carry_results.json
 Traceback (most recent call last):
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 65, in fetch_funding_history
-    response.raise_for_status()
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
-    raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
-    df = download_funding_data(start_date="2019-09-01", force_refresh=True)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 135, in download_funding_data
-    df = fetcher.fetch_funding_history(start_date=start_date)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 81, in fetch_funding_history
-    raise ConnectionError(
-ConnectionError: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Error fetching funding rate (1/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Error fetching funding rate (2/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Error fetching funding rate (3/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Error fetching funding rate (4/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Error fetching funding rate (5/5): 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-funding fetch FAILED: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-Traceback (most recent call last):
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 65, in fetch_funding_history
-    response.raise_for_status()
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
-    raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/_ci_fetch_funding.py", line 14, in <module>
-    df = download_funding_data(start_date="2019-09-01", force_refresh=True)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 135, in download_funding_data
-    df = fetcher.fetch_funding_history(start_date=start_date)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/data/funding_rate_fetcher.py", line 81, in fetch_funding_history
-    raise ConnectionError(
-ConnectionError: Binance funding-rate fetch failed 5 times in a row (https://fapi.binance.com/fapi/v1/fundingRate) - giving up instead of retrying forever. Last error: 451 Client Error:  for url: https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1567296000000&endTime=1784937600000&limit=1000
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/funding_rate_carry.py", line 145, in <module>
+    main()
+  File "/home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/funding_rate_carry.py", line 139, in main
+    print(f"CAGR={stats.get('cagr_pct'):.2f}% Sharpe={stats.get('sharpe_ratio'):.2f} "
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__
 exit_code=1
+--./funding_fetch_log.txt--
+Fetching BTC-USDT-SWAP funding rate history from OKX (public endpoint, limited trailing window)...
+Downloading funding rates (OKX):   0%|          | 0/200 [00:00<?, ?it/s]Downloading funding rates (OKX):   0%|          | 1/200 [00:00<00:57,  3.48it/s]Downloading funding rates (OKX):   1%|          | 2/200 [00:00<01:23,  2.36it/s]Downloading funding rates (OKX):   1%|          | 2/200 [00:00<01:34,  2.09it/s]
+Downloaded 100 funding settlements from 2026-06-22 08:00:00 to 2026-07-25 08:00:00 (OKX public endpoint's available trailing window)
+Data saved to:
+  /home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/data/BTCUSDT_funding_rate.csv
+  /home/runner/work/Paper-Trading-Bot/Paper-Trading-Bot/research/strategies/data/BTCUSDT_funding_rate.parquet
+funding: 100 settlements, 2026-06-22 08:00:00 -> 2026-07-25 08:00:00
+exit_code=0
 === find funding_carry_results.json ===
+./funding_carry_results.json
 === research/strategies/data listing ===
-total 8
-drwxr-xr-x 2 runner runner 4096 Jul 25 13:46 .
-drwxr-xr-x 5 runner runner 4096 Jul 25 13:46 ..
+total 24
+drwxr-xr-x 2 runner runner 4096 Jul 25 13:49 .
+drwxr-xr-x 5 runner runner 4096 Jul 25 13:49 ..
+-rw-r--r-- 1 runner runner 3846 Jul 25 13:49 BTCUSDT_funding_rate.csv
+-rw-r--r-- 1 runner runner 4201 Jul 25 13:49 BTCUSDT_funding_rate.parquet
+-rw-r--r-- 1 runner runner  451 Jul 25 13:49 MANIFEST.json
 === python version ===
 Python 3.11.15
 === PYTHONPATH ===

@@ -1,0 +1,7 @@
+{
+  "strategy": "funding_rate_carry",
+  "generated_at": "2026-07-25T13:49:11.873852+00:00",
+  "acceptance_check_passed": true,
+  "holdout_start": "2025-01-01 00:00:00",
+  "cagr_by_calendar_year": {}
+}
