@@ -37,6 +37,8 @@ jobs:
         run: pip install pandas numpy requests tqdm pyarrow
 
       - name: Refresh BTCUSDT funding rate history
+        env:
+          PYTHONPATH: ${{ github.workspace }}/research/strategies:${{ github.workspace }}/research/data
         run: |
           set +e
           python -c "
@@ -50,26 +52,35 @@ jobs:
               traceback.print_exc()
               raise
           " > funding_fetch_log.txt 2>&1
-          echo "exit_code=$?" >> funding_fetch_log.txt
+          ec=$?
           cat funding_fetch_log.txt
+          echo "exit_code=$ec" >> funding_fetch_log.txt
+          exit $ec
 
       - name: Run funding-carry backtest
+        env:
+          PYTHONPATH: ${{ github.workspace }}/research/strategies:${{ github.workspace }}/research/data
         run: |
           set +e
-          python funding_rate_carry.py --out funding_carry_results.json > backtest_log.txt 2>&1
-          echo "exit_code=$?" >> backtest_log.txt
+          python research/strategies/funding_rate_carry.py --out funding_carry_results.json > backtest_log.txt 2>&1
+          ec=$?
           cat backtest_log.txt
+          echo "exit_code=$ec" >> backtest_log.txt
+          exit $ec
 
       - name: Run regression tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/research/strategies:${{ github.workspace }}/research/data
         run: |
           pip install pytest
-          pytest test_funding_carry.py -v
+          pytest tests/test_funding_carry.py -v
 
       - name: Commit results
         if: always()
         run: |
           git config --local user.email "validation-bot@github.com"
           git config --local user.name "Validation Bot"
-          git add -f funding_carry_results.json results/funding_carry_equity.csv data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt backtest_log.txt 2>/dev/null || true
+          git add -f funding_carry_results.json research/strategies/results/funding_carry_equity.csv research/strategies/data/BTCUSDT_funding_rate.parquet research/strategies/data/BTCUSDT_funding_rate.csv research/strategies/data/MANIFEST.json funding_fetch_log.txt backtest_log.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "funding carry validation: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase origin master
           git push origin HEAD:${{ github.ref_name }}
