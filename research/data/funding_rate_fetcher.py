@@ -90,8 +90,15 @@ class BinanceFundingRateFetcher:
 
         df = pd.DataFrame(all_rows)
         df["timestamp"] = pd.to_datetime(df["fundingTime"], unit="ms")
-        df["funding_rate"] = df["fundingRate"].astype(float)
-        df["mark_price"] = df.get("markPrice", pd.Series(dtype=float)).astype(float) if "markPrice" in df else float("nan")
+        df["funding_rate"] = pd.to_numeric(df["fundingRate"], errors="coerce")
+        n_bad = df["funding_rate"].isna().sum()
+        if n_bad:
+            print(f"WARNING: {n_bad} settlement(s) had unparseable fundingRate — dropping them")
+            df = df.dropna(subset=["funding_rate"])
+        if "markPrice" in df:
+            df["mark_price"] = pd.to_numeric(df["markPrice"], errors="coerce")
+        else:
+            df["mark_price"] = float("nan")
         df = df.set_index("timestamp")[["funding_rate", "mark_price"]]
         df = df[~df.index.duplicated(keep="first")]
         df.sort_index(inplace=True)
