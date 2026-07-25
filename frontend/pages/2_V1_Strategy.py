@@ -16,9 +16,9 @@ st.set_page_config(page_title="V1 Strategy", page_icon="🐢", layout="wide")
 # === CONFIGURATION ===
 KRAKEN_API = "https://api.kraken.com/0/public"
 PAIR = "XBTUSD"
-STATE_FILE = Path("bot_state.json")
-TRADES_FILE = Path("trades.json")
-WALK_FORWARD_FILE = Path("walk_forward_results_v1.json")
+STATE_FILE = Path("data/bot_state.json")
+TRADES_FILE = Path("data/trades.json")
+WALK_FORWARD_FILE = Path("data/walk_forward_results_v1.json")
 
 
 def load_walk_forward_summary():

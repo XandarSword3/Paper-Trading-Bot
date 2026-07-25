@@ -68,7 +68,7 @@ st.markdown("---")
 def load_metrics():
     """Load the JSON metrics from the Liquidation Hunter logs director"""
     # Assuming the user runs Streamlit from 'BTC Strategy' root directory
-    filepath = Path("paper_readiness.json")
+    filepath = Path("data/paper_readiness.json")
     
     if filepath.exists():
         try:

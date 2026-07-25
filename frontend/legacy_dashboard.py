@@ -36,10 +36,10 @@ GITHUB_USER = "XandarSword3"
 GITHUB_REPO = "Paper-Trading-Bot"
 GITHUB_BRANCH = "master"
 
-STATE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state.json"
-TRADES_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/trades.json"
-STATE_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/bot_state_v4.json"
-TRADES_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/trades_v4.json"
+STATE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/data/bot_state.json"
+TRADES_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/data/trades.json"
+STATE_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/data/bot_state_v4.json"
+TRADES_V4_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}/data/trades_v4.json"
 KRAKEN_PRICE_URL = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
 
 # === CUSTOM CSS ===
@@ -141,26 +141,26 @@ def _load_json_source(local_file: str, raw_url: str):
 @st.cache_data(ttl=30)
 def load_state():
     """Load V1 bot state from local file or GitHub"""
-    return _load_json_source("bot_state.json", STATE_URL)
+    return _load_json_source("data/bot_state.json", STATE_URL)
 
 
 @st.cache_data(ttl=30)
 def load_trades():
     """Load V1 trade history from local file or GitHub"""
-    data = _load_json_source("trades.json", TRADES_URL)
+    data = _load_json_source("data/trades.json", TRADES_URL)
     return data if isinstance(data, list) else []
 
 
 @st.cache_data(ttl=30)
 def load_state_v4():
     """Load V4 bot state from local file or GitHub"""
-    return _load_json_source("bot_state_v4.json", STATE_V4_URL)
+    return _load_json_source("data/bot_state_v4.json", STATE_V4_URL)
 
 
 @st.cache_data(ttl=30)
 def load_trades_v4():
     """Load V4 trade history from local file or GitHub"""
-    data = _load_json_source("trades_v4.json", TRADES_V4_URL)
+    data = _load_json_source("data/trades_v4.json", TRADES_V4_URL)
     return data if isinstance(data, list) else []
 
 
