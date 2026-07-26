@@ -5,5 +5,173 @@
     "mark_price": 64505.9,
     "size_btc": 1.55,
     "fees": 259.958777
+  },
+  {
+    "timestamp": "2026-07-20T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 1.49115311815e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 1.49015859357785,
+    "cumulative_funding": 1.49015859357785
+  },
+  {
+    "timestamp": "2026-07-20T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -1.0642569389e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": -0.10635471327346008,
+    "cumulative_funding": 1.38380388030439
+  },
+  {
+    "timestamp": "2026-07-20T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 1.51065561787e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 1.5096480861056616,
+    "cumulative_funding": 2.8934519664100513
+  },
+  {
+    "timestamp": "2026-07-21T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 7.8604607579e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": 0.7855218223597519,
+    "cumulative_funding": 3.6789737887698033
+  },
+  {
+    "timestamp": "2026-07-21T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 1.70667772237e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 1.7055394536630655,
+    "cumulative_funding": 5.3845132424328686
+  },
+  {
+    "timestamp": "2026-07-21T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -3.86532726688e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": -3.8627492868593545,
+    "cumulative_funding": 1.521763955573514
+  },
+  {
+    "timestamp": "2026-07-22T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 6.45951712624e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 6.455208951292655,
+    "cumulative_funding": 7.97697290686617
+  },
+  {
+    "timestamp": "2026-07-22T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -4.6095462073e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": -0.4606471870457041,
+    "cumulative_funding": 7.516325719820466
+  },
+  {
+    "timestamp": "2026-07-22T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 7.2341658587e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": 0.7229341031780541,
+    "cumulative_funding": 8.23925982299852
+  },
+  {
+    "timestamp": "2026-07-23T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 3.45300865541e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 3.4507056712872743,
+    "cumulative_funding": 11.689965494285794
+  },
+  {
+    "timestamp": "2026-07-23T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -3.33148169405e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": -3.329259762334154,
+    "cumulative_funding": 8.36070573195164
+  },
+  {
+    "timestamp": "2026-07-23T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 3.09437083436e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 3.092307043732024,
+    "cumulative_funding": 11.453012775683664
+  },
+  {
+    "timestamp": "2026-07-24T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 1.46168809e-07,
+    "mark_price_used": 64473.1,
+    "funding_payment": 0.014607132171283748,
+    "cumulative_funding": 11.467619907854948
+  },
+  {
+    "timestamp": "2026-07-24T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -8.3475733975e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": -0.8342005983422538,
+    "cumulative_funding": 10.633419309512695
+  },
+  {
+    "timestamp": "2026-07-24T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 4.63556429945e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 4.632472609840483,
+    "cumulative_funding": 15.265891919353177
+  },
+  {
+    "timestamp": "2026-07-25T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 2.97244816893e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 2.9704656946237327,
+    "cumulative_funding": 18.23635761397691
+  },
+  {
+    "timestamp": "2026-07-25T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 2.85540115723e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 2.853496747428186,
+    "cumulative_funding": 21.089854361405095
+  },
+  {
+    "timestamp": "2026-07-25T16:00:00+00:00",
+    "event": "funding",
+    "funding_rate": -1.9531187263e-06,
+    "mark_price_used": 64473.1,
+    "funding_payment": -0.19518160937654944,
+    "cumulative_funding": 20.894672752028544
+  },
+  {
+    "timestamp": "2026-07-26T00:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 4.04469961172e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 4.042001999313964,
+    "cumulative_funding": 24.936674751342508
+  },
+  {
+    "timestamp": "2026-07-26T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 2.91130085216e-05,
+    "mark_price_used": 64473.1,
+    "funding_payment": 2.909359160056652,
+    "cumulative_funding": 27.84603391139916
+  },
+  {
+    "timestamp": "2026-07-26T10:10:18.366498+00:00",
+    "event": "mark",
+    "mark_price": 64473.1,
+    "perp_equity": 99932.85164541139,
+    "maintenance_margin": 399.73322,
+    "combined_equity": 199866.1566454114
   }
 ]
