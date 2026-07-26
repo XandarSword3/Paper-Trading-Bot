@@ -348,7 +348,14 @@ def run(notional: float, leverage: float, margin_mode: str, dry_run: bool = Fals
     mark_price = fetch_mark_price()
 
     if state is None:
-        state = open_position(notional=notional, leverage=leverage, margin_mode=margin_mode, mark_price=mark_price)
+        try:
+            state = open_position(notional=notional, leverage=leverage, margin_mode=margin_mode, mark_price=mark_price)
+        except ValueError as e:
+            print(f"COULD NOT OPEN POSITION: {e}")
+            # No state/trades file gets written — next run retries cleanly with
+            # whatever notional/price it's given, rather than persisting a
+            # half-open position that never actually opened.
+            raise SystemExit(1)
         print(
             f"OPENED: {state['size_btc']} BTC each leg @ ${mark_price:,.2f} "
             f"(target ${notional:,.0f}, unhedged residual ${state['unhedged_residual_usd']:,.2f}) "
