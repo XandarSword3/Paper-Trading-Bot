@@ -1,0 +1,477 @@
+{
+  "strategy": "Trend Momentum Pyramid (TMP)",
+  "version": "1.0",
+  "timeframe": "4h",
+  "asset": "BTCUSDT",
+  "params": {
+    "ema_trend": 55,
+    "ema_macro": 200,
+    "atr_period": 14,
+    "lookback": 10,
+    "trail_mult": 4.0,
+    "base_risk_pct": 2.0,
+    "pyramid_decay": 0.6,
+    "max_units": 3,
+    "leverage_cap": 2.5,
+    "long_only": false,
+    "commission_pct": 0.08,
+    "slippage_pct": 0.05,
+    "lot_step": 0.001
+  },
+  "full_backtest": {
+    "final_equity": 466936.41,
+    "total_return_pct": 366.94,
+    "cagr_pct": 20.77,
+    "sharpe": 0.672,
+    "sortino": 0.641,
+    "calmar": 0.447,
+    "max_drawdown_pct": -46.43,
+    "monthly_mean_pct": 2.45,
+    "monthly_median_pct": -2.29,
+    "monthly_std_pct": 14.19,
+    "best_month_pct": 49.01,
+    "worst_month_pct": -16.87,
+    "months_above_10": 19,
+    "months_total": 98,
+    "pct_months_above_10": 19.4,
+    "pct_months_positive": 43.9,
+    "vol_ann_pct": 39.78,
+    "total_trades": 285,
+    "win_rate_pct": 29.5,
+    "avg_win": 27245.89,
+    "avg_loss": -9560.79,
+    "profit_factor": 1.191,
+    "total_pnl": 366936.44,
+    "long_trades": 143,
+    "short_trades": 142,
+    "avg_units": 1.68,
+    "exit_reasons": {
+      "count": {
+        "EMA Break": 39,
+        "End of Data": 1,
+        "Trail Stop": 245
+      },
+      "sum": {
+        "EMA Break": -350335.02,
+        "End of Data": -3996.79,
+        "Trail Stop": 721268.25
+      }
+    }
+  },
+  "walk_forward_folds": [
+    {
+      "fold": 0,
+      "test_start": "2019-11-15",
+      "test_end": "2020-05-15",
+      "final_equity": 116595.32,
+      "total_return_pct": 16.6,
+      "cagr_pct": 36.06,
+      "sharpe": 1.013,
+      "sortino": 0.834,
+      "calmar": 2.281,
+      "max_drawdown_pct": -15.81,
+      "monthly_mean_pct": 2.84,
+      "monthly_median_pct": 4.45,
+      "monthly_std_pct": 7.78,
+      "best_month_pct": 11.48,
+      "worst_month_pct": -8.39,
+      "months_above_10": 1,
+      "months_total": 6,
+      "pct_months_above_10": 16.7,
+      "pct_months_positive": 66.7,
+      "vol_ann_pct": 37.3,
+      "total_trades": 14,
+      "win_rate_pct": 50.0,
+      "avg_win": 5806.12,
+      "avg_loss": -3435.36,
+      "profit_factor": 1.69,
+      "total_pnl": 16595.3,
+      "long_trades": 8,
+      "short_trades": 6,
+      "avg_units": 1.93,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 1,
+          "End of Data": 1,
+          "Trail Stop": 12
+        },
+        "sum": {
+          "EMA Break": -1094.95,
+          "End of Data": -1021.29,
+          "Trail Stop": 18711.54
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "test_start": "2020-05-15",
+      "test_end": "2020-11-15",
+      "final_equity": 167055.31,
+      "total_return_pct": 67.06,
+      "cagr_pct": 176.75,
+      "sharpe": 2.458,
+      "sortino": 1.996,
+      "calmar": 6.514,
+      "max_drawdown_pct": -27.13,
+      "monthly_mean_pct": 10.78,
+      "monthly_median_pct": 8.44,
+      "monthly_std_pct": 22.49,
+      "best_month_pct": 45.1,
+      "worst_month_pct": -12.86,
+      "months_above_10": 3,
+      "months_total": 6,
+      "pct_months_above_10": 50.0,
+      "pct_months_positive": 50.0,
+      "vol_ann_pct": 45.79,
+      "total_trades": 12,
+      "win_rate_pct": 33.3,
+      "avg_win": 22685.3,
+      "avg_loss": -2960.74,
+      "profit_factor": 3.831,
+      "total_pnl": 67055.31,
+      "long_trades": 7,
+      "short_trades": 5,
+      "avg_units": 1.42,
+      "exit_reasons": {
+        "count": {
+          "End of Data": 1,
+          "Trail Stop": 11
+        },
+        "sum": {
+          "End of Data": 75045.42,
+          "Trail Stop": -7990.11
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "test_start": "2020-11-15",
+      "test_end": "2021-05-15",
+      "final_equity": 94598.54,
+      "total_return_pct": -5.4,
+      "cagr_pct": -10.59,
+      "sharpe": -0.179,
+      "sortino": -0.136,
+      "calmar": -0.368,
+      "max_drawdown_pct": -28.76,
+      "monthly_mean_pct": -0.68,
+      "monthly_median_pct": -1.71,
+      "monthly_std_pct": 7.61,
+      "best_month_pct": 10.97,
+      "worst_month_pct": -8.69,
+      "months_above_10": 1,
+      "months_total": 6,
+      "pct_months_above_10": 16.7,
+      "pct_months_positive": 33.3,
+      "vol_ann_pct": 32.62,
+      "total_trades": 15,
+      "win_rate_pct": 26.7,
+      "avg_win": 4668.8,
+      "avg_loss": -2188.79,
+      "profit_factor": 0.776,
+      "total_pnl": -5401.47,
+      "long_trades": 8,
+      "short_trades": 7,
+      "avg_units": 1.67,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 7,
+          "End of Data": 1,
+          "Trail Stop": 7
+        },
+        "sum": {
+          "EMA Break": -13355.32,
+          "End of Data": 2768.59,
+          "Trail Stop": 5185.26
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "test_start": "2021-05-15",
+      "test_end": "2021-11-15",
+      "final_equity": 85888.73,
+      "total_return_pct": -14.11,
+      "cagr_pct": -26.05,
+      "sharpe": -0.832,
+      "sortino": -0.658,
+      "calmar": -1.37,
+      "max_drawdown_pct": -19.02,
+      "monthly_mean_pct": -2.34,
+      "monthly_median_pct": -4.47,
+      "monthly_std_pct": 6.22,
+      "best_month_pct": 5.49,
+      "worst_month_pct": -9.74,
+      "months_above_10": 0,
+      "months_total": 6,
+      "pct_months_above_10": 0.0,
+      "pct_months_positive": 33.3,
+      "vol_ann_pct": 30.62,
+      "total_trades": 16,
+      "win_rate_pct": 31.2,
+      "avg_win": 2386.54,
+      "avg_loss": -2367.63,
+      "profit_factor": 0.458,
+      "total_pnl": -14111.27,
+      "long_trades": 10,
+      "short_trades": 6,
+      "avg_units": 1.62,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 5,
+          "Trail Stop": 11
+        },
+        "sum": {
+          "EMA Break": -4440.51,
+          "Trail Stop": -9670.76
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "test_start": "2021-11-15",
+      "test_end": "2022-05-15",
+      "final_equity": 104614.94,
+      "total_return_pct": 4.61,
+      "cagr_pct": 9.52,
+      "sharpe": 0.439,
+      "sortino": 0.443,
+      "calmar": 0.416,
+      "max_drawdown_pct": -22.89,
+      "monthly_mean_pct": 0.9,
+      "monthly_median_pct": -0.56,
+      "monthly_std_pct": 5.97,
+      "best_month_pct": 9.33,
+      "worst_month_pct": -5.58,
+      "months_above_10": 0,
+      "months_total": 6,
+      "pct_months_above_10": 0.0,
+      "pct_months_positive": 50.0,
+      "vol_ann_pct": 33.45,
+      "total_trades": 16,
+      "win_rate_pct": 31.2,
+      "avg_win": 5324.59,
+      "avg_loss": -2000.73,
+      "profit_factor": 1.21,
+      "total_pnl": 4614.93,
+      "long_trades": 6,
+      "short_trades": 10,
+      "avg_units": 1.88,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 5,
+          "Trail Stop": 11
+        },
+        "sum": {
+          "EMA Break": -12961.64,
+          "Trail Stop": 17576.57
+        }
+      }
+    },
+    {
+      "fold": 5,
+      "test_start": "2022-05-15",
+      "test_end": "2022-11-15",
+      "final_equity": 92378.07,
+      "total_return_pct": -7.62,
+      "cagr_pct": -14.55,
+      "sharpe": -0.469,
+      "sortino": -0.389,
+      "calmar": -0.998,
+      "max_drawdown_pct": -14.58,
+      "monthly_mean_pct": -1.24,
+      "monthly_median_pct": -0.28,
+      "monthly_std_pct": 4.16,
+      "best_month_pct": 4.64,
+      "worst_month_pct": -6.79,
+      "months_above_10": 0,
+      "months_total": 6,
+      "pct_months_above_10": 0.0,
+      "pct_months_positive": 33.3,
+      "vol_ann_pct": 26.22,
+      "total_trades": 11,
+      "win_rate_pct": 36.4,
+      "avg_win": 2763.18,
+      "avg_loss": -2667.81,
+      "profit_factor": 0.592,
+      "total_pnl": -7621.95,
+      "long_trades": 6,
+      "short_trades": 5,
+      "avg_units": 1.64,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 1,
+          "End of Data": 1,
+          "Trail Stop": 9
+        },
+        "sum": {
+          "EMA Break": -1638.97,
+          "End of Data": 2319.94,
+          "Trail Stop": -8302.92
+        }
+      }
+    },
+    {
+      "fold": 6,
+      "test_start": "2022-11-15",
+      "test_end": "2023-05-15",
+      "final_equity": 136044.18,
+      "total_return_pct": 36.04,
+      "cagr_pct": 86.03,
+      "sharpe": 1.891,
+      "sortino": 1.763,
+      "calmar": 5.267,
+      "max_drawdown_pct": -16.33,
+      "monthly_mean_pct": 6.46,
+      "monthly_median_pct": -0.34,
+      "monthly_std_pct": 18.63,
+      "best_month_pct": 42.59,
+      "worst_month_pct": -8.3,
+      "months_above_10": 1,
+      "months_total": 6,
+      "pct_months_above_10": 16.7,
+      "pct_months_positive": 33.3,
+      "vol_ann_pct": 36.33,
+      "total_trades": 14,
+      "win_rate_pct": 42.9,
+      "avg_win": 10010.66,
+      "avg_loss": -3002.47,
+      "profit_factor": 2.501,
+      "total_pnl": 36044.2,
+      "long_trades": 8,
+      "short_trades": 6,
+      "avg_units": 1.86,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 1,
+          "Trail Stop": 13
+        },
+        "sum": {
+          "EMA Break": -4077.62,
+          "Trail Stop": 40121.82
+        }
+      }
+    },
+    {
+      "fold": 7,
+      "test_start": "2023-05-15",
+      "test_end": "2023-11-15",
+      "final_equity": 93139.15,
+      "total_return_pct": -6.86,
+      "cagr_pct": -13.15,
+      "sharpe": -0.502,
+      "sortino": -0.425,
+      "calmar": -0.485,
+      "max_drawdown_pct": -27.1,
+      "monthly_mean_pct": -0.99,
+      "monthly_median_pct": -1.89,
+      "monthly_std_pct": 6.74,
+      "best_month_pct": 8.77,
+      "worst_month_pct": -8.78,
+      "months_above_10": 0,
+      "months_total": 6,
+      "pct_months_above_10": 0.0,
+      "pct_months_positive": 50.0,
+      "vol_ann_pct": 22.89,
+      "total_trades": 18,
+      "win_rate_pct": 44.4,
+      "avg_win": 2823.07,
+      "avg_loss": -2944.54,
+      "profit_factor": 0.767,
+      "total_pnl": -6860.84,
+      "long_trades": 12,
+      "short_trades": 6,
+      "avg_units": 1.39,
+      "exit_reasons": {
+        "count": {
+          "Trail Stop": 18
+        },
+        "sum": {
+          "Trail Stop": -6860.84
+        }
+      }
+    },
+    {
+      "fold": 8,
+      "test_start": "2023-11-15",
+      "test_end": "2024-05-15",
+      "final_equity": 107002.87,
+      "total_return_pct": 7.0,
+      "cagr_pct": 14.54,
+      "sharpe": 0.559,
+      "sortino": 0.44,
+      "calmar": 0.558,
+      "max_drawdown_pct": -26.06,
+      "monthly_mean_pct": 2.88,
+      "monthly_median_pct": -6.89,
+      "monthly_std_pct": 22.86,
+      "best_month_pct": 49.01,
+      "worst_month_pct": -9.34,
+      "months_above_10": 1,
+      "months_total": 6,
+      "pct_months_above_10": 16.7,
+      "pct_months_positive": 16.7,
+      "vol_ann_pct": 35.75,
+      "total_trades": 12,
+      "win_rate_pct": 16.7,
+      "avg_win": 21946.41,
+      "avg_loss": -3689.0,
+      "profit_factor": 1.19,
+      "total_pnl": 7002.86,
+      "long_trades": 6,
+      "short_trades": 6,
+      "avg_units": 1.92,
+      "exit_reasons": {
+        "count": {
+          "EMA Break": 2,
+          "Trail Stop": 10
+        },
+        "sum": {
+          "EMA Break": -6584.48,
+          "Trail Stop": 13587.34
+        }
+      }
+    },
+    {
+      "fold": 9,
+      "test_start": "2024-05-15",
+      "test_end": "2024-11-15",
+      "final_equity": 114558.29,
+      "total_return_pct": 14.56,
+      "cagr_pct": 30.95,
+      "sharpe": 0.944,
+      "sortino": 0.99,
+      "calmar": 2.316,
+      "max_drawdown_pct": -13.36,
+      "monthly_mean_pct": 2.59,
+      "monthly_median_pct": 0.65,
+      "monthly_std_pct": 8.72,
+      "best_month_pct": 18.68,
+      "worst_month_pct": -7.28,
+      "months_above_10": 1,
+      "months_total": 6,
+      "pct_months_above_10": 16.7,
+      "pct_months_positive": 50.0,
+      "vol_ann_pct": 35.08,
+      "total_trades": 16,
+      "win_rate_pct": 43.8,
+      "avg_win": 4967.79,
+      "avg_loss": -2246.25,
+      "profit_factor": 1.72,
+      "total_pnl": 14558.28,
+      "long_trades": 7,
+      "short_trades": 9,
+      "avg_units": 2.06,
+      "exit_reasons": {
+        "count": {
+          "End of Data": 1,
+          "Trail Stop": 15
+        },
+        "sum": {
+          "End of Data": 18027.37,
+          "Trail Stop": -3469.09
+        }
+      }
+    }
+  ]
+}
