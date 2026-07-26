@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "started_at": "2026-07-26T03:50:52.952162+00:00",
+  "notional_target": 100000.0,
+  "unhedged_residual_usd": 15.854999999995925,
+  "leverage": 1.0,
+  "margin_mode": "isolated",
+  "size_btc": 1.55,
+  "entry_price": 64505.9,
+  "entry_fee_spot": 129.9793885,
+  "entry_fee_perp": 129.9793885,
+  "spot_cash_basis": 99984.145,
+  "perp_isolated_margin": 99854.16561150001,
+  "cumulative_funding": 0.0,
+  "num_settlements": 0,
+  "last_settlement_applied": null,
+  "position_open": true,
+  "liquidated": false,
+  "closed": false,
+  "closed_reason": null
+}
