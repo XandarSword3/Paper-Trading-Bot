@@ -34,9 +34,13 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Rebuild both gate files
-        run: python -m research.validation.build_readiness_gates --all
+        # build_readiness_gates.py exits 1 whenever a strategy is NOT READY —
+        # that's a normal, expected daily outcome here, not a workflow
+        # failure, so don't let it block the commit step below.
+        run: python -m research.validation.build_readiness_gates --all || true
 
       - name: Commit gate files
+        if: always()
         run: |
           git config --local user.email "bot@github.com"
           git config --local user.name "Trading Bot"

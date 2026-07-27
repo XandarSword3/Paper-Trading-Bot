@@ -25,6 +25,12 @@ Design notes:
   ready_for_live=False with the exception message as the reason, never a
   crash that could leave a stale (or absent-then-defaulted) file behind.
 """
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
