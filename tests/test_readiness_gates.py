@@ -9,8 +9,8 @@ Run with: pytest test_readiness_gates.py -v
 """
 from datetime import datetime, timedelta, timezone
 
-from config import GateThresholds
-from build_readiness_gates import compute_paper_metrics, evaluate_gate, build_gate_file
+from research.strategies.config import GateThresholds
+from research.validation.build_readiness_gates import compute_paper_metrics, evaluate_gate, build_gate_file
 
 
 def _make_exit(t_offset_days, pnl, equity):
