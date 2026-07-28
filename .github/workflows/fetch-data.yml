@@ -25,6 +25,7 @@ jobs:
         run: pip install pandas numpy requests tqdm pyarrow
 
       - name: Fetch BTCUSDT and ETHUSDT historical data (4h and 1h)
+        working-directory: research/data
         run: |
           python -c "
           from data_fetcher import download_btc_data, download_eth_data

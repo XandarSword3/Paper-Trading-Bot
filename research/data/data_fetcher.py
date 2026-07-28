@@ -15,7 +15,14 @@ from typing import Optional
 import requests
 from tqdm import tqdm
 
-from config import DATA_DIR, DEFAULT_BACKTEST
+# DATA_DIR was previously `from config import DATA_DIR` — but research/strategies/config.py
+# computes its DATA_DIR relative to *its own* file location (research/strategies/data/),
+# not the actual top-level data/ folder this fetcher writes to. That import only ever
+# resolved correctly by accident, dependent on ambient sys.path/cwd state in whatever
+# environment ran it. Computed directly here instead, anchored to this file's own path,
+# so it's correct regardless of caller's cwd or PYTHONPATH.
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data"))
+os.makedirs(DATA_DIR, exist_ok=True)
 
 MANIFEST_PATH = os.path.join(DATA_DIR, "MANIFEST.json")
 

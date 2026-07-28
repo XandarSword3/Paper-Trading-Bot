@@ -27,8 +27,9 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from config import DATA_DIR
-from data_fetcher import _update_manifest
+from data_fetcher import _update_manifest, DATA_DIR  # see data_fetcher.py for why this is
+                                                       # computed there rather than imported
+                                                       # from research/strategies/config.py
 
 KRAKEN_API = "https://api.kraken.com/0/public/OHLC"
 
