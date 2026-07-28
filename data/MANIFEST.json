@@ -2,19 +2,37 @@
   "BTCUSDT_4h": {
     "source": "CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "BTCUSD",
-    "rows": 17886,
+    "rows": 17928,
     "start": "2018-05-15 04:00:00",
-    "end": "2026-07-21 00:00:00",
-    "fetched_at": "2026-07-21T13:48:21.709413+00:00",
-    "sha256": "3eeabfde6e02aabe82fcc388acd582536fa2009001bf24567655d09e12265e7e"
+    "end": "2026-07-28 00:00:00",
+    "fetched_at": "2026-07-28T07:19:53.856632+00:00",
+    "sha256": "4e2246891b8db7eb559086b2196a3142f77b2842843b55d46930eec9a534e195"
   },
   "BTCUSDT_1h": {
     "source": "CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "BTCUSD",
-    "rows": 71527,
+    "rows": 71695,
     "start": "2018-05-15 06:00:00",
-    "end": "2026-07-21 00:00:00",
-    "fetched_at": "2026-07-21T13:48:57.396495+00:00",
-    "sha256": "93408b1bbdcabfe6a58c298fcd1d8dd391d60ae03ef2f5759608d01e54bd8609"
+    "end": "2026-07-28 00:00:00",
+    "fetched_at": "2026-07-28T07:20:25.304922+00:00",
+    "sha256": "75010ab53eb5c022e822a348e662433c295ff4a733d52e84e8cb2909e8d42275"
+  },
+  "ETHUSDT_4h": {
+    "source": "CryptoDataDownload.com Bitstamp_ETHUSD CSV (proxy \u2014 Binance unreachable)",
+    "symbol": "ETHUSD",
+    "rows": 17932,
+    "start": "2018-05-15 04:00:00",
+    "end": "2026-07-28 00:00:00",
+    "fetched_at": "2026-07-28T07:20:56.508188+00:00",
+    "sha256": "7d55984eb230adbd15fa7824591cbf8f0d53c45bfbfb008c9faf7e32aa4f5f07"
+  },
+  "ETHUSDT_1h": {
+    "source": "CryptoDataDownload.com Bitstamp_ETHUSD CSV (proxy \u2014 Binance unreachable)",
+    "symbol": "ETHUSD",
+    "rows": 71715,
+    "start": "2018-05-15 06:00:00",
+    "end": "2026-07-28 00:00:00",
+    "fetched_at": "2026-07-28T07:21:48.670136+00:00",
+    "sha256": "693eec62e7e98214048a3822b982927c8c27f5c8334714733f46eb444e305dcd"
   }
 }
