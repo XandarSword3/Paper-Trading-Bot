@@ -257,7 +257,8 @@ class CryptoDataDownloadFetcher:
         df["timestamp"] = pd.to_datetime(df["unix"], unit="s")
         df.set_index("timestamp", inplace=True)
 
-        volume_col = "Volume BTC" if "Volume BTC" in df.columns else "Volume"
+        base_asset = self.pair[:-3] if self.pair.upper().endswith("USD") else self.pair
+        volume_col = f"Volume {base_asset}" if f"Volume {base_asset}" in df.columns else "Volume"
         df = df.rename(columns={volume_col: "volume"})
         df = df[["open", "high", "low", "close", "volume"]].astype(float)
         df = df[~df.index.duplicated(keep="first")]
@@ -412,6 +413,61 @@ def download_btc_data(
             filename, df, parquet_path,
             source="CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy — Binance unreachable)",
             symbol="BTCUSD",
+        )
+        print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
+
+        return df
+
+
+def download_eth_data(
+    timeframe: str = "4h",
+    start_date: str = "2017-01-01",
+    end_date: Optional[str] = None,
+    force_refresh: bool = False
+) -> pd.DataFrame:
+    """
+    Download or load ETH data. Mirrors download_btc_data() exactly — same
+    Binance-first / Bitstamp-CSV-fallback shape, since Binance is equally
+    unreachable (HTTP 451) for ETHUSDT as it is for BTCUSDT from Lebanon and
+    from GitHub Actions' US-hosted runners. Added to extend the paper-trading
+    system to a small BTC+ETH basket for diversification (single-asset
+    Sharpe ceiling was hit and confirmed non-overfittable via regime-filter
+    testing — see research/strategies/momentum_surge_dual_exit.py).
+
+    Args:
+        timeframe: '1h' or '4h'
+        start_date: Start date
+        end_date: End date (default: today)
+        force_refresh: Force re-download even if file exists
+
+    Returns:
+        DataFrame with OHLCV data
+    """
+    try:
+        return download_binance_data(
+            symbol="ETHUSDT",
+            timeframe=timeframe,
+            start_date=start_date,
+            end_date=end_date,
+            force_refresh=force_refresh,
+        )
+    except Exception as e:
+        print(f"\n⚠️  Binance unavailable ({e})")
+        print(f"   Falling back to CryptoDataDownload (Bitstamp ETHUSD) as a USD-pegged proxy for ETHUSDT...")
+
+        filename = f"ETHUSDT_{timeframe}"
+        parquet_path = os.path.join(DATA_DIR, f"{filename}.parquet")
+        csv_path = os.path.join(DATA_DIR, f"{filename}.csv")
+
+        cdd_fetcher = CryptoDataDownloadFetcher(exchange="Bitstamp", pair="ETHUSD")
+        df = cdd_fetcher.fetch(timeframe=timeframe, start_date=start_date, end_date=end_date)
+
+        df.to_csv(csv_path)
+        df.to_parquet(parquet_path)
+        _update_manifest(
+            filename, df, parquet_path,
+            source="CryptoDataDownload.com Bitstamp_ETHUSD CSV (proxy — Binance unreachable)",
+            symbol="ETHUSD",
         )
         print(f"Data saved to:\n  {csv_path}\n  {parquet_path}")
 

@@ -24,18 +24,20 @@ jobs:
       - name: Install minimal dependencies
         run: pip install pandas numpy requests tqdm pyarrow
 
-      - name: Fetch BTCUSDT historical data (4h and 1h)
+      - name: Fetch BTCUSDT and ETHUSDT historical data (4h and 1h)
         run: |
           python -c "
-          from data_fetcher import download_btc_data
+          from data_fetcher import download_btc_data, download_eth_data
 
-          for tf in ['4h', '1h']:
-              print(f'Fetching {tf}...')
-              try:
-                  df = download_btc_data(timeframe=tf, start_date='2017-01-01', force_refresh=True)
-                  print(f'{tf}: {len(df)} candles, {df.index[0]} -> {df.index[-1]}')
-              except Exception as e:
-                  print(f'{tf} FAILED: {e}')
+          fetchers = {'BTCUSDT': download_btc_data, 'ETHUSDT': download_eth_data}
+          for symbol, fn in fetchers.items():
+              for tf in ['4h', '1h']:
+                  print(f'Fetching {symbol} {tf}...')
+                  try:
+                      df = fn(timeframe=tf, start_date='2017-01-01', force_refresh=True)
+                      print(f'{symbol} {tf}: {len(df)} candles, {df.index[0]} -> {df.index[-1]}')
+                  except Exception as e:
+                      print(f'{symbol} {tf} FAILED: {e}')
           "
 
       - name: Commit and push data
@@ -43,6 +45,8 @@ jobs:
         run: |
           git config --local user.email "data-bot@github.com"
           git config --local user.name "Data Fetch Bot"
-          git add -f data/BTCUSDT_4h.parquet data/BTCUSDT_4h.csv data/BTCUSDT_1h.parquet data/BTCUSDT_1h.csv data/MANIFEST.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "data: refresh BTCUSDT historical dataset via Kraken fallback ($(date -u +'%Y-%m-%d'))"
+          git add -f data/BTCUSDT_4h.parquet data/BTCUSDT_4h.csv data/BTCUSDT_1h.parquet data/BTCUSDT_1h.csv \
+                     data/ETHUSDT_4h.parquet data/ETHUSDT_4h.csv data/ETHUSDT_1h.parquet data/ETHUSDT_1h.csv \
+                     data/MANIFEST.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "data: refresh BTCUSDT + ETHUSDT historical dataset ($(date -u +'%Y-%m-%d'))"
           git push origin master
