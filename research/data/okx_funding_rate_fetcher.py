@@ -22,11 +22,15 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from config import DATA_DIR
-
+# DATA_DIR is computed in data_fetcher.py from that module's own file location —
+# see data_fetcher.py for why config.py's DATA_DIR is unreliable across different
+# cwd/PYTHONPATH states. _update_manifest has a no-op fallback so this fetcher can
+# still run standalone if data_fetcher.py somehow isn't importable.
 try:
-    from data_fetcher import _update_manifest
+    from data_fetcher import DATA_DIR, _update_manifest
 except ImportError:
+    DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data"))
+    os.makedirs(DATA_DIR, exist_ok=True)
     def _update_manifest(*args, **kwargs):
         pass
 

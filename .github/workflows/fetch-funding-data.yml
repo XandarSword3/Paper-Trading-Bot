@@ -44,11 +44,32 @@ jobs:
           echo "exit_code=$?" >> funding_fetch_log.txt
           cat funding_fetch_log.txt
 
+      - name: Fetch ETHUSDT funding rate history (OKX — Binance/Bybit blocked from CI)
+        working-directory: research/data
+        run: |
+          set +e
+          python -c "
+          import traceback
+          from okx_funding_rate_fetcher import download_funding_data
+
+          try:
+              df = download_funding_data(inst_id='ETH-USDT-SWAP', force_refresh=True, filename='ETHUSDT_funding_rate')
+              print(f'ETH funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
+          except Exception as e:
+              print(f'ETH funding fetch FAILED: {e}')
+              traceback.print_exc()
+              raise
+          " > ../../eth_funding_fetch_log.txt 2>&1
+          echo "exit_code=$?" >> ../../eth_funding_fetch_log.txt
+          cat ../../eth_funding_fetch_log.txt
+
       - name: Commit and push data
         if: always()
         run: |
           git config --local user.email "data-bot@github.com"
           git config --local user.name "Data Fetch Bot"
-          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv data/MANIFEST.json funding_fetch_log.txt 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "data: fetch BTCUSDT perpetual funding rate history ($(date -u +'%Y-%m-%d'))"
+          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
+                     data/ETHUSDT_funding_rate.parquet data/ETHUSDT_funding_rate.csv \
+                     data/MANIFEST.json funding_fetch_log.txt eth_funding_fetch_log.txt 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "data: fetch ETHUSDT perpetual funding rate history via OKX ($(date -u +'%Y-%m-%d'))"
           git push origin HEAD:${{ github.ref_name }}
