@@ -45,29 +45,13 @@ jobs:
           cat funding_fetch_log.txt
 
       - name: Fetch ETHUSDT funding rate history (OKX — Binance/Bybit blocked from CI)
-        working-directory: research/data
         run: |
           set +e
-          echo "cwd: $(pwd)" > "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE" >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
-          python -c "
-          import traceback, sys
-          print('python sys.path[0]:', sys.path[0])
-          try:
-              from okx_funding_rate_fetcher import download_funding_data
-              df = download_funding_data(inst_id='ETH-USDT-SWAP', force_refresh=True, filename='ETHUSDT_funding_rate')
-              print(f'SUCCESS: ETH funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
-          except Exception as e:
-              print(f'FAILED: {e}')
-              traceback.print_exc()
-              sys.exit(1)
-          " >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt" 2>&1
-          PYEXIT=$?
-          echo "python_exit_code=$PYEXIT" >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
-          echo "--- log contents ---"
-          cat "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
+          python research/data/fetch_eth_funding_ci.py 2>&1 | tee eth_funding_fetch_log.txt
+          PYEXIT=${PIPESTATUS[0]}
+          echo "python_exit_code=$PYEXIT" >> eth_funding_fetch_log.txt
           echo "--- data dir after fetch ---"
-          ls -la "$GITHUB_WORKSPACE/data/" | grep -i eth || echo "no ETH files found in data/"
+          ls -la data/ | grep -i eth || echo "no ETH files found in data/"
 
       - name: Commit and push data
         if: always()
