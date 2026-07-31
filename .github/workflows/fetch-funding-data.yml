@@ -48,20 +48,26 @@ jobs:
         working-directory: research/data
         run: |
           set +e
+          echo "cwd: $(pwd)" > "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE" >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
           python -c "
-          import traceback
-          from okx_funding_rate_fetcher import download_funding_data
-
+          import traceback, sys
+          print('python sys.path[0]:', sys.path[0])
           try:
+              from okx_funding_rate_fetcher import download_funding_data
               df = download_funding_data(inst_id='ETH-USDT-SWAP', force_refresh=True, filename='ETHUSDT_funding_rate')
-              print(f'ETH funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
+              print(f'SUCCESS: ETH funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
           except Exception as e:
-              print(f'ETH funding fetch FAILED: {e}')
+              print(f'FAILED: {e}')
               traceback.print_exc()
-              raise
-          " > ../../eth_funding_fetch_log.txt 2>&1
-          echo "exit_code=$?" >> ../../eth_funding_fetch_log.txt
-          cat ../../eth_funding_fetch_log.txt
+              sys.exit(1)
+          " >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt" 2>&1
+          PYEXIT=$?
+          echo "python_exit_code=$PYEXIT" >> "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
+          echo "--- log contents ---"
+          cat "$GITHUB_WORKSPACE/eth_funding_fetch_log.txt"
+          echo "--- data dir after fetch ---"
+          ls -la "$GITHUB_WORKSPACE/data/" | grep -i eth || echo "no ETH files found in data/"
 
       - name: Commit and push data
         if: always()
@@ -71,5 +77,6 @@ jobs:
           git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
                      data/ETHUSDT_funding_rate.parquet data/ETHUSDT_funding_rate.csv \
                      data/MANIFEST.json funding_fetch_log.txt eth_funding_fetch_log.txt 2>/dev/null || true
+          git status
           git diff --staged --quiet || git commit -m "data: fetch ETHUSDT perpetual funding rate history via OKX ($(date -u +'%Y-%m-%d'))"
           git push origin HEAD:${{ github.ref_name }}
