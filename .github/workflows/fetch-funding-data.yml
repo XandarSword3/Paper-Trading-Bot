@@ -44,6 +44,17 @@ jobs:
           echo "exit_code=$?" >> funding_fetch_log.txt
           cat funding_fetch_log.txt
 
+      - name: DIAGNOSTIC — verify basic shell + commit mechanism works
+        run: |
+          echo "diagnostic marker $(date -u)" > diagnostic_test.txt
+          echo "python location: $(which python)"
+          python --version
+          echo "cwd: $(pwd)"
+          ls -la research/data/ | grep -i okx
+          echo "network test:"
+          python -c "import requests; r = requests.get('https://api.github.com', timeout=10); print('api.github.com status:', r.status_code)" || echo "network test FAILED"
+          python -c "import requests; r = requests.get('https://www.okx.com', timeout=10); print('okx.com status:', r.status_code)" || echo "okx test FAILED"
+
       - name: Fetch ETHUSDT funding rate history (OKX — Binance/Bybit blocked from CI)
         run: |
           set +e
@@ -58,7 +69,7 @@ jobs:
         run: |
           git config --local user.email "data-bot@github.com"
           git config --local user.name "Data Fetch Bot"
-          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
+          git add -f diagnostic_test.txt data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
                      data/ETHUSDT_funding_rate.parquet data/ETHUSDT_funding_rate.csv \
                      data/MANIFEST.json funding_fetch_log.txt eth_funding_fetch_log.txt 2>/dev/null || true
           git status
