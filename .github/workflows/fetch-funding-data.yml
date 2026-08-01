@@ -64,6 +64,39 @@ jobs:
           echo "--- data dir after fetch ---"
           ls -la data/ | grep -i eth || echo "no ETH files found in data/"
 
+      - name: DIAGNOSTIC — report status via API (bypasses raw log access entirely)
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "=== git status ==="
+            git status
+            echo "=== ls data/ ==="
+            ls -la data/ | grep -i eth || echo "no eth files"
+            echo "=== eth_funding_fetch_log.txt ==="
+            cat eth_funding_fetch_log.txt 2>/dev/null || echo "file does not exist"
+            echo "=== token permission check ==="
+            curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/collaborators/${{ github.actor }}/permission" \
+              || echo "permission check curl failed"
+            echo "=== attempting a direct API-based file write (bypasses git CLI) ==="
+            CONTENT_B64=$(echo "api write test $(date -u)" | base64 -w0)
+            curl -s -X PUT \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/contents/ci_diagnostic_output.txt" \
+              -d "{\"message\":\"ci diagnostic via Contents API\",\"content\":\"$CONTENT_B64\",\"branch\":\"${{ github.ref_name }}\"}"
+          } > diag_output_raw.txt 2>&1
+          # Push this diagnostic file directly via Contents API too, so it's readable
+          # even if we never figure out why git push wasn't landing anything.
+          DIAG_B64=$(base64 -w0 diag_output_raw.txt)
+          curl -s -X PUT \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/ci_diagnostic_full.txt" \
+            -d "{\"message\":\"ci diagnostic full output\",\"content\":\"$DIAG_B64\",\"branch\":\"${{ github.ref_name }}\"}"
+
       - name: Commit and push data
         if: always()
         run: |
@@ -72,6 +105,5 @@ jobs:
           git add -f diagnostic_test.txt data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
                      data/ETHUSDT_funding_rate.parquet data/ETHUSDT_funding_rate.csv \
                      data/MANIFEST.json funding_fetch_log.txt eth_funding_fetch_log.txt 2>/dev/null || true
-          git status
           git diff --staged --quiet || git commit -m "data: fetch ETHUSDT perpetual funding rate history via OKX ($(date -u +'%Y-%m-%d'))"
           git push origin HEAD:${{ github.ref_name }}
