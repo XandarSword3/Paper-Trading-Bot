@@ -43,10 +43,46 @@ jobs:
           cat funding_fetch_log.txt
 
       - name: Fetch ETHUSDT funding rate history (OKX — Binance/Bybit blocked from CI)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
           python research/data/fetch_eth_funding_ci.py 2>&1 | tee eth_funding_fetch_log.txt
           echo "python_exit_code=${PIPESTATUS[0]}" >> eth_funding_fetch_log.txt
+
+          # Deliver the fetched files via the GitHub Contents API directly,
+          # rather than relying solely on git add/commit/push. This repo's
+          # git-based commit step has failed to land changes across several
+          # debugging attempts for reasons never fully confirmed (raw CI
+          # logs are hosted on Azure blob storage, outside the network
+          # allowlist of the environment that built this pipeline) — while
+          # a Contents-API write was independently verified to work
+          # reliably in that same debugging session. Kept as a second,
+          # independent delivery path rather than the sole one, since git
+          # push *should* work and may simply have been racing the
+          # concurrent funding-carry paper-bot's own commits.
+          if [ -f data/ETHUSDT_funding_rate.csv ]; then
+            for f in data/ETHUSDT_funding_rate.csv data/ETHUSDT_funding_rate.parquet; do
+              if [ -f "$f" ]; then
+                CONTENT_B64=$(base64 -w0 "$f")
+                EXISTING_SHA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                  "https://api.github.com/repos/${{ github.repository }}/contents/$f?ref=${{ github.ref_name }}" \
+                  | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null)
+                if [ -n "$EXISTING_SHA" ]; then
+                  PAYLOAD="{\"message\":\"data: fetch ETHUSDT funding rate via OKX (Contents API)\",\"content\":\"$CONTENT_B64\",\"branch\":\"${{ github.ref_name }}\",\"sha\":\"$EXISTING_SHA\"}"
+                else
+                  PAYLOAD="{\"message\":\"data: fetch ETHUSDT funding rate via OKX (Contents API)\",\"content\":\"$CONTENT_B64\",\"branch\":\"${{ github.ref_name }}\"}"
+                fi
+                curl -s -X PUT \
+                  -H "Authorization: token $GITHUB_TOKEN" \
+                  -H "Accept: application/vnd.github+json" \
+                  "https://api.github.com/repos/${{ github.repository }}/contents/$f" \
+                  -d "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print('Contents API result for $f:', 'OK' if 'content' in d else d.get('message'))"
+              fi
+            done
+          else
+            echo "No ETH data file to deliver — fetch step did not produce output"
+          fi
 
       - name: Commit and push data
         if: always()
