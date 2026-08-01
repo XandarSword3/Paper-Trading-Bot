@@ -27,83 +27,38 @@ jobs:
         run: pip install pandas numpy requests tqdm pyarrow
 
       - name: Fetch BTCUSDT funding rate history
+        # Known broken: Binance fapi.binance.com returns HTTP 451 to
+        # GitHub-hosted runner IPs (confirmed via the OKX fetcher's own
+        # docstring, which documents this exact block). Left as-is rather
+        # than switched to OKX, since OKX's public endpoint only serves a
+        # ~1-month trailing window (confirmed empirically: the ETH fetch
+        # below returned exactly 100 settlements / ~33 days) and would
+        # regress the existing 7-year Binance-sourced BTC history if it
+        # force-overwrote the file. Soft-fails (set +e) so it never blocks
+        # the ETH fetch step below.
         run: |
           set +e
-          python -c "
-          import traceback
-          from funding_rate_fetcher import download_funding_data
-
-          try:
-              df = download_funding_data(start_date='2019-09-01', force_refresh=True)
-              print(f'funding: {len(df)} settlements, {df.index[0]} -> {df.index[-1]}')
-          except Exception as e:
-              print(f'funding fetch FAILED: {e}')
-              traceback.print_exc()
-              raise
-          " > funding_fetch_log.txt 2>&1
+          python research/data/funding_rate_fetcher.py > funding_fetch_log.txt 2>&1
           echo "exit_code=$?" >> funding_fetch_log.txt
           cat funding_fetch_log.txt
-
-      - name: DIAGNOSTIC — verify basic shell + commit mechanism works
-        run: |
-          echo "diagnostic marker $(date -u)" > diagnostic_test.txt
-          echo "python location: $(which python)"
-          python --version
-          echo "cwd: $(pwd)"
-          ls -la research/data/ | grep -i okx
-          echo "network test:"
-          python -c "import requests; r = requests.get('https://api.github.com', timeout=10); print('api.github.com status:', r.status_code)" || echo "network test FAILED"
-          python -c "import requests; r = requests.get('https://www.okx.com', timeout=10); print('okx.com status:', r.status_code)" || echo "okx test FAILED"
 
       - name: Fetch ETHUSDT funding rate history (OKX — Binance/Bybit blocked from CI)
         run: |
           set +e
           python research/data/fetch_eth_funding_ci.py 2>&1 | tee eth_funding_fetch_log.txt
-          PYEXIT=${PIPESTATUS[0]}
-          echo "python_exit_code=$PYEXIT" >> eth_funding_fetch_log.txt
-          echo "--- data dir after fetch ---"
-          ls -la data/ | grep -i eth || echo "no ETH files found in data/"
-
-      - name: DIAGNOSTIC — report status via API (bypasses raw log access entirely)
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          {
-            echo "=== git status ==="
-            git status
-            echo "=== ls data/ ==="
-            ls -la data/ | grep -i eth || echo "no eth files"
-            echo "=== eth_funding_fetch_log.txt ==="
-            cat eth_funding_fetch_log.txt 2>/dev/null || echo "file does not exist"
-            echo "=== token permission check ==="
-            curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${{ github.repository }}/collaborators/${{ github.actor }}/permission" \
-              || echo "permission check curl failed"
-            echo "=== attempting a direct API-based file write (bypasses git CLI) ==="
-            CONTENT_B64=$(echo "api write test $(date -u)" | base64 -w0)
-            curl -s -X PUT \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${{ github.repository }}/contents/ci_diagnostic_output.txt" \
-              -d "{\"message\":\"ci diagnostic via Contents API\",\"content\":\"$CONTENT_B64\",\"branch\":\"${{ github.ref_name }}\"}"
-          } > diag_output_raw.txt 2>&1
-          # Push this diagnostic file directly via Contents API too, so it's readable
-          # even if we never figure out why git push wasn't landing anything.
-          DIAG_B64=$(base64 -w0 diag_output_raw.txt)
-          curl -s -X PUT \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/ci_diagnostic_full.txt" \
-            -d "{\"message\":\"ci diagnostic full output\",\"content\":\"$DIAG_B64\",\"branch\":\"${{ github.ref_name }}\"}"
+          echo "python_exit_code=${PIPESTATUS[0]}" >> eth_funding_fetch_log.txt
 
       - name: Commit and push data
         if: always()
         run: |
           git config --local user.email "data-bot@github.com"
           git config --local user.name "Data Fetch Bot"
-          git add -f diagnostic_test.txt data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
+          # Rebase onto the latest remote state first — this repo also runs
+          # a funding-carry paper-trading bot on its own schedule that
+          # commits to master frequently, so a plain push here can race it.
+          git pull --rebase origin ${{ github.ref_name }} || true
+          git add -f data/BTCUSDT_funding_rate.parquet data/BTCUSDT_funding_rate.csv \
                      data/ETHUSDT_funding_rate.parquet data/ETHUSDT_funding_rate.csv \
                      data/MANIFEST.json funding_fetch_log.txt eth_funding_fetch_log.txt 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "data: fetch ETHUSDT perpetual funding rate history via OKX ($(date -u +'%Y-%m-%d'))"
+          git diff --staged --quiet || git commit -m "data: fetch funding rate history ($(date -u +'%Y-%m-%d'))"
           git push origin HEAD:${{ github.ref_name }}
