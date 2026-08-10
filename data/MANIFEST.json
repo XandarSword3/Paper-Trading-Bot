@@ -2,37 +2,37 @@
   "BTCUSDT_4h": {
     "source": "CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "BTCUSD",
-    "rows": 17964,
+    "rows": 18006,
     "start": "2018-05-15 04:00:00",
-    "end": "2026-08-03 00:00:00",
-    "fetched_at": "2026-08-03T09:50:37.834039+00:00",
-    "sha256": "2939dfcb23870471af55a7de55e5ee202009b761b88111ecdfd3744cc59581c3"
+    "end": "2026-08-10 00:00:00",
+    "fetched_at": "2026-08-10T07:45:51.285536+00:00",
+    "sha256": "622d7fb1523f8c3992ea88ed79805e666a6090e8e2920d019c5acb10cbefc5d5"
   },
   "BTCUSDT_1h": {
     "source": "CryptoDataDownload.com Bitstamp_BTCUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "BTCUSD",
-    "rows": 71839,
+    "rows": 72007,
     "start": "2018-05-15 06:00:00",
-    "end": "2026-08-03 00:00:00",
-    "fetched_at": "2026-08-03T09:51:09.675496+00:00",
-    "sha256": "5e27081c7a676f8c94dd54fc09d57df1130f23255a7f0219a8becf53f6b38d72"
+    "end": "2026-08-10 00:00:00",
+    "fetched_at": "2026-08-10T07:46:22.299217+00:00",
+    "sha256": "cd9ab34de61f8d0980e13044a8f23052f993e22bba9d4f5fe89fa7fc34b65677"
   },
   "ETHUSDT_4h": {
     "source": "CryptoDataDownload.com Bitstamp_ETHUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "ETHUSD",
-    "rows": 17968,
+    "rows": 18010,
     "start": "2018-05-15 04:00:00",
-    "end": "2026-08-03 00:00:00",
-    "fetched_at": "2026-08-03T09:51:41.194142+00:00",
-    "sha256": "33141cdbe5fed6e65ac398f9c72e31411d43abb345c8c70fd4a7145dd1f2f8ef"
+    "end": "2026-08-10 00:00:00",
+    "fetched_at": "2026-08-10T07:46:52.905679+00:00",
+    "sha256": "46bfcf1918a0e4b78fd279eb24b63e8447dc91d79229743affafce5bd67c334b"
   },
   "ETHUSDT_1h": {
     "source": "CryptoDataDownload.com Bitstamp_ETHUSD CSV (proxy \u2014 Binance unreachable)",
     "symbol": "ETHUSD",
-    "rows": 71859,
+    "rows": 72027,
     "start": "2018-05-15 06:00:00",
-    "end": "2026-08-03 00:00:00",
-    "fetched_at": "2026-08-03T09:52:13.017637+00:00",
-    "sha256": "9f70edd2586d097a8d8b25d32e6dd2c567a996109f517d49977bfa8df1732d33"
+    "end": "2026-08-10 00:00:00",
+    "fetched_at": "2026-08-10T07:47:23.859545+00:00",
+    "sha256": "33141c94f9636a74af7f237e120b11196d18697e3a853c6452be5e785a259276"
   }
 }
