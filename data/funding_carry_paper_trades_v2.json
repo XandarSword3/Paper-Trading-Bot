@@ -1061,5 +1061,21 @@
     "perp_equity": 101767.8343112068,
     "maintenance_margin": 393.52516,
     "combined_equity": 200149.1243112068
+  },
+  {
+    "timestamp": "2026-08-14T08:00:00+00:00",
+    "event": "funding",
+    "funding_rate": 8.26026727968e-05,
+    "mark_price_used": 62861.1,
+    "funding_payment": 8.048367056167733,
+    "cumulative_funding": 318.8620667630377
+  },
+  {
+    "timestamp": "2026-08-14T09:18:05.542282+00:00",
+    "event": "mark",
+    "mark_price": 62861.1,
+    "perp_equity": 102722.46767826297,
+    "maintenance_margin": 389.73882000000003,
+    "combined_equity": 200157.17267826298
   }
 ]
