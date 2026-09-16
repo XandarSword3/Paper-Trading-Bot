@@ -3,7 +3,7 @@
   "notional": 100000.0,
   "capital_multiplier": 2.0,
   "real_capital": 200000.0,
-  "equity": 200913.17865143294,
-  "last_settlement_applied": "2026-09-16T08:00:00+00:00",
-  "num_settlements": 178
+  "equity": 200917.19407396571,
+  "last_settlement_applied": "2026-09-16T16:00:00+00:00",
+  "num_settlements": 179
 }
