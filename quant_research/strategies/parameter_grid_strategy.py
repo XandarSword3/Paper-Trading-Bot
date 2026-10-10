@@ -66,6 +66,7 @@ def run_fast_grid_simulation(
     returns_bps_sum = 0.0
     win_count = 0
     fast_trades = []
+    ambiguous_bars_count = 0
 
     fee_slip_side = (cost_model.taker_fee_pct / 100.0) + (cost_model.slippage_pct / 100.0)
     apply_funding = cost_model.apply_funding
@@ -105,6 +106,11 @@ def run_fast_grid_simulation(
                     trail_level = highest_since_entry - float(tp_type) * atr
                     if trail_level > active_stop:
                         active_stop = trail_level
+
+                # Intrabar ambiguous bar check: stop and target touched in same bar
+                target_level = bb_basis_arr[i] if tp_type == "basis_reversion" else params.get("target_price")
+                if target_level is not None and low <= active_stop and high >= target_level:
+                    ambiguous_bars_count += 1
 
                 if low <= active_stop:
                     exit_triggered = True
@@ -155,6 +161,11 @@ def run_fast_grid_simulation(
                     trail_level = lowest_since_entry + float(tp_type) * atr
                     if trail_level < active_stop:
                         active_stop = trail_level
+
+                # Intrabar ambiguous bar check: stop and target touched in same bar
+                target_level = bb_basis_arr[i] if tp_type == "basis_reversion" else params.get("target_price")
+                if target_level is not None and high >= active_stop and low <= target_level:
+                    ambiguous_bars_count += 1
 
                 if high >= active_stop:
                     exit_triggered = True
@@ -239,6 +250,7 @@ def run_fast_grid_simulation(
         "win_rate_pct": round(win_rate, 2),
         "profit_factor": round(profit_factor, 2),
         "final_equity": round(equity, 2),
+        "ambiguous_bars": ambiguous_bars_count,
     }
     return (res, fast_trades) if return_trades else res
 
