@@ -62,7 +62,7 @@
     "max_drawdown_pct": 1489.368339867352,
     "expectancy_bps": -18.247831545366626,
     "profit_factor": 0.6008975766465632,
-    "dsr_stat": -729.0481780987393,
+    "dsr_stat": -746.5400060728468,
     "dsr_p_value": 1.0
   },
   "holdout_base_metrics": {
