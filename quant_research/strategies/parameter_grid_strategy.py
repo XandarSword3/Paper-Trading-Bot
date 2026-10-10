@@ -31,9 +31,12 @@ def run_fast_grid_simulation(
     cost_model: CostModel,
     initial_capital: float = 100_000.0,
     risk_percent: float = 1.0,
-) -> Dict[str, Any]:
+    timestamps: Optional[pd.DatetimeIndex] = None,
+    return_trades: bool = False,
+) -> Any:
     """
     Ultra-fast simulation for grid search: returns key selection metrics in milliseconds.
+    If return_trades=True, also returns the list of recorded trade dictionaries.
     """
     bb_mult = float(params["bb_mult"])
     rsi_low, rsi_high = params["rsi_thresh"]
@@ -49,6 +52,7 @@ def run_fast_grid_simulation(
     position_size = 0.0
     position_direction = 0  # 1: long, -1: short, 0: flat
     entry_price = 0.0
+    entry_time = None
     bars_held = 0
     active_stop = 0.0
     highest_since_entry = 0.0
@@ -61,8 +65,9 @@ def run_fast_grid_simulation(
     gross_losses = 0.0
     returns_bps_sum = 0.0
     win_count = 0
+    fast_trades = []
 
-    fee_slip_side = (cost_model.taker_fee_pct + cost_model.slippage_pct) / 100.0
+    fee_slip_side = (cost_model.taker_fee_pct / 100.0) + (cost_model.slippage_pct / 100.0)
     apply_funding = cost_model.apply_funding
 
     # Dynamic BB upper/lower
@@ -129,6 +134,15 @@ def run_fast_grid_simulation(
                     else:
                         gross_losses += abs(net_pnl)
 
+                    if return_trades:
+                        fast_trades.append({
+                            "entry_time": entry_time,
+                            "exit_time": timestamps[i] if timestamps is not None else i,
+                            "direction": "long",
+                            "net_pnl": net_pnl,
+                            "return_bps": bps,
+                        })
+
                     position_direction = 0
                     position_size = 0.0
                     bars_held = 0
@@ -170,6 +184,15 @@ def run_fast_grid_simulation(
                     else:
                         gross_losses += abs(net_pnl)
 
+                    if return_trades:
+                        fast_trades.append({
+                            "entry_time": entry_time,
+                            "exit_time": timestamps[i] if timestamps is not None else i,
+                            "direction": "short",
+                            "net_pnl": net_pnl,
+                            "return_bps": bps,
+                        })
+
                     position_direction = 0
                     position_size = 0.0
                     bars_held = 0
@@ -192,6 +215,8 @@ def run_fast_grid_simulation(
                     position_direction = 1 if long_sig else -1
                     position_size = size if long_sig else -size
                     entry_price = fill_price
+                    if return_trades:
+                        entry_time = timestamps[i + 1] if timestamps is not None else (i + 1)
                     bars_held = 0
                     funding_accrued = 0.0
 
@@ -207,7 +232,7 @@ def run_fast_grid_simulation(
     profit_factor = (gross_wins / gross_losses) if gross_losses > 0 else (999.0 if gross_wins > 0 else 0.0)
     total_ret_pct = ((equity - initial_capital) / initial_capital) * 100.0
 
-    return {
+    res = {
         "total_trades": trade_count,
         "expectancy_bps": round(exp_bps, 2),
         "total_return_pct": round(total_ret_pct, 2),
@@ -215,6 +240,7 @@ def run_fast_grid_simulation(
         "profit_factor": round(profit_factor, 2),
         "final_equity": round(equity, 2),
     }
+    return (res, fast_trades) if return_trades else res
 
 
 def run_grid_simulation(
