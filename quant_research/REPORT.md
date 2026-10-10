@@ -196,14 +196,21 @@ The calibration run **WAS performed** prior to Test 1 and saved in `quant_resear
 ## 4. Trial Log Accountability
 
 - **Rows Deleted from `trials.csv`:** Exactly **1,296 rows** were truncated when the first Test 2 execution was terminated.
-- **First Test 2 Run Production:** The aborted single-core run evaluated all 1,296 In-Sample configurations. It selected `CFG_1142` as the top in-sample candidate (+2.97 bps net expectancy, 2,752 trades, 64.97% win rate) before entering the rolling walk-forward fold loop, where it became unresponsive/hung due to single-threaded CPU bottleneck.
-- **True Total Trial Evaluations:**
-  - Calibration Runs: 4 evaluations
-  - Test 1 (Mechanical Indicator Stack): 12 evaluations
-  - Test 2 Run 1 (Aborted during WF): 1,296 evaluations
-  - Test 2 Run 2 (Completed Multiprocessing): 1,296 evaluations
-  - Test 3 (Cross-Asset Robustness): 6 evaluations
-  - **Grand Total Configurations Evaluated:** **2,614 trial runs**.
+- **First Test 2 Run Production:** The aborted single-core run evaluated all 1,296 In-Sample configurations. It selected `CFG_1142` as the top in-sample candidate (+2.97 bps net expectancy, 457 trades, 49.23% win rate, cited from `quant_research/results/test_2_results.json`) before entering the rolling walk-forward fold loop, where it became unresponsive/hung due to single-threaded CPU bottleneck.
+- **Trial Recount:**
+  - **Distinct Strategy Parameter Sets (for DSR adjustment):**
+    * Test 2 Grid: 1,296 unique configs
+    * Test 1 Mechanical Variants: 12 unique configs
+    * Test 3 Cross-Asset Strategies: 6 unique configs
+    * Calibration Strategies: 4 unique configs
+    * **Total Distinct Configurations:** **1,318 unique parameter sets**.
+  - **Compute Simulations (Individual Backtest Executions):**
+    * Test 1 (1m, 3m, 5m): 12 runs
+    * Test 2 (Single Complete Pass): Fixed IS (1,296) + 5 WF train grids (5 x 1,296 = 6,480) + 5 WF test runs (5) + Fixed OOS base/stress (2) + Live window (1) + Hold-out base/stress (2) = 7,786 runs
+    * Test 3 (BTC & ETH across 4 windows): 24 runs
+    * Calibration (4 models x 2 windows): 8 runs
+    * **Single Complete Pass Total:** **7,830 compute executions**.
+    * **Cumulative Total Compute Runs (including aborted run + re-runs):** **16,912 executions**.
 
 ---
 
@@ -293,16 +300,25 @@ tests\test_readiness_gates.py ......                                     [100%]
 
 ### Explanation of -100% Account Drawdown
 At ultra-high trade frequencies (500 to 3,800 trades per year on 1m, 3m, and 5m timeframes), every position faces a 14.0 bps round-trip friction cost (10 bps taker commission + 4 bps execution slippage). Because the gross trading expectancy ranges between -9 bps and +2 bps, net trade expectancy is uniformly negative (-11 to -23 bps per trade). Compounding capital over thousands of consecutive negative-expectancy bets causes exponential decay:
-$$E_T = E_0 \prod_{t=1}^T (1 + r_t)$$
 Once capital falls below the minimum viable trade size ($10 notional), trading terminates and the final portfolio equity registers total account ruin (-100.0%).
+
+### Corrected Stitched Walk-Forward Performance (Test 2)
+*(Corrected using geometric compounding and hard ruin floor at zero)*
+- **Total Trades:** 738 (across 5 folds, cited from `quant_research/results/test_2_results.json`)
+- **Total Return:** **-76.14%** (previously distorted at -1462.37% due to additive dollar compounding against a $10k baseline)
+- **Max Drawdown:** **76.80%** (previously distorted at 1489.37%)
+- **Annualized Sharpe Ratio:** **-3.183**
+- **Net Expectancy:** **-18.25 bps**
+- **Profit Factor:** **0.65**
+- **Final Equity:** **$23,863.81** (from $100,000.00 initial capital)
 
 ---
 
 ## 7. Hold-Out Status
 
-- **Status:** **BURNED for SOLUSDT**.
-- **Explanation:** During Test 2 Part 3, config `CFG_1142` was evaluated on the frozen hold-out dataset (2026-04-01 to 2026-10-09). It generated 270 trades, -16.25 bps net expectancy, and -52.44% total return. Because the SOL hold-out window was inspected, it is permanently marked as **BURNED** for SOLUSDT.
-- **BTC & ETH Hold-Outs:** Remain completely untouched and frozen.
+- **SOL Hold-Out (2026-04-01 to 2026-10-09):** **BURNED**. Config `CFG_1142` was evaluated during Test 2 Part 3 (270 trades, -16.25 bps net expectancy, -52.44% return, cited from `quant_research/results/test_2_results.json`).
+- **BTC 2025+:** **BURNED**. BTC was evaluated across calibration (2018–2026), legacy backtests, and Test 3 (IS, OOS, live, and hold-out through 2026-10-09). BTC results must be reported as OOS only, never as clean hold-out.
+- **ETH 2026-04-01+:** **FRESH**. Remains untouched and reserved strictly as a veto hold-out for the Turtle strategy family.
 
 ---
 

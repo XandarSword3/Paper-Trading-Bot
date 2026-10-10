@@ -141,10 +141,14 @@ def stitch_walk_forward_trades(
     gross_loss = 0.0
 
     for _, tr in all_trades.iterrows():
-        pnl = tr["net_pnl"]
-        equity += pnl
+        r = float(tr.get("return_pct", 0.0))
+        returns_pct.append(r)
+
+        # Multiplicative compounding with hard ruin floor at zero (equity can never go negative)
+        pnl = equity * r
+        equity = max(0.0, equity + pnl)
         equity_curve.append(equity)
-        returns_pct.append(tr["return_pct"])
+
         if pnl > 0:
             gross_profit += pnl
         else:
@@ -152,18 +156,17 @@ def stitch_walk_forward_trades(
 
     total_return_pct = ((equity - initial_capital) / initial_capital) * 100.0
 
-    # Max Drawdown
+    # Max Drawdown strictly bounded in [0%, 100%]
     eq_series = pd.Series(equity_curve)
     peaks = eq_series.cummax()
-    drawdowns = (peaks - eq_series) / peaks * 100.0
-    max_dd = float(drawdowns.max())
+    drawdowns = np.where(peaks > 0, (peaks - eq_series) / peaks * 100.0, 0.0)
+    max_dd = float(np.max(drawdowns)) if len(drawdowns) > 0 else 0.0
 
     # Expectancy in bps
     exp_bps = float(np.mean(returns_pct) * 10000.0) if returns_pct else 0.0
 
-    # Sharpe of trade returns
+    # Annualized Sharpe of trade returns
     if len(returns_pct) > 1 and np.std(returns_pct) > 1e-8:
-        # Annualized assuming typical trade frequency
         sharpe = float(np.mean(returns_pct) / np.std(returns_pct) * np.sqrt(len(returns_pct)))
     else:
         sharpe = 0.0

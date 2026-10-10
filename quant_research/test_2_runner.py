@@ -404,7 +404,7 @@ def run_test_2():
         print(f"[{f_id}] Selected {best_fold_cfg['config_id']} (Train Exp: {best_fold_exp:.2f} bps, {best_fold_trades} tr) -> Test Exp: {m_te['expectancy_bps']:.2f} bps ({m_te['total_trades']} tr) in {time.time() - t_fold_start:.2f}s", flush=True)
 
     # Stitch walk-forward trades
-    stitched = stitch_walk_forward_trades(wf_test_trades_dfs)
+    stitched = stitch_walk_forward_trades(wf_test_trades_dfs, initial_capital=100000.0)
     print("\nStitched Walk-Forward Performance (OOS 2025-01 to 2026-03):", flush=True)
     print(f"  Total Trades: {stitched['total_trades']}", flush=True)
     print(f"  Total Return: {stitched['total_return_pct']:.2f}%", flush=True)
