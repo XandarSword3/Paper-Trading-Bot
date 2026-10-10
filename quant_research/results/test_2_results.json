@@ -1,0 +1,158 @@
+{
+  "best_config": {
+    "config_id": "CFG_1142",
+    "bb_mult": 2.5,
+    "rsi_thresh": [
+      20.0,
+      80.0
+    ],
+    "adx_thresh": 30.0,
+    "stop_atr_mult": 3.0,
+    "tp_type": "3.5",
+    "max_hold": 20
+  },
+  "is_metrics": {
+    "total_trades": 457,
+    "expectancy_bps": 2.97,
+    "total_return_pct": -17.26,
+    "win_rate_pct": 49.23,
+    "profit_factor": 0.9,
+    "final_equity": 82742.89
+  },
+  "oos_base_metrics": {
+    "total_trades": 466,
+    "total_return_pct": -59.8,
+    "cagr_pct": -59.8,
+    "sharpe_ratio": -4.432,
+    "max_drawdown_pct": 61.0,
+    "expectancy_bps": -21.2,
+    "profit_factor": 0.57,
+    "win_rate_pct": 39.91,
+    "round_trip_cost_bps": 14.0,
+    "final_equity": 40197.46
+  },
+  "oos_stress_metrics": {
+    "total_trades": 466,
+    "total_return_pct": -66.5,
+    "cagr_pct": -66.51,
+    "sharpe_ratio": -5.241,
+    "max_drawdown_pct": 67.47,
+    "expectancy_bps": -25.2,
+    "profit_factor": 0.51,
+    "win_rate_pct": 38.41,
+    "round_trip_cost_bps": 18.0,
+    "final_equity": 33495.35
+  },
+  "live_metrics": {
+    "total_trades": 55,
+    "total_return_pct": -13.66,
+    "cagr_pct": -74.71,
+    "sharpe_ratio": -6.432,
+    "max_drawdown_pct": 14.36,
+    "expectancy_bps": -23.06,
+    "profit_factor": 0.43,
+    "win_rate_pct": 36.36,
+    "round_trip_cost_bps": 14.0,
+    "final_equity": 86338.63
+  },
+  "stitched_wf_metrics": {
+    "total_trades": 738,
+    "total_return_pct": -1462.3740661838688,
+    "sharpe_ratio": -3.1832405501934207,
+    "max_drawdown_pct": 1489.368339867352,
+    "expectancy_bps": -18.247831545366626,
+    "profit_factor": 0.6008975766465632,
+    "dsr_stat": -729.0481780987393,
+    "dsr_p_value": 1.0
+  },
+  "holdout_base_metrics": {
+    "total_trades": 270,
+    "total_return_pct": -52.44,
+    "cagr_pct": -75.66,
+    "sharpe_ratio": -6.692,
+    "max_drawdown_pct": 54.13,
+    "expectancy_bps": -16.25,
+    "profit_factor": 0.5,
+    "win_rate_pct": 36.67,
+    "round_trip_cost_bps": 14.0,
+    "final_equity": 47556.72
+  },
+  "holdout_stress_metrics": {
+    "total_trades": 270,
+    "total_return_pct": -58.57,
+    "cagr_pct": -81.28,
+    "sharpe_ratio": -7.715,
+    "max_drawdown_pct": 60.02,
+    "expectancy_bps": -20.25,
+    "profit_factor": 0.44,
+    "win_rate_pct": 34.44,
+    "round_trip_cost_bps": 18.0,
+    "final_equity": 41426.32
+  },
+  "fold_summaries": [
+    {
+      "Fold": "Fold_1",
+      "Train Window": "2024-01-01 to 2024-12-31",
+      "Test Window": "2025-01-01 to 2025-03-31",
+      "Train Trades": 370,
+      "Train Exp (bps)": 10.92,
+      "Selected Config": "CFG_1147",
+      "Test Trades": 78,
+      "Test Exp (bps)": -39.65,
+      "Test Return %": -22.1
+    },
+    {
+      "Fold": "Fold_2",
+      "Train Window": "2024-04-01 to 2025-03-31",
+      "Test Window": "2025-04-01 to 2025-06-30",
+      "Train Trades": 389,
+      "Train Exp (bps)": -2.67,
+      "Selected Config": "CFG_1126",
+      "Test Trades": 135,
+      "Test Exp (bps)": -27.64,
+      "Test Return %": -40.12
+    },
+    {
+      "Fold": "Fold_3",
+      "Train Window": "2024-07-01 to 2025-06-30",
+      "Test Window": "2025-07-01 to 2025-09-30",
+      "Train Trades": 847,
+      "Train Exp (bps)": -6.21,
+      "Selected Config": "CFG_0715",
+      "Test Trades": 206,
+      "Test Exp (bps)": -5.68,
+      "Test Return %": -20.11
+    },
+    {
+      "Fold": "Fold_4",
+      "Train Window": "2024-10-01 to 2025-09-30",
+      "Test Window": "2025-10-01 to 2025-12-31",
+      "Train Trades": 835,
+      "Train Exp (bps)": -7.41,
+      "Selected Config": "CFG_0715",
+      "Test Trades": 223,
+      "Test Exp (bps)": -14.07,
+      "Test Return %": -32.2
+    },
+    {
+      "Fold": "Fold_5",
+      "Train Window": "2025-01-01 to 2025-12-31",
+      "Test Window": "2026-01-01 to 2026-03-31",
+      "Train Trades": 321,
+      "Train Exp (bps)": -5.87,
+      "Selected Config": "CFG_0973",
+      "Test Trades": 96,
+      "Test Exp (bps)": -24.33,
+      "Test Return %": -30.86
+    }
+  ],
+  "verdict": "FAIL",
+  "criteria": {
+    "c1_net_expectancy": false,
+    "c2_stress_cost": false,
+    "c3_dsr_significance": false,
+    "c4_sample_size": true,
+    "c5_drawdown": false,
+    "c6_profit_factor": false
+  }
+}

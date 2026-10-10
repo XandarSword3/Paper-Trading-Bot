@@ -48,6 +48,10 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Quant Research Data
+quant_research/data/
+quant_research/results/*.parquet
+
 # Streamlit (legacy)
 .streamlit/
 
