@@ -1,6 +1,6 @@
 {
   "ready_for_live": false,
-  "generated_at": "2026-10-09T13:35:10.257607+00:00",
+  "generated_at": "2026-10-10T12:51:01.670231+00:00",
   "strategy": "v4",
   "reasons": [
     "annualized paper Sharpe -1.36 < required 0.5",
