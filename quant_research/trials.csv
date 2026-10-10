@@ -1,0 +1,1 @@
+trial_id,timestamp_utc,test_name,asset,timeframe,strategy_name,params_json,is_return_pct,is_expectancy_bps,oos_return_pct,oos_expectancy_bps,status
