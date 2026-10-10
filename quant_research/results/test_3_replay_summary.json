@@ -1,0 +1,66 @@
+{
+  "total_trades": 257,
+  "symbols": {
+    "SOLUSDT": 195,
+    "BTCUSDT": 35,
+    "ETHUSDT": 25,
+    "BNBUSDT": 2
+  },
+  "win_rate_pct": 52.14,
+  "profit_factor": 1.51,
+  "total_volume_usd": 2279063.79,
+  "total_gross_pnl_usd": 960.27,
+  "total_commissions_usd": -1139.53,
+  "total_funding_usd": 0.68,
+  "insurance_liquidation_usd": -18.76,
+  "total_net_pnl_usd": -178.59,
+  "avg_gross_expectancy_bps": 6.94,
+  "avg_fee_drag_bps": 10.0,
+  "avg_funding_bps": -0.03,
+  "avg_net_expectancy_bps": -3.08,
+  "max_drawdown_pct": 41.45,
+  "total_deposits_usd": 189.28,
+  "account_wipeout_pct": 94.35,
+  "symbol_breakdown": {
+    "BNBUSDT": {
+      "trades": 2,
+      "win_rate_pct": 0.0,
+      "volume_usd": 4423.76,
+      "gross_pnl_usd": 1.64,
+      "commission_usd": -2.21,
+      "funding_usd": 0.0,
+      "net_pnl_usd": -0.58,
+      "avg_net_bps": -2.79
+    },
+    "BTCUSDT": {
+      "trades": 35,
+      "win_rate_pct": 42.86,
+      "volume_usd": 211693.09,
+      "gross_pnl_usd": 12.09,
+      "commission_usd": -105.85,
+      "funding_usd": -0.14,
+      "net_pnl_usd": -93.9,
+      "avg_net_bps": -0.35
+    },
+    "ETHUSDT": {
+      "trades": 25,
+      "win_rate_pct": 44.0,
+      "volume_usd": 124054.44,
+      "gross_pnl_usd": -134.0,
+      "commission_usd": -62.03,
+      "funding_usd": -0.23,
+      "net_pnl_usd": -196.26,
+      "avg_net_bps": -23.83
+    },
+    "SOLUSDT": {
+      "trades": 195,
+      "win_rate_pct": 55.38,
+      "volume_usd": 1938892.49,
+      "gross_pnl_usd": 1080.55,
+      "commission_usd": -969.45,
+      "funding_usd": 1.04,
+      "net_pnl_usd": 112.15,
+      "avg_net_bps": -0.92
+    }
+  }
+}

@@ -344,3 +344,99 @@ index a9f7109..411e2d8 100644
 
 ### Clean State Confirmation
 All temporary scratch files remain localized in the conversation scratch directory. No modifications or live bot trades were executed.
+
+---
+
+## 9. Test 3 Replay: Empirical Replay of Binance Futures History
+
+*(All numbers cited directly from `quant_research/results/test_3_replay_summary.json` and `quant_research/results/test_3_replay_trades.csv`)*
+
+### Overview and Dataset Scope
+- **Data Source:** Raw execution fill archives (`trade_history.csv`) and transaction cashflow ledgers (`transaction_history.csv`) in `quant_research/inputs/`.
+- **Time Window:** `2025-04-04 18:48:43 UTC` to `2025-05-12 18:04:46 UTC` (38 days, 23 hours).
+- **Execution Volume:** 1,786 fill executions across 2,643 ledger transactions.
+- **Account Deposit Basis:** Exactly **$189.28** total net deposits (20 `TRANSFER` entries totaling $188.83 plus 4 `STRATEGY_ACCOUNT_TRANSFER` entries totaling $0.45).
+- **Completed Trade Cycles:** Exactly **257 closed round-trip positions** (reconstructed from flat-to-flat position cycles).
+
+### Portfolio Aggregate Results
+
+| Metric | Empirical Replay Value | Benchmark / Hurdle | Status |
+| :--- | :---: | :---: | :---: |
+| **Total Completed Trades** | **257** | $\ge 150$ | PASS |
+| **Total Notional Traded** | **$2,279,063.79** | - | 12,040x account turnover |
+| **Win Rate** | **52.14%** (134 W / 123 L) | > 50% | Gross Edge Present |
+| **Gross Realized PnL** | **+$960.27** | > $0 | Positive Alpha |
+| **Average Gross Expectancy** | **+6.94 bps** | > 0 bps | +6.94 bps per trade |
+| **Commissions Paid** | **-$1,139.53** | 0 bps | **-10.00 bps RT fee drag** |
+| **Funding Carry Cashflow** | **+$0.68** | - | -0.03 bps net impact |
+| **Insurance / Liquidation Fee** | **-$18.76** | - | Liquidation on ETH |
+| **Net Realized Trading PnL** | **-$178.59** | $\ge +5$ bps | **FAIL** (-3.08 bps) |
+| **Average Net Expectancy** | **-3.08 bps** | $\ge +5$ bps | Negative Net Expectancy |
+| **Profit Factor** | **1.51 (Gross) / 0.86 (Net)** | $\ge 1.25$ Net | FAIL |
+| **Max Drawdown** | **41.45%** | $< 30\%$ | FAIL |
+| **Capital Depletion** | **94.35%** ($189.28 $\to$ $10.69) | 0% | Total Account Ruin |
+
+### Symbol-by-Symbol Breakdown
+
+| Symbol | Trades | Win Rate % | Traded Volume ($) | Gross PnL ($) | Commissions ($) | Funding ($) | Net PnL ($) | Net Exp (bps) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **SOLUSDT** | 195 | 55.38% | \$1,938,892.49 | +$1,080.55 | -$969.45 | +$1.04 | **+$112.15** | -0.92 bps |
+| **BTCUSDT** | 35 | 42.86% | \$211,693.09 | +$12.09 | -$105.85 | -$0.14 | **-$93.90** | -0.35 bps |
+| **ETHUSDT** | 25 | 44.00% | \$124,054.44 | -$134.00 | -$62.03 | -$0.23 | **-$196.26** | -23.83 bps |
+| **BNBUSDT** | 2 | 0.00% | \$4,423.76 | +$1.64 | -$2.21 | \$0.00 | **-$0.58** | -2.79 bps |
+| **Total** | **257** | **52.14%** | **$2,279,063.79** | **+$960.27** | **-$1,139.53** | **+$0.68** | **-$178.59** | **-3.08 bps** |
+
+### Root Cause of Account Ruin in Test 3
+1. **The bot had a genuine gross trading edge (+6.94 bps, 52.14% win rate, 1.51 gross profit factor).**
+2. **However, it traded 257 times in 39 days with an average hold time of minutes, generating $2.28 Million in turnover on a $189 account.**
+3. **Binance Futures charged 5.00 bps per side (10.00 bps round-trip taker fee). Total commissions paid were $1,139.53.**
+4. **Because commission friction (10.0 bps) was 44% larger than the strategy's gross edge (6.94 bps), the bot bled -3.08 bps on every single bet, destroying $178.59 of the $189.28 capital base.**
+
+---
+
+## 10. Classical Turtle / Donchian Breakout Multi-Asset Evaluation (Addendum)
+
+*(All numbers cited directly from `quant_research/results/turtle_results.json`)*
+
+### Search Space & Execution Rules
+- **Configurations Evaluated:** 36 distinct parameter sets (3 assets: SOLUSDT, BTCUSDT, ETHUSDT $\times$ 3 timeframes: 5m, 15m, 1h $\times$ 4 lookbacks: $N \in \{20, 55\}$, $M \in \{10, 20\}$).
+- **Execution:** Next bar open fills, 14 bps RT base, 18 bps RT stress, empirical funding settlement, 4-unit pyramiding at 0.5N increments, 2N ratcheting stops, 2.0x leverage cap, zero same-bar pyramiding.
+- **In-Sample:** `2024-01-01` to `2025-03-31` | **Out-of-Sample:** `2025-04-01` to `2026-03-31`.
+
+### Pooled Multi-Asset Performance Summary (SOL + BTC + ETH)
+
+| Timeframe | Lookback Parameters | Pooled IS Trades | Pooled IS Exp (bps) | Pooled OOS Trades | Pooled OOS Exp (bps) | Stress OOS Exp (bps) | Mean OOS Sharpe | DSR $p$-value ($N=1,354$) | Hurdle Verdict |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **5m** | $N=20, M=10$ | 12,799 | -26.59 | 14,904 | -17.11 | -19.91 | -10.233 | 1.0000 | **FAIL** |
+| **5m** | $N=20, M=20$ | 13,044 | -27.80 | 13,665 | -17.93 | -21.57 | -8.437 | 1.0000 | **FAIL** |
+| **5m** | $N=55, M=10$ | 11,484 | -25.07 | 9,960 | -16.49 | -20.53 | -8.063 | 1.0000 | **FAIL** |
+| **5m** | $N=55, M=20$ | 10,996 | -27.11 | 9,589 | -17.51 | -21.26 | -7.108 | 1.0000 | **FAIL** |
+| **15m** | $N=20, M=10$ | 8,375 | -26.10 | 6,682 | -18.23 | -21.81 | -4.034 | 1.0000 | **FAIL** |
+| **15m** | $N=20, M=20$ | 7,311 | -25.85 | 5,826 | -15.89 | -19.96 | -2.535 | 1.0000 | **FAIL** |
+| **15m** | $N=55, M=10$ | 4,892 | -28.37 | 3,859 | -16.17 | -20.17 | -3.050 | 1.0000 | **FAIL** |
+| **15m** | $N=55, M=20$ | 4,647 | -27.81 | 3,629 | -13.52 | -17.53 | -2.049 | 1.0000 | **FAIL** |
+| **1h** | $N=20, M=10$ | 2,275 | -21.17 | 1,815 | -8.51 | -12.51 | -0.643 | 1.0000 | **FAIL** |
+| **1h** | $N=20, M=20$ | 1,977 | -9.05 | 1,613 | -5.38 | -9.37 | +0.121 | 1.0000 | **FAIL** |
+| **1h** | $N=55, M=10$ | 1,332 | -13.94 | 1,103 | -27.82 | -31.82 | -1.553 | 1.0000 | **FAIL** |
+| **1h** | $N=55, M=20$ | 1,254 | -12.25 | 1,061 | -33.19 | -37.19 | -1.042 | 1.0000 | **FAIL** |
+
+### Pre-Registered Decision Gate Evaluation
+1. **Net Expectancy Hurdle ($\ge +5.0$ bps):** 0 / 12 passed. All pooled configurations generated negative net expectancy (-5.38 to -18.23 bps).
+2. **Stress Hurdle ($> 0.0$ bps):** 0 / 12 passed. All pooled configurations generated negative stress expectancy (-9.37 to -21.81 bps).
+3. **Pooled Sample Size Hurdle ($\ge 150$ trades):** 12 / 12 passed (trade counts ranged from 1,061 to 14,904).
+4. **Statistical Significance Hurdle (DSR $p < 0.05$ across 1,354 trials):** 0 / 12 passed (DSR $p = 1.0000$).
+5. **Surviving Configurations Clearing Hurdles:** **0 / 36**.
+6. **Hold-Out Integrity:** Because zero configurations passed the pre-registered OOS hurdles, the fresh **ETH Hold-Out (`2026-04-01` to `2026-10-09`) was NOT touched**. It remains 100% frozen, unpolluted, and preserved.
+
+---
+
+## 11. Final Scientific Conclusion
+
+Across four comprehensive empirical tests and 2,650 logged trial executions:
+1. **Test 1 (Mechanical Indicator Stack):** All 12 variants failed In-Sample and Out-of-Sample (-11 to -23 bps net expectancy).
+2. **Test 2 (1,296 Parameter Grid & Walk-Forward):** Zero parameter configurations demonstrated persistent out-of-sample edge. Top in-sample candidate suffered -76.14% stitched return and -18.25 bps net expectancy on walk-forward testing.
+3. **Test 3 (Binance Futures Replay of 257 Live Trades):** The user's bot possessed a genuine gross edge (+6.94 bps, 52.14% win rate), but churning $2.28M of volume at 10 bps RT taker commissions drained $1,139.53 in fees, causing a 94.35% wipeout of the $189 deposit.
+4. **Turtle / Donchian Breakout Addendum (36 Multi-Asset Configs):** Classical trend-following failed on 5m, 15m, and 1h across SOL, BTC, and ETH (-5.38 to -18.23 bps pooled net expectancy).
+
+**Definitive Verdict:** **NO EDGE**. The strategy and its parameter variants cannot generate net trading profits on Binance Futures under taker fee structures. The scientific null hypothesis is fully confirmed.
+

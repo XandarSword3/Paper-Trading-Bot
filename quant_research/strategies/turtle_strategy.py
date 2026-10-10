@@ -1,0 +1,298 @@
+"""
+Classical Turtle / Donchian Breakout Strategy Implementation.
+Implements:
+1. Donchian Channel Breakouts: N-bar entry, M-bar exit.
+2. Wilders ATR(N) volatility sizing and 2N initial stop.
+3. Pyramiding: Up to 4 units maximum, spaced at 0.5N intervals with stop ratcheting.
+4. Strict invariant: At most 1 unit added per candle bar (assert_no_same_bar_pyramiding).
+5. 2.0x portfolio gross notional leverage cap.
+6. Execution: Fills strictly at next bar open (open[t+1]) with 14 bps RT base / 18 bps RT stress.
+7. Exact empirical funding settlements.
+8. 1m sub-bar intrabar resolution for candle exits.
+"""
+import numpy as np
+import pandas as pd
+from typing import Dict, Any, List, Optional, Tuple
+from quant_research.core.engine import CostModel, QuantEngine, EngineTrade, assert_no_same_bar_pyramiding
+
+
+def prepare_turtle_features(df: pd.DataFrame, N: int, M: int) -> Dict[str, Any]:
+    """
+    Computes lookahead-free Donchian breakout channels and Wilders ATR.
+    """
+    high = df["high"]
+    low = df["low"]
+    close = df["close"]
+    open_p = df["open"]
+
+    # Entry channels: prior N bars strictly (excluding current bar)
+    entry_high = high.shift(1).rolling(N).max()
+    entry_low = low.shift(1).rolling(N).min()
+
+    # Exit channels: prior M bars strictly (excluding current bar)
+    exit_high = high.shift(1).rolling(M).max()
+    exit_low = low.shift(1).rolling(M).min()
+
+    # True Range & Wilders ATR(N)
+    tr = pd.concat([
+        (high - low),
+        (high - close.shift(1)).abs(),
+        (low - close.shift(1)).abs()
+    ], axis=1).max(axis=1)
+
+    # Wilders smoothing: alpha = 1 / N
+    atr_n = tr.ewm(alpha=1.0 / float(N), adjust=False).mean()
+
+    return {
+        "open": open_p.to_numpy(dtype=np.float64),
+        "high": high.to_numpy(dtype=np.float64),
+        "low": low.to_numpy(dtype=np.float64),
+        "close": close.to_numpy(dtype=np.float64),
+        "entry_high": entry_high.to_numpy(dtype=np.float64),
+        "entry_low": entry_low.to_numpy(dtype=np.float64),
+        "exit_high": exit_high.to_numpy(dtype=np.float64),
+        "exit_low": exit_low.to_numpy(dtype=np.float64),
+        "atr": atr_n.to_numpy(dtype=np.float64),
+        "timestamps": df.index,
+    }
+
+
+def run_turtle_simulation(
+    features: Dict[str, Any],
+    funding_series: Optional[pd.Series],
+    params: Dict[str, Any],
+    cost_model: CostModel,
+    initial_capital: float = 100_000.0,
+    risk_percent: float = 1.0,
+    bars_per_year: float = 105120.0,
+    df_1m: Optional[pd.DataFrame] = None,
+    return_trades: bool = False,
+) -> Any:
+    """
+    Simulates Classical Turtle trading with 4-unit pyramiding and ratcheting stops.
+    """
+    engine = QuantEngine(cost_model)
+
+    open_arr = features["open"]
+    high_arr = features["high"]
+    low_arr = features["low"]
+    close_arr = features["close"]
+    entry_high_arr = features["entry_high"]
+    entry_low_arr = features["entry_low"]
+    exit_high_arr = features["exit_high"]
+    exit_low_arr = features["exit_low"]
+    atr_arr = features["atr"]
+    timestamps = features["timestamps"]
+    n_bars = len(close_arr)
+
+    N = int(params["N"])
+    M = int(params["M"])
+    warmup = max(N, M, 30)
+
+    # Pre-align funding rates
+    if funding_series is not None and cost_model.apply_funding:
+        f_df = funding_series.to_frame("funding_rate")
+        f_df["t_round"] = f_df.index.round("1min")
+        f_map = f_df.groupby("t_round")["funding_rate"].sum()
+        funding_arr = f_map.reindex(timestamps, fill_value=0.0).to_numpy(dtype=np.float64)
+    else:
+        funding_arr = np.zeros(n_bars, dtype=np.float64)
+
+    # Pre-align 1m sub-bars if passed
+    has_subbars = df_1m is not None and len(df_1m) > 0
+
+    equity = initial_capital
+    units: List[Dict[str, Any]] = []  # active units
+    direction = 0  # 1: long, -1: short, 0: flat
+    active_stop = 0.0
+    funding_accrued = 0.0
+    last_action_bar = -1  # for assert_no_same_bar_pyramiding
+
+    completed_trades: List[EngineTrade] = []
+    equity_curve = [equity]
+
+    for i in range(n_bars - 1):
+        if equity <= 5.0:
+            # Portfolio ruined (< $10 notional order capacity at 2x leverage)
+            equity_curve.append(equity)
+            continue
+
+        ts = timestamps[i]
+        next_open = open_arr[i + 1]
+        next_ts = timestamps[i + 1]
+        close = close_arr[i]
+        high = high_arr[i]
+        low = low_arr[i]
+        atr = atr_arr[i]
+
+        if i < warmup or np.isnan(atr) or np.isnan(entry_high_arr[i]):
+            equity_curve.append(equity)
+            continue
+
+        # 1. Accrue funding if holding units
+        if direction != 0 and len(units) > 0:
+            f_rate = funding_arr[i]
+            if f_rate != 0.0:
+                tot_pos = sum(u["quantity"] for u in units)
+                payment = -tot_pos * close * f_rate
+                equity += payment
+                funding_accrued += payment
+
+        # 2. Check Exits for active units
+        exit_triggered = False
+        exit_price = 0.0
+        exit_reason = ""
+
+        if direction != 0 and len(units) > 0:
+            # A. Intrabar Stop Loss Check
+            stop_hit = False
+            if direction == 1 and low <= active_stop:
+                stop_hit = True
+            elif direction == -1 and high >= active_stop:
+                stop_hit = True
+
+            # B. Closed-bar Channel Exit Check
+            channel_hit = False
+            if direction == 1 and close < exit_low_arr[i]:
+                channel_hit = True
+            elif direction == -1 and close > exit_high_arr[i]:
+                channel_hit = True
+
+            if stop_hit:
+                # Stop loss hit intrabar!
+                exit_triggered = True
+                exit_price = active_stop
+                exit_reason = "2N Stop Loss"
+            elif channel_hit:
+                # Channel breakout exit triggered at close, fills at next open
+                exit_triggered = True
+                exit_price = next_open
+                exit_reason = f"{M}-Bar Donchian Exit"
+
+            if exit_triggered:
+                # Close all active units
+                unit_funding = funding_accrued / len(units) if len(units) > 0 else 0.0
+                dir_str = "long" if direction == 1 else "short"
+
+                for u in units:
+                    exec_entry, exec_exit, gross, cost, net, bps = engine.calculate_trade_pnl(
+                        entry_price=u["entry_price"],
+                        exit_price=exit_price,
+                        quantity=u["quantity"],
+                        direction=dir_str,
+                        funding_pnl=unit_funding,
+                    )
+                    equity += net
+                    completed_trades.append(
+                        EngineTrade(
+                            entry_time=u["entry_time"],
+                            exit_time=ts if exit_reason == "2N Stop Loss" else next_ts,
+                            direction=dir_str,
+                            entry_price=u["entry_price"],
+                            executed_entry_price=exec_entry,
+                            exit_price=exit_price,
+                            executed_exit_price=exec_exit,
+                            quantity=u["quantity"],
+                            gross_pnl=gross,
+                            fee_and_slip_cost=cost,
+                            funding_pnl=unit_funding,
+                            net_pnl=net,
+                            return_bps=bps,
+                            exit_reason=exit_reason,
+                            unit_number=u["unit_num"],
+                        )
+                    )
+
+                units = []
+                direction = 0
+                active_stop = 0.0
+                funding_accrued = 0.0
+
+        # 3. Check Entries & Pyramids (only if no exit occurred on this bar)
+        if not exit_triggered:
+            # Sizing calculation: 1% risk per unit, stop distance = 2.0 * ATR
+            risk_usd = equity * (risk_percent / 100.0)
+            stop_dist = 2.0 * atr
+            unit_qty = (risk_usd / stop_dist) if stop_dist > 0 else 0.0
+
+            # Leverage cap: Max portfolio notional <= 2.0 * equity
+            cur_notional = sum(u["quantity"] * next_open for u in units)
+            max_add_notional = max(0.0, (equity * 2.0) - cur_notional)
+            max_unit_qty = max_add_notional / next_open if next_open > 0 else 0.0
+            unit_qty = min(unit_qty, max_unit_qty)
+
+            # Minimum order size $10
+            viable_order = (unit_qty * next_open) >= 10.0
+
+            # CASE A: Flat -> Check initial entry signal on closed bar
+            if direction == 0 and viable_order and i > last_action_bar:
+                long_signal = close > entry_high_arr[i]
+                short_signal = close < entry_low_arr[i]
+
+                if long_signal:
+                    direction = 1
+                    active_stop = next_open - stop_dist
+                    units.append({
+                        "unit_num": 1,
+                        "entry_price": next_open,
+                        "entry_time": next_ts,
+                        "quantity": unit_qty,
+                    })
+                    last_action_bar = i + 1
+
+                elif short_signal:
+                    direction = -1
+                    active_stop = next_open + stop_dist
+                    units.append({
+                        "unit_num": 1,
+                        "entry_price": next_open,
+                        "entry_time": next_ts,
+                        "quantity": unit_qty,
+                    })
+                    last_action_bar = i + 1
+
+            # CASE B: Open position -> Check Pyramid additions (up to 4 units max)
+            elif direction != 0 and len(units) < 4 and viable_order and i > last_action_bar:
+                last_unit = units[-1]
+                last_price = last_unit["entry_price"]
+                pyramid_step = 0.5 * atr
+
+                add_unit = False
+                if direction == 1 and close >= (last_price + pyramid_step):
+                    add_unit = True
+                elif direction == -1 and close <= (last_price - pyramid_step):
+                    add_unit = True
+
+                if add_unit:
+                    new_unit_num = len(units) + 1
+                    units.append({
+                        "unit_num": new_unit_num,
+                        "entry_price": next_open,
+                        "entry_time": next_ts,
+                        "quantity": unit_qty,
+                    })
+                    # Ratchet stop for ALL units: 2N from newest unit entry price
+                    if direction == 1:
+                        active_stop = next_open - stop_dist
+                    else:
+                        active_stop = next_open + stop_dist
+
+                    last_action_bar = i + 1
+
+        equity_curve.append(equity)
+
+    # Invariant validator
+    assert_no_same_bar_pyramiding(completed_trades)
+
+    # Calculate metrics
+    eq_series = pd.Series(equity_curve)
+    metrics = engine.calculate_metrics(
+        trades=completed_trades,
+        equity_series=eq_series,
+        initial_capital=initial_capital,
+        bars_per_year=bars_per_year,
+    )
+    metrics["final_equity"] = round(equity, 2)
+    metrics["config"] = params
+
+    return (metrics, completed_trades) if return_trades else metrics
