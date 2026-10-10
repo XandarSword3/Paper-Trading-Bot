@@ -113,3 +113,64 @@ A strategy configuration is deemed to have a **statistically meaningful edge** O
 6. **Profit Factor:** Gross Profit / Gross Loss $\ge 1.25$ after all fees.
 
 Any configuration failing to clear these hurdles will be objectively labeled **NO EDGE**. A clean "no edge" result is accepted as a successful scientific conclusion.
+
+---
+
+## 7. Pre-Registration Addendum: Classical Turtle / Donchian Breakout & Test 3 User Replay
+
+**Date of Addendum:** 2026-10-10  
+**Commit Status:** Committed strictly BEFORE running any Turtle simulation or Test 3 CSV replay.
+
+### 7.1 Scope and Parameter Search Space
+Evaluation of the classic trend-following Turtle / Donchian Breakout system across three major perpetual contracts:
+* **Assets:** SOLUSDT, BTCUSDT, ETHUSDT
+* **Timeframes:** 5m, 15m, 1h (resampled from continuous 1m tick/kline archives)
+* **Channel Lookbacks:**
+  * Entry Breakout Period $N \in \{20, 55\}$ (System 1: 20-bar breakout; System 2: 55-bar breakout)
+  * Exit Breakout Period $M \in \{10, 20\}$ (System 1: 10-bar breakout; System 2: 20-bar breakout)
+  * Total Distinct Configurations: $2 \times 2 = 4$ parameter sets per Asset-Timeframe combination $\times 3 \text{ assets} \times 3 \text{ timeframes} = \mathbf{36}\text{ distinct configurations}$.
+  * No other variants, filters, or ad-hoc indicators are permitted.
+
+### 7.2 Position Sizing, Pyramiding, and Risk Rules
+* **Risk Per Unit:** $1.0\%$ of account equity per trade/unit.
+* **Stop Loss:** $2.0 \times \text{ATR}(N)$ from the initial unit entry price.
+* **Pyramiding:** Up to 4 units maximum, spaced at $0.5 \times \text{ATR}(N)$ intervals as price moves in the trade's favor.
+* **Pyramid Stop Ratchet:** When a new pyramid unit is added, the stop loss for ALL accumulated units ratchets to $2.0 \times \text{ATR}(N)$ below/above the newest unit entry price.
+* **Invariant:** Maximum 1 unit added per candle bar (`assert_no_same_bar_pyramiding`).
+* **Leverage Cap:** Portfolio gross notional strictly capped at $2.0\times$ portfolio equity.
+
+### 7.3 Execution and Intrabar Resolution
+* **Order Execution:** Closed bar signals, fills strictly at next bar open (`open[t+1]`). Zero lookahead.
+* **Friction Model:** $14\text{ bps}$ round-trip base ($5\text{ bps}$ fee $+ 2\text{ bps}$ slip per side), $18\text{ bps}$ round-trip stress ($5\text{ bps}$ fee $+ 4\text{ bps}$ slip per side).
+* **Funding Settlement:** Exact historical perpetual funding settlements applied at empirical settlement timestamps.
+* **1m Sub-Bar Resolution:** All 5m, 15m, and 1h bars pass 1m sub-bars into `QuantEngine.resolve_intrabar_exit` to resolve candle stop-loss vs. take-profit / channel-exit ordering. If ambiguous at 1m, the stop loss is assumed to have triggered first.
+
+### 7.4 Data Windows and Hold-Out Protocol
+* **In-Sample (IS):** `2024-01-01 00:00:00 UTC` to `2025-03-31 23:59:59 UTC`.
+* **Out-Of-Sample (OOS):** `2025-04-01 00:00:00 UTC` to `2026-03-31 23:59:59 UTC`.
+* **Burned Windows (OOS Only):**
+  * **BTC 2025+:** **BURNED.** Ingested during legacy backtests, bot states, and Test 3. Must be reported as OOS only, never as clean hold-out.
+  * **SOL 2026-04-01+:** **BURNED.** Evaluated during Test 2 (`CFG_1142`). Must be reported as OOS only.
+* **Frozen Veto Hold-Out:**
+  * **ETH 2026-04-01+:** **FRESH.** Reserved strictly as a single-shot veto hold-out.
+  * **Hold-Out Access Rule:** The ETH hold-out window will be touched ONCE, and ONLY for configurations that pass all in-sample, out-of-sample, and stress hurdles. Its trade count and metrics will be recorded without parameter alteration.
+
+### 7.5 Pass / Fail Decision Criteria
+A configuration is deemed to possess a viable quantitative edge if and only if:
+1. **Net Expectancy Hurdle:** Net expectancy $\ge +5.0\text{ bps}$ per trade after $14\text{ bps}$ RT base costs and funding.
+2. **Stress Hurdle:** Net expectancy $> 0.0\text{ bps}$ after $18\text{ bps}$ RT stress costs.
+3. **Pooled Sample Size:** Completed trade count $\ge 150$ trades **pooled across the three assets** (SOL, BTC, ETH) for the parameter configuration.
+4. **Statistical Significance:** Deflated Sharpe Ratio (DSR) $p\text{-value} < 0.05$ factoring in the 36 new parameter sets plus the 1,318 historical configurations ($N_{\text{trials}} = 1,354$).
+5. **Drawdown Tolerance:** Max Drawdown $< 30\%$ on walk-forward stitched equity.
+6. **Profit Factor:** $\ge 1.25$ after all friction.
+
+### 7.6 Test 3: Empirical Replay of Binance Execution CSVs
+* Replay the two user execution CSVs to be placed in `quant_research/inputs/`.
+* Match exact execution timestamps, prices, and quantities against `QuantEngine`.
+* Deconstruct every trade into gross return, exchange commissions, execution slippage, funding carry, and net bps.
+* Determine whether the live portfolio achieved positive net alpha over passive buy-and-hold and benchmark funding costs.
+
+### 7.7 Trial Logging Governance
+* All 36 configurations, calibration runs, and walk-forward evaluations will be appended to `quant_research/trials.csv`.
+* No trial row may be deleted or modified.
+
