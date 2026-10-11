@@ -1,0 +1,178 @@
+{
+  "timestamp_utc": "2026-10-10T20:43:22.152407+00:00",
+  "ledger_reconciliation": {
+    "deposits_sum": 1071.43,
+    "withdrawals_sum": -882.15,
+    "net_capital_deposited": 189.28,
+    "realized_pnl_sum": 960.27,
+    "commissions_sum": -1131.47,
+    "funding_fees_sum": 0.68,
+    "insurance_clear_liquidation": -18.76,
+    "total_net_trading_pnl": -189.28,
+    "ending_ledger_balance": 0.0,
+    "peak_wallet_balance": 687.79,
+    "final_trough_balance": 0.0,
+    "true_max_drawdown_pct": 100.0
+  },
+  "bootstrap_expectancies": {
+    "BNBUSDT": {
+      "n_trades": 2,
+      "gross_mean_bps": 7.21,
+      "gross_ci_95": [
+        6.37,
+        8.05
+      ],
+      "net_mean_bps": -2.79,
+      "net_ci_95": [
+        -3.63,
+        -1.95
+      ]
+    },
+    "BTCUSDT": {
+      "n_trades": 35,
+      "gross_mean_bps": 9.77,
+      "gross_ci_95": [
+        -1.83,
+        22.96
+      ],
+      "net_mean_bps": -0.35,
+      "net_ci_95": [
+        -11.82,
+        12.85
+      ]
+    },
+    "ETHUSDT": {
+      "n_trades": 25,
+      "gross_mean_bps": -13.74,
+      "gross_ci_95": [
+        -42.46,
+        9.61
+      ],
+      "net_mean_bps": -23.83,
+      "net_ci_95": [
+        -52.44,
+        -0.53
+      ]
+    },
+    "SOLUSDT": {
+      "n_trades": 195,
+      "gross_mean_bps": 9.09,
+      "gross_ci_95": [
+        -1.77,
+        19.89
+      ],
+      "net_mean_bps": -0.92,
+      "net_ci_95": [
+        -11.76,
+        9.88
+      ]
+    },
+    "ALL": {
+      "n_trades": 257,
+      "gross_mean_bps": 6.94,
+      "gross_ci_95": [
+        -1.61,
+        17.15
+      ],
+      "net_mean_bps": -3.08,
+      "net_ci_95": [
+        -11.64,
+        7.09
+      ]
+    }
+  },
+  "isolated_margin_liquidations": {
+    "liq_20x_count": 1,
+    "liq_20x_trades": [
+      {
+        "trade_num": 63,
+        "symbol": "SOLUSDT",
+        "direction": "SHORT",
+        "mae_pct": 5.2,
+        "time": "2025-04-12 14:32:00+00:00"
+      }
+    ],
+    "liq_50x_count": 45,
+    "liq_50x_pct": 17.51
+  },
+  "replay_variants": [
+    {
+      "variant": "Stop_0.3%_Cap_5x",
+      "stop_pct": 0.3,
+      "leverage_cap": 5.0,
+      "trades_taken": 111,
+      "stops_triggered": 70,
+      "stops_triggered_pct": 63.06,
+      "final_equity": 5015.43,
+      "total_return_pct": -49.85,
+      "max_drawdown_pct": 49.97,
+      "worst_trade_usd": -512.67,
+      "account_ruined": false
+    },
+    {
+      "variant": "Stop_0.3%_Cap_10x",
+      "stop_pct": 0.3,
+      "leverage_cap": 10.0,
+      "trades_taken": 111,
+      "stops_triggered": 70,
+      "stops_triggered_pct": 63.06,
+      "final_equity": 5015.43,
+      "total_return_pct": -49.85,
+      "max_drawdown_pct": 49.97,
+      "worst_trade_usd": -512.67,
+      "account_ruined": false
+    },
+    {
+      "variant": "Stop_0.5%_Cap_5x",
+      "stop_pct": 0.5,
+      "leverage_cap": 5.0,
+      "trades_taken": 119,
+      "stops_triggered": 67,
+      "stops_triggered_pct": 56.3,
+      "final_equity": 5168.19,
+      "total_return_pct": -48.32,
+      "max_drawdown_pct": 48.32,
+      "worst_trade_usd": -296.11,
+      "account_ruined": false
+    },
+    {
+      "variant": "Stop_0.5%_Cap_10x",
+      "stop_pct": 0.5,
+      "leverage_cap": 10.0,
+      "trades_taken": 119,
+      "stops_triggered": 67,
+      "stops_triggered_pct": 56.3,
+      "final_equity": 5168.19,
+      "total_return_pct": -48.32,
+      "max_drawdown_pct": 48.32,
+      "worst_trade_usd": -296.11,
+      "account_ruined": false
+    },
+    {
+      "variant": "Stop_1.0%_Cap_5x",
+      "stop_pct": 1.0,
+      "leverage_cap": 5.0,
+      "trades_taken": 169,
+      "stops_triggered": 54,
+      "stops_triggered_pct": 31.95,
+      "final_equity": 5993.26,
+      "total_return_pct": -40.07,
+      "max_drawdown_pct": 40.2,
+      "worst_trade_usd": -151.94,
+      "account_ruined": false
+    },
+    {
+      "variant": "Stop_1.0%_Cap_10x",
+      "stop_pct": 1.0,
+      "leverage_cap": 10.0,
+      "trades_taken": 169,
+      "stops_triggered": 54,
+      "stops_triggered_pct": 31.95,
+      "final_equity": 5993.26,
+      "total_return_pct": -40.07,
+      "max_drawdown_pct": 40.2,
+      "worst_trade_usd": -151.94,
+      "account_ruined": false
+    }
+  ]
+}

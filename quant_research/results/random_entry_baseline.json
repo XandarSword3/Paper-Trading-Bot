@@ -1,0 +1,10 @@
+{
+  "n_simulations": 1000,
+  "mean_net_bps": -12.14,
+  "std_net_bps": 12.19,
+  "ci_90": [
+    -31.11,
+    8.6
+  ],
+  "pct_positive_runs": 16.2
+}

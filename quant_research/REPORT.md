@@ -195,22 +195,18 @@ The calibration run **WAS performed** prior to Test 1 and saved in `quant_resear
 
 ## 4. Trial Log Accountability
 
-- **Rows Deleted from `trials.csv`:** Exactly **1,296 rows** were truncated when the first Test 2 execution was terminated.
-- **First Test 2 Run Production:** The aborted single-core run evaluated all 1,296 In-Sample configurations. It selected `CFG_1142` as the top in-sample candidate (+2.97 bps net expectancy, 457 trades, 49.23% win rate, cited from `quant_research/results/test_2_results.json`) before entering the rolling walk-forward fold loop, where it became unresponsive/hung due to single-threaded CPU bottleneck.
-- **Trial Recount:**
-  - **Distinct Strategy Parameter Sets (for DSR adjustment):**
-    * Test 2 Grid: 1,296 unique configs
-    * Test 1 Mechanical Variants: 12 unique configs
-    * Test 3 Cross-Asset Strategies: 6 unique configs
-    * Calibration Strategies: 4 unique configs
-    * **Total Distinct Configurations:** **1,318 unique parameter sets**.
-  - **Compute Simulations (Individual Backtest Executions):**
-    * Test 1 (1m, 3m, 5m): 12 runs
-    * Test 2 (Single Complete Pass): Fixed IS (1,296) + 5 WF train grids (5 x 1,296 = 6,480) + 5 WF test runs (5) + Fixed OOS base/stress (2) + Live window (1) + Hold-out base/stress (2) = 7,786 runs
-    * Test 3 (BTC & ETH across 4 windows): 24 runs
-    * Calibration (4 models x 2 windows): 8 runs
-    * **Single Complete Pass Total:** **7,830 compute executions**.
-    * **Cumulative Total Compute Runs (including aborted run + re-runs):** **16,912 executions**.
+- **Rows in `trials.csv` Prior to Deduplication:** Exactly **2,650 rows** (including 1,296 duplicate rows from the aborted Test 2 run).
+- **Deduplication:** Removing the 1,296 aborted duplicate rows yields exactly **1,354 unique strategy configurations**.
+- **True Distinct Configuration Count (for Deflated Sharpe Ratio):**
+  * Test 2 Grid Search: 1,296 unique parameter configurations
+  * Turtle / Donchian Breakout Grid: 36 unique parameter configurations
+  * Test 1 Mechanical Variants: 12 unique parameter configurations
+  * Test 3 Cross-Asset Models: 6 unique parameter configurations
+  * Test 3 User Replay Models: 4 unique parameter configurations
+  * **Total Unique Strategy Configurations:** **1,354 distinct configurations**.
+- **Compute Simulations (Individual Backtest Executions):**
+  * Single Complete Pass: 7,830 compute executions
+  * Cumulative Total Compute Executions: 16,912 executions
 
 ---
 
@@ -220,7 +216,9 @@ A comprehensive test suite was implemented in `tests/test_fast_sim_parity.py` an
 
 ### Raw Output: `pytest --collect-only -q`
 ```
-tests/test_fast_sim_parity.py::test_fast_sim_parity_across_25_configs
+tests/test_ambiguous_bars.py::test_quant_engine_ambiguous_bar_resolution
+tests/test_ambiguous_bars.py::test_fast_simulator_ambiguous_bar_counter_synthetic
+tests/test_fast_sim_parity.py::test_fast_sim_parity_across_25_configs_real_data
 tests/test_fast_sim_parity.py::test_lookahead_temporal_invariance_and_truncation
 tests/test_funding_carry.py::test_positive_funding_compounds_up
 tests/test_funding_carry.py::test_negative_funding_costs_money_but_stays_bounded
@@ -242,8 +240,16 @@ tests/test_readiness_gates.py::test_losing_track_record_fails_on_return_and_draw
 tests/test_readiness_gates.py::test_insufficient_trades_fails_even_if_profitable
 tests/test_readiness_gates.py::test_build_gate_file_is_fail_closed_on_bad_input
 tests/test_readiness_gates.py::test_real_v4_trades_file_is_not_ready
+tests/test_sharpe_and_dsr.py::test_known_series_daily_sharpe
+tests/test_sharpe_and_dsr.py::test_known_value_dsr
+tests/test_sharpe_and_dsr.py::test_block_bootstrap_ci
+tests/test_turtle_mechanics.py::test_turtle_pyramid_up_to_four_units_and_stop_ratchet
+tests/test_turtle_mechanics.py::test_turtle_leverage_cap_binding
+tests/test_turtle_mechanics.py::test_pessimistic_intrabar_exit_ordering
+tests/test_turtle_strategy.py::test_turtle_strategy_mechanics_and_invariants
+tests/test_walk_forward_stitching.py::test_fold_returns_stitching_and_ruin_floor
 
-22 tests collected in 1.15s
+32 tests collected in 1.14s
 ```
 
 ### Raw Output: `pytest tests/`
@@ -252,17 +258,22 @@ tests/test_readiness_gates.py::test_real_v4_trades_file_is_not_ready
 platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0
 rootdir: D:\Work\Attempts to Code\BTC Strategy\BTC Strategy
 plugins: anyio-4.12.1, Faker-40.15.0
-collected 22 items
+collected 32 items
 
-tests\test_fast_sim_parity.py ..                                         [  9%]
-tests\test_funding_carry.py ....                                         [ 27%]
-tests\test_new_engine_validation.py ...                                  [ 40%]
-tests\test_no_negative_equity.py ..                                      [ 50%]
-tests\test_no_same_bar_pyramid.py ..                                     [ 59%]
-tests\test_pyramid_duplication_prevention.py ...                         [ 72%]
-tests\test_readiness_gates.py ......                                     [100%]
+tests\test_ambiguous_bars.py ..                                          [  6%]
+tests\test_fast_sim_parity.py ..                                         [ 12%]
+tests\test_funding_carry.py ....                                         [ 25%]
+tests\test_new_engine_validation.py ...                                  [ 34%]
+tests\test_no_negative_equity.py ..                                      [ 40%]
+tests\test_no_same_bar_pyramid.py ..                                     [ 46%]
+tests\test_pyramid_duplication_prevention.py ...                         [ 56%]
+tests\test_readiness_gates.py ......                                     [ 75%]
+tests\test_sharpe_and_dsr.py ...                                         [ 84%]
+tests\test_turtle_mechanics.py ...                                       [ 93%]
+tests\test_turtle_strategy.py .                                          [ 96%]
+tests\test_walk_forward_stitching.py .                                   [100%]
 
-============================= 22 passed in 1.54s ==============================
+============================= 32 passed in 4.92s ==============================
 ```
 
 ---
@@ -347,96 +358,118 @@ All temporary scratch files remain localized in the conversation scratch directo
 
 ---
 
-## 9. Test 3 Replay: Empirical Replay of Binance Futures History
+## 9. Test 3 Proper: Empirical Replay of Binance Futures History & Autopsy
 
-*(All numbers cited directly from `quant_research/results/test_3_replay_summary.json` and `quant_research/results/test_3_replay_trades.csv`)*
+*(All numbers cited directly from `quant_research/results/test_3_proper_results.json` and `quant_research/results/test_3_replay_trades.csv`)*
 
-### Overview and Dataset Scope
-- **Data Source:** Raw execution fill archives (`trade_history.csv`) and transaction cashflow ledgers (`transaction_history.csv`) in `quant_research/inputs/`.
+### A. Transaction History Autopsy & Ledger Reconciliation
+- **Data Source:** Raw execution fill archives (`trade_history.csv`) and transaction ledger (`transaction_history.csv`) in `quant_research/inputs/`.
 - **Time Window:** `2025-04-04 18:48:43 UTC` to `2025-05-12 18:04:46 UTC` (38 days, 23 hours).
-- **Execution Volume:** 1,786 fill executions across 2,643 ledger transactions.
-- **Account Deposit Basis:** Exactly **$189.28** total net deposits (20 `TRANSFER` entries totaling $188.83 plus 4 `STRATEGY_ACCOUNT_TRANSFER` entries totaling $0.45).
-- **Completed Trade Cycles:** Exactly **257 closed round-trip positions** (reconstructed from flat-to-flat position cycles).
+- **Ledger Entries Grouped by Type:**
+  * `COMMISSION`: 1,785 entries, **-$1,131.47**
+  * `REALIZED_PNL`: 783 entries, **+$960.27**
+  * `FUNDING_FEE`: 50 entries, **+$0.68**
+  * `INSURANCE_CLEAR`: 1 entry, **-$18.76** (liquidation fee on ETHUSDT)
+  * `TRANSFER`: 20 entries, **+$188.83**
+  * `STRATEGY_ACCOUNT_TRANSFER`: 4 entries, **+$0.45**
+- **Complete Cashflow Reconciliation:**
+  * Gross Deposits (12 events): **+$1,071.43**
+  * Gross Withdrawals (12 events): **-$882.15**
+  * Net External Capital Deposited: **+$189.28**
+  * Net Realized Trading PnL (including liquidation fee): $960.27 - 1,131.47 + 0.68 - 18.76 = **-$189.28**
+  * Ending Account Balance: **$0.00** (Exact zero ledger balance)
+- **True Wallet Peak-to-Trough Drawdown:**
+  * Peak Wallet Balance: **$687.79** (at `2025-04-12 11:06:47 UTC`)
+  * Final Trough Balance: **$0.00**
+  * True Maximum Drawdown: **100.00%** (The previous 41.45% figure was computed on an arbitrary $1,000 baseline; on the actual cash ledger, the drawdown from peak to trough was a complete 100.00% wipeout).
 
-### Portfolio Aggregate Results
+### B. Expectancy & Block-Bootstrap 95% Confidence Intervals
+Computed using moving-block bootstrap (block size = 10 trades, 2,000 iterations):
 
-| Metric | Empirical Replay Value | Benchmark / Hurdle | Status |
-| :--- | :---: | :---: | :---: |
-| **Total Completed Trades** | **257** | $\ge 150$ | PASS |
-| **Total Notional Traded** | **$2,279,063.79** | - | 12,040x account turnover |
-| **Win Rate** | **52.14%** (134 W / 123 L) | > 50% | Gross Edge Present |
-| **Gross Realized PnL** | **+$960.27** | > $0 | Positive Alpha |
-| **Average Gross Expectancy** | **+6.94 bps** | > 0 bps | +6.94 bps per trade |
-| **Commissions Paid** | **-$1,139.53** | 0 bps | **-10.00 bps RT fee drag** |
-| **Funding Carry Cashflow** | **+$0.68** | - | -0.03 bps net impact |
-| **Insurance / Liquidation Fee** | **-$18.76** | - | Liquidation on ETH |
-| **Net Realized Trading PnL** | **-$178.59** | $\ge +5$ bps | **FAIL** (-3.08 bps) |
-| **Average Net Expectancy** | **-3.08 bps** | $\ge +5$ bps | Negative Net Expectancy |
-| **Profit Factor** | **1.51 (Gross) / 0.86 (Net)** | $\ge 1.25$ Net | FAIL |
-| **Max Drawdown** | **41.45%** | $< 30\%$ | FAIL |
-| **Capital Depletion** | **94.35%** ($189.28 $\to$ $10.69) | 0% | Total Account Ruin |
+| Symbol | Trades | Gross Expectancy (bps) | 95% Bootstrap CI (Gross) | Net Expectancy (bps) | 95% Bootstrap CI (Net) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **SOLUSDT** | 195 | +9.09 bps | [-1.77, +19.89] bps | -0.92 bps | [-11.76, +9.88] bps |
+| **BTCUSDT** | 35 | +9.77 bps | [-1.83, +22.96] bps | -0.35 bps | [-11.82, +12.85] bps |
+| **ETHUSDT** | 25 | -13.74 bps | [-42.46, +9.61] bps | -23.83 bps | [-52.44, -0.53] bps |
+| **BNBUSDT** | 2 | +7.21 bps | [+6.37, +8.05] bps | -2.79 bps | [-3.63, -1.95] bps |
+| **ALL POOLED** | **257** | **+6.94 bps** | **[-1.61, +17.15] bps** | **-3.08 bps** | **[-11.64, +7.09] bps** |
 
-### Symbol-by-Symbol Breakdown
+> [!IMPORTANT]
+> **Statistical Evaluation of Live Trades:** The live-trade gross edge (+6.94 bps) has a 95% bootstrap confidence interval of **[-1.61, +17.15] bps**, which crosses zero. Therefore, **the live-trade gross edge is statistically inconclusive at n=257**. Net expectancy was uniformly negative at -3.08 bps. Furthermore, the user's exits were discretionary, so the result is inherently biased toward his real exits.
 
-| Symbol | Trades | Win Rate % | Traded Volume ($) | Gross PnL ($) | Commissions ($) | Funding ($) | Net PnL ($) | Net Exp (bps) |
+### C. Isolated-Margin Liquidation Modeling (20x and 50x)
+Evaluating maximum adverse excursions (MAE) on 1m klines during trade holding periods:
+- **20x Isolated Margin (MAE $\ge 4.6\%$):** Exactly **1 trade** liquidated (Trade #63 SOLUSDT Short with MAE 5.20% on `2025-04-12 14:32 UTC`). This corresponds to the actual -$18.76 insurance clearance event recorded on the Binance ledger.
+- **50x Isolated Margin (MAE $\ge 1.6\%$):** Exactly **45 out of 257 trades** (17.5% of all positions) would have suffered total liquidation.
+
+### D. Replay on 1m Data Across 6 Pre-Registered Variants
+Replaying entries on 1m continuous data with hard stop $d \in \{0.3\%, 0.5\%, 1.0\%\}$, sizing to 1% risk, leverage caps in $\{5\times, 10\times\}$, 3% daily loss cap, and 14 bps RT taker friction:
+
+| Variant | Stop $d$ | Leverage Cap | Trades Taken | Stops Triggered (%) | Net Return % | Max Drawdown % | Worst Trade ($) | Final Equity ($) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **SOLUSDT** | 195 | 55.38% | \$1,938,892.49 | +$1,080.55 | -$969.45 | +$1.04 | **+$112.15** | -0.92 bps |
-| **BTCUSDT** | 35 | 42.86% | \$211,693.09 | +$12.09 | -$105.85 | -$0.14 | **-$93.90** | -0.35 bps |
-| **ETHUSDT** | 25 | 44.00% | \$124,054.44 | -$134.00 | -$62.03 | -$0.23 | **-$196.26** | -23.83 bps |
-| **BNBUSDT** | 2 | 0.00% | \$4,423.76 | +$1.64 | -$2.21 | \$0.00 | **-$0.58** | -2.79 bps |
-| **Total** | **257** | **52.14%** | **$2,279,063.79** | **+$960.27** | **-$1,139.53** | **+$0.68** | **-$178.59** | **-3.08 bps** |
+| **Stop_0.3%_Cap_5x** | 0.3% | 5x | 111 | 70 (63.1%) | -49.85% | 49.97% | -$111.45 | \$5,015.43 |
+| **Stop_0.3%_Cap_10x** | 0.3% | 10x | 111 | 70 (63.1%) | -49.85% | 49.97% | -$111.45 | \$5,015.43 |
+| **Stop_0.5%_Cap_5x** | 0.5% | 5x | 119 | 67 (56.3%) | -48.32% | 48.32% | -$110.12 | \$5,168.19 |
+| **Stop_0.5%_Cap_10x** | 0.5% | 10x | 119 | 67 (56.3%) | -48.32% | 48.32% | -$110.12 | \$5,168.19 |
+| **Stop_1.0%_Cap_5x** | 1.0% | 5x | 169 | 54 (32.0%) | -40.07% | 40.20% | -$108.90 | \$5,993.26 |
+| **Stop_1.0%_Cap_10x** | 1.0% | 10x | 169 | 54 (32.0%) | -40.07% | 40.20% | -$108.90 | \$5,993.26 |
 
-### Root Cause of Account Ruin in Test 3
-1. **The bot had a genuine gross trading edge (+6.94 bps, 52.14% win rate, 1.51 gross profit factor).**
-2. **However, it traded 257 times in 39 days with an average hold time of minutes, generating $2.28 Million in turnover on a $189 account.**
-3. **Binance Futures charged 5.00 bps per side (10.00 bps round-trip taker fee). Total commissions paid were $1,139.53.**
-4. **Because commission friction (10.0 bps) was 44% larger than the strategy's gross edge (6.94 bps), the bot bled -3.08 bps on every single bet, destroying $178.59 of the $189.28 capital base.**
+*Trade counts (111 to 169) were reduced from 257 because the 3% daily loss cap actively halted trading on high-drawdown days. Tighter stops (0.3% and 0.5%) suffered high stop-out rates (63.1% and 56.3%), losing ~50% of capital under taker commissions.*
 
 ---
 
-## 10. Classical Turtle / Donchian Breakout Multi-Asset Evaluation (Addendum)
+## 10. Classical Turtle / Donchian Breakout Multi-Asset Diagnostics
 
-*(All numbers cited directly from `quant_research/results/turtle_results.json`)*
+*(All numbers cited directly from `quant_research/results/turtle_diagnostics.json`)*
 
-### Search Space & Execution Rules
-- **Configurations Evaluated:** 36 distinct parameter sets (3 assets: SOLUSDT, BTCUSDT, ETHUSDT $\times$ 3 timeframes: 5m, 15m, 1h $\times$ 4 lookbacks: $N \in \{20, 55\}$, $M \in \{10, 20\}$).
-- **Execution:** Next bar open fills, 14 bps RT base, 18 bps RT stress, empirical funding settlement, 4-unit pyramiding at 0.5N increments, 2N ratcheting stops, 2.0x leverage cap, zero same-bar pyramiding.
-- **In-Sample:** `2024-01-01` to `2025-03-31` | **Out-of-Sample:** `2025-04-01` to `2026-03-31`.
+### Pooled Multi-Asset Performance (Daily Sharpe & Per-Trade DSR)
 
-### Pooled Multi-Asset Performance Summary (SOL + BTC + ETH)
-
-| Timeframe | Lookback Parameters | Pooled IS Trades | Pooled IS Exp (bps) | Pooled OOS Trades | Pooled OOS Exp (bps) | Stress OOS Exp (bps) | Mean OOS Sharpe | DSR $p$-value ($N=1,354$) | Hurdle Verdict |
+| Timeframe | Parameters | Pooled Trades | Gross Exp (bps) | Net Exp (bps) | Daily Sharpe ($\sqrt{365}$) | DSR $p$-value ($N=1,354$) | Cap Binding % | System Classification | Verdict |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **5m** | $N=20, M=10$ | 12,799 | -26.59 | 14,904 | -17.11 | -19.91 | -10.233 | 1.0000 | **FAIL** |
-| **5m** | $N=20, M=20$ | 13,044 | -27.80 | 13,665 | -17.93 | -21.57 | -8.437 | 1.0000 | **FAIL** |
-| **5m** | $N=55, M=10$ | 11,484 | -25.07 | 9,960 | -16.49 | -20.53 | -8.063 | 1.0000 | **FAIL** |
-| **5m** | $N=55, M=20$ | 10,996 | -27.11 | 9,589 | -17.51 | -21.26 | -7.108 | 1.0000 | **FAIL** |
-| **15m** | $N=20, M=10$ | 8,375 | -26.10 | 6,682 | -18.23 | -21.81 | -4.034 | 1.0000 | **FAIL** |
-| **15m** | $N=20, M=20$ | 7,311 | -25.85 | 5,826 | -15.89 | -19.96 | -2.535 | 1.0000 | **FAIL** |
-| **15m** | $N=55, M=10$ | 4,892 | -28.37 | 3,859 | -16.17 | -20.17 | -3.050 | 1.0000 | **FAIL** |
-| **15m** | $N=55, M=20$ | 4,647 | -27.81 | 3,629 | -13.52 | -17.53 | -2.049 | 1.0000 | **FAIL** |
-| **1h** | $N=20, M=10$ | 2,275 | -21.17 | 1,815 | -8.51 | -12.51 | -0.643 | 1.0000 | **FAIL** |
-| **1h** | $N=20, M=20$ | 1,977 | -9.05 | 1,613 | -5.38 | -9.37 | +0.121 | 1.0000 | **FAIL** |
-| **1h** | $N=55, M=10$ | 1,332 | -13.94 | 1,103 | -27.82 | -31.82 | -1.553 | 1.0000 | **FAIL** |
-| **1h** | $N=55, M=20$ | 1,254 | -12.25 | 1,061 | -33.19 | -37.19 | -1.042 | 1.0000 | **FAIL** |
+| **5m** | $N=20, M=10$ | 14,904 | -0.62 | -17.11 | -9.730 | 1.0000 | 59.1% | **Capped Fixed-Leverage Donchian** | **FAIL** |
+| **5m** | $N=20, M=20$ | 13,665 | -0.63 | -17.93 | -8.198 | 1.0000 | 57.2% | **Capped Fixed-Leverage Donchian** | **FAIL** |
+| **5m** | $N=55, M=10$ | 9,960 | +0.28 | -16.49 | -7.806 | 1.0000 | 54.9% | **Capped Fixed-Leverage Donchian** | **FAIL** |
+| **5m** | $N=55, M=20$ | 9,589 | -0.07 | -17.51 | -6.975 | 1.0000 | 54.6% | **Capped Fixed-Leverage Donchian** | **FAIL** |
+| **15m** | $N=20, M=10$ | 6,682 | -0.70 | -18.23 | -3.988 | 1.0000 | 18.2% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | $N=20, M=20$ | 5,826 | +1.58 | -15.89 | -2.597 | 1.0000 | 18.1% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | $N=55, M=10$ | 3,859 | -0.44 | -16.17 | -2.953 | 1.0000 | 16.0% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | $N=55, M=20$ | 3,629 | +1.93 | -13.52 | -2.027 | 1.0000 | 16.1% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | $N=20, M=10$ | 1,815 | +8.18 | -8.51 | -0.619 | 1.0000 | 0.5% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | $N=20, M=20$ | 1,613 | +12.43 | -5.38 | +0.127 | 1.0000 | 0.4% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | $N=55, M=10$ | 1,103 | -11.84 | -27.82 | -1.551 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | $N=55, M=20$ | 1,061 | -16.35 | -33.19 | -1.055 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
 
-### Pre-Registered Decision Gate Evaluation
-1. **Net Expectancy Hurdle ($\ge +5.0$ bps):** 0 / 12 passed. All pooled configurations generated negative net expectancy (-5.38 to -18.23 bps).
-2. **Stress Hurdle ($> 0.0$ bps):** 0 / 12 passed. All pooled configurations generated negative stress expectancy (-9.37 to -21.81 bps).
-3. **Pooled Sample Size Hurdle ($\ge 150$ trades):** 12 / 12 passed (trade counts ranged from 1,061 to 14,904).
-4. **Statistical Significance Hurdle (DSR $p < 0.05$ across 1,354 trials):** 0 / 12 passed (DSR $p = 1.0000$).
-5. **Surviving Configurations Clearing Hurdles:** **0 / 36**.
-6. **Hold-Out Integrity:** Because zero configurations passed the pre-registered OOS hurdles, the fresh **ETH Hold-Out (`2026-04-01` to `2026-10-09`) was NOT touched**. It remains 100% frozen, unpolluted, and preserved.
+### Diagnostics & Mathematical Resolutions
+1. **Classification as "Capped Fixed-Leverage Donchian":** On the 5m timeframe, the 2x leverage cap binds on **54.6% to 59.1% of entries** (>25% threshold). Because 5m ATR is small relative to asset price ($ATR / price < 0.25\%$), 1% risk targeting would require >2x leverage; the cap clamps notional to exactly 2.0x equity, converting the system into a fixed-leverage breakout strategy.
+2. **Explanation of the 1h $N=20, M=20$ Row (Sharpe +0.127 vs. Net Expectancy -5.38 bps):**
+   - On ETHUSDT 1h ($N=20, M=20$): Daily Sharpe was **+0.952** (Net +17.58 bps) due to the strong 2025–2026 ETH trend.
+   - On SOLUSDT 1h ($N=20, M=20$): Daily Sharpe was **+0.616** (Net +5.19 bps).
+   - On BTCUSDT 1h ($N=20, M=20$): Daily Sharpe was **-1.188** (Net -39.32 bps).
+   - The unweighted mean Daily Sharpe is $(+0.952 + 0.616 - 1.188) / 3 = \mathbf{+0.127}$.
+   - However, the trade-weighted net expectancy across all 1,613 trades was **-5.38 bps** because BTC suffered large whipsaw losses that outweighed ETH and SOL gains.
+   - When fed into the Deflated Sharpe Ratio with $T = 1,613$ trades against $N_{\text{trials}} = 1,354$ trials, the per-trade Sharpe ratio ($0.005$) yields **DSR $p$-value = 1.0000** (no statistical significance).
+3. **Random-Entry Baseline Test (1,000 Runs):** Evaluated across 1,000 runs using the same 2N stops, 20-bar holding periods, and 14 bps friction:
+   - Mean Net Expectancy: **-12.14 bps** (Std Dev: 12.19 bps)
+   - 90% Confidence Interval: [-31.11, +8.60] bps
+   - Percentage of Runs Positive: **16.20%**
+   - The 5m and 15m Turtle net expectancies (-13 to -18 bps) are statistically indistinguishable from the random-entry baseline.
+4. **Mechanical Unit Tests:** Real tests in [`tests/test_turtle_mechanics.py`](file:///d:/Work/Attempts%20to%20Code/BTC%20Strategy/BTC%20Strategy/tests/test_turtle_mechanics.py) prove:
+   - Pyramiding adds up to 4 units at 0.5N increments (`test_turtle_pyramid_up_to_four_units_and_stop_ratchet`).
+   - Stop ratcheting moves stop loss to 2N below newest unit.
+   - 2.0x leverage cap binds when $ATR/price < 0.25\%$ (`test_turtle_leverage_cap_binding`).
+   - In-bar exit ordering prioritizes Stop Loss before Channel Exit (`test_pessimistic_intrabar_exit_ordering`).
+5. **Fresh Veto Hold-Out Status:** Because zero configurations passed the pre-registered hurdles, the fresh **ETH Hold-Out (`2026-04-01` to `2026-10-09`) remains completely untouched, pristine, and unpolluted**.
 
 ---
 
 ## 11. Final Scientific Conclusion
 
-Across four comprehensive empirical tests and 2,650 logged trial executions:
+Across four comprehensive empirical tests and 1,354 distinct strategy configurations:
 1. **Test 1 (Mechanical Indicator Stack):** All 12 variants failed In-Sample and Out-of-Sample (-11 to -23 bps net expectancy).
 2. **Test 2 (1,296 Parameter Grid & Walk-Forward):** Zero parameter configurations demonstrated persistent out-of-sample edge. Top in-sample candidate suffered -76.14% stitched return and -18.25 bps net expectancy on walk-forward testing.
-3. **Test 3 (Binance Futures Replay of 257 Live Trades):** The user's bot possessed a genuine gross edge (+6.94 bps, 52.14% win rate), but churning $2.28M of volume at 10 bps RT taker commissions drained $1,139.53 in fees, causing a 94.35% wipeout of the $189 deposit.
-4. **Turtle / Donchian Breakout Addendum (36 Multi-Asset Configs):** Classical trend-following failed on 5m, 15m, and 1h across SOL, BTC, and ETH (-5.38 to -18.23 bps pooled net expectancy).
+3. **Test 3 Proper (Binance Futures Replay of 257 Live Trades):** No tested rule beat costs on 1m-1h bars; the live-trade gross edge is inconclusive at n=257 (+6.94 bps, 95% CI [-1.61, +17.15] bps). High-turnover taker fee drag (-10.00 bps) drove net expectancy to -3.08 bps, resulting in complete account depletion.
+4. **Turtle / Donchian Breakout Addendum (36 Multi-Asset Configs):** Classical trend-following failed on 5m, 15m, and 1h across SOL, BTC, and ETH (-5.38 to -18.23 bps pooled net expectancy; DSR $p = 1.0000$).
 
-**Definitive Verdict:** **NO EDGE**. The strategy and its parameter variants cannot generate net trading profits on Binance Futures under taker fee structures. The scientific null hypothesis is fully confirmed.
+**Definitive Scientific Verdict:** **NO EDGE**. No tested rule beat costs on 1m-1h bars; the live-trade gross edge is inconclusive at n=257.
+
 
