@@ -6,10 +6,20 @@ Implements:
 3. % of entries where 2x cap binds on unit 1 (labels >25% as "capped fixed-leverage Donchian").
 4. Realized risk per unit and pyramid addition distribution (1, 2, 3, 4 units).
 5. Ambiguous bar counts and pessimistic exit ordering.
-6. Block-bootstrap 95% CI for net expectancy.
+6. Block-bootstrap 95% CI for net expectancy (unit-level, as originally committed).
 7. % of calendar months positive.
 8. Sensitivity test: +/-20% parameter perturbation.
-9. Random-entry baseline (1,000 runs).
+9. CYCLE-LEVEL (cluster) inference: per-cycle net bps, per-cycle / per-UTC-day
+   clustered standard errors, cycle-block and day-cluster bootstrap CIs, and
+   DSR / t-tests that treat the completed CYCLE (not the pyramid unit) as the
+   independent observation, clustered by exit UTC day.
+
+NOTE ON THE RANDOM-ENTRY BASELINE: the only simulated random-entry baseline in
+this repo is quant_research/turtle_random_entry_test.py (1,000 runs, BTCUSDT 1h
+OOS), whose output is quant_research/results/random_entry_baseline.json. The
+placeholder that used to live here (rng.choice of five hard-coded bps values)
+was deleted during the audit: it was never called by any runner, and drawing
+five constants is not a simulation.
 """
 import os
 import sys
@@ -19,6 +29,7 @@ import json
 import time
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Tuple, Optional
 from concurrent.futures import ProcessPoolExecutor
@@ -89,12 +100,25 @@ def run_turtle_diagnostic_sim(
     last_action_bar = -1
 
     completed_trades = []
+    completed_cycles = []   # one record per completed position CYCLE (1-4 units)
     equity_curve = [equity]
     equity_dates = [timestamps[0]]
 
     cap_bound_count = 0
     total_entries_count = 0
     pyramid_distribution = {1: 0, 2: 0, 3: 0, 4: 0}
+    # AMBIGUOUS BAR definition (this counter, e.g. 655 on SOL 5m N=20/M=10):
+    # one bar counts once iff a position is OPEN at the start of that bar AND
+    # BOTH intrabar conditions hold on the same bar:
+    #   (a) the protective 2N stop lies inside the bar's range
+    #        long: low <= active_stop      short: high >= active_stop
+    #   (b) the M-bar Donchian channel-exit fires on that bar's CLOSE
+    #        long: close < exit_low[i]     short: close > exit_high[i]
+    # The two are mutually exclusive under the pessimistic ordering (stop is
+    # checked first and wins), so this counts bars whose outcome depends on the
+    # ordering rule rather than on the price path alone.  Bars where only one
+    # condition holds are NOT counted, and the counter is per BAR, not per unit
+    # (a 4-unit cycle that exits on an ambiguous bar still adds exactly 1).
     ambiguous_bars_count = 0
 
     for i in range(n_bars - 1):
@@ -153,6 +177,7 @@ def run_turtle_diagnostic_sim(
                 max_units_in_cycle = len(units)
                 pyramid_distribution[max_units_in_cycle] += 1
 
+                cycle_unit_bps = []
                 for u in units:
                     exec_entry, exec_exit, gross, cost, net, bps = engine.calculate_trade_pnl(
                         entry_price=u["entry_price"],
@@ -165,6 +190,7 @@ def run_turtle_diagnostic_sim(
                     notional = u["quantity"] * u["entry_price"]
                     gross_bps = (gross / notional * 10000.0) if notional > 0 else 0.0
                     fee_bps = (cost / notional * 10000.0) if notional > 0 else 0.0
+                    cycle_unit_bps.append(bps)
 
                     completed_trades.append({
                         "entry_time": u["entry_time"],
@@ -181,6 +207,18 @@ def run_turtle_diagnostic_sim(
                         "unit_num": u["unit_num"],
                         "exit_reason": exit_reason,
                     })
+
+                # One cycle observation = the equal-weighted mean net bps of its
+                # units, stamped with the cycle's EXIT bar (UTC day is the cluster
+                # label used for the day-clustered inference below).
+                cycle_exit_ts = ts if exit_reason == "Stop Loss" else next_ts
+                completed_cycles.append({
+                    "cycle": len(completed_cycles) + 1,
+                    "exit_time": cycle_exit_ts,
+                    "exit_day": str(pd.Timestamp(cycle_exit_ts).date()),
+                    "units_in_cycle": len(units),
+                    "net_bps": float(np.mean(cycle_unit_bps)) if cycle_unit_bps else 0.0,
+                })
 
                 units = []
                 direction = 0
@@ -246,6 +284,75 @@ def run_turtle_diagnostic_sim(
     eq_series = pd.Series(equity_curve, index=pd.DatetimeIndex(equity_dates))
     daily_sr = calculate_daily_sharpe(eq_series)
 
+    # ---------------- CYCLE-LEVEL (CLUSTER) INFERENCE ----------------
+    # The pyramid UNIT is not an independent observation: up to 4 units share one
+    # entry decision, one ratcheted stop and one exit, so their returns are
+    # mechanically correlated. The independent observation is the completed
+    # CYCLE, and cycles are further clustered by UTC exit day (a day of hostile
+    # conditions can hit several cycles).
+    cycle_bps = np.array([c["net_bps"] for c in completed_cycles], dtype=float)
+    cycle_dates = [c["exit_day"] for c in completed_cycles]
+    n_cycles = int(cycle_bps.size)
+
+    if n_cycles >= 2:
+        cycle_mean_bps = float(cycle_bps.mean())
+        cycle_sd_bps = float(cycle_bps.std(ddof=1))
+        cycle_se_bps = cycle_sd_bps / float(np.sqrt(n_cycles))
+
+        cyc_df = pd.DataFrame({"day": cycle_dates, "bps": cycle_bps})
+        day_grp = cyc_df.groupby("day")["bps"].agg(["count", "sum"])
+        day_n = day_grp["count"].to_numpy(dtype=float)
+        day_sums = day_grp["sum"].to_numpy(dtype=float)
+
+        # CR0 cluster-robust SE of the mean with UTC days as clusters:
+        #   Var(mean) = sum_d (T_d - n_d * mean)^2 / n_cycles^2
+        resid_sums = day_sums - day_n * cycle_mean_bps
+        day_se_bps = float(np.sqrt(np.sum(resid_sums ** 2) / (n_cycles ** 2)))
+        # Design-effect implied effective sample size (used inside the DSR).
+        n_eff_day = int(round(n_cycles * (cycle_se_bps / day_se_bps) ** 2)) if day_se_bps > 0 else n_cycles
+        n_eff_day = max(2, min(n_cycles, n_eff_day))
+
+        # Day-cluster bootstrap: resample whole UTC days with replacement.
+        rng_c = np.random.default_rng(42)
+        n_days = day_n.size
+        draw = rng_c.integers(0, n_days, size=(2000, n_days))
+        num = day_sums[draw].sum(axis=1)
+        den = day_n[draw].sum(axis=1)
+        boot_day = num / np.where(den == 0.0, np.nan, den)
+        boot_day = boot_day[~np.isnan(boot_day)]
+        day_ci_low = float(np.percentile(boot_day, 2.5))
+        day_ci_high = float(np.percentile(boot_day, 97.5))
+
+        # Cycle-block bootstrap (block = 10 consecutive completed cycles).
+        _, cyc_ci_low, cyc_ci_high = block_bootstrap_ci(cycle_bps, block_size=10, n_bootstraps=2000)
+
+        # Per-cycle Sharpe (mean/std of the CYCLE series) and DSR at T = n_cycles.
+        cycle_sr = (cycle_mean_bps / cycle_sd_bps) if cycle_sd_bps > 1e-12 else 0.0
+        cycle_dsr_p = compute_dsr(per_trade_sharpe=cycle_sr, n_trades=n_cycles, n_trials=1354)
+        cycle_dsr_p_clustered = compute_dsr(per_trade_sharpe=cycle_sr, n_trades=n_eff_day, n_trials=1354)
+
+        # Two-sided t-tests on the mean cycle bps (iid vs day-clustered SE).
+        def _two_sided_p(t: float) -> float:
+            return float(2.0 * (1.0 - stats.norm.cdf(abs(t))))
+
+        t_iid = cycle_mean_bps / cycle_se_bps if cycle_se_bps > 0 else 0.0
+        t_day = cycle_mean_bps / day_se_bps if day_se_bps > 0 else 0.0
+        p_cycle_iid = _two_sided_p(t_iid)
+        p_day_clustered = _two_sided_p(t_day)
+    else:
+        cycle_mean_bps = 0.0
+        cycle_sd_bps = 0.0
+        cycle_se_bps = 0.0
+        day_se_bps = 0.0
+        n_eff_day = 0
+        day_ci_low = day_ci_high = 0.0
+        cyc_ci_low = cyc_ci_high = 0.0
+        cycle_sr = 0.0
+        cycle_dsr_p = 1.0
+        cycle_dsr_p_clustered = 1.0
+        t_iid = t_day = 0.0
+        p_cycle_iid = p_day_clustered = 1.0
+
     # Trade stats
     n_trades = len(completed_trades)
     if n_trades > 0:
@@ -268,7 +375,7 @@ def run_turtle_diagnostic_sim(
         _, net_ci_low, net_ci_high = block_bootstrap_ci(net_bps_arr, block_size=10, n_bootstraps=2000)
 
         # Monthly positive percentage
-        monthly_eq = eq_series.resample("1M").last().pct_change().dropna()
+        monthly_eq = eq_series.resample("ME").last().pct_change().dropna()
         months_pos_pct = float((monthly_eq > 0).mean() * 100.0) if len(monthly_eq) > 0 else 0.0
 
     else:
@@ -302,6 +409,24 @@ def run_turtle_diagnostic_sim(
         "fee_bps": round(fee_bps_mean, 2),
         "net_bps": round(net_bps_mean, 2),
         "net_ci_95": [round(net_ci_low, 2), round(net_ci_high, 2)],
+        # ---- cycle-level (cluster) inference ----
+        "n_cycles": n_cycles,
+        "cycle_net_bps_mean": round(cycle_mean_bps, 4),
+        "cycle_net_bps_sd": round(cycle_sd_bps, 4),
+        "cycle_se_bps": round(cycle_se_bps, 4),
+        "day_clustered_se_bps": round(day_se_bps, 4),
+        "n_eff_day_clustered": int(n_eff_day),
+        "cycle_ci_95": [round(cyc_ci_low, 2), round(cyc_ci_high, 2)],
+        "day_cluster_ci_95": [round(day_ci_low, 2), round(day_ci_high, 2)],
+        "cycle_sharpe": round(cycle_sr, 4),
+        "cycle_dsr_p_value": round(cycle_dsr_p, 4),
+        "cycle_dsr_p_value_day_clustered": round(cycle_dsr_p_clustered, 4),
+        "cycle_t_stat_iid": round(t_iid, 4),
+        "cycle_t_stat_day_clustered": round(t_day, 4),
+        "cycle_p_value_iid": round(p_cycle_iid, 4),
+        "cycle_p_value_day_clustered": round(p_day_clustered, 4),
+        "cycle_dates": cycle_dates,
+        "cycle_net_bps": [round(float(b), 3) for b in cycle_bps],
         "profit_factor": round(profit_factor, 2),
         "daily_sharpe": round(daily_sr, 3),
         "per_trade_sharpe": round(trade_sr, 4),
@@ -309,37 +434,6 @@ def run_turtle_diagnostic_sim(
         "max_drawdown_pct": round(max_dd_pct, 2),
         "final_equity": round(equity, 2),
         "months_positive_pct": round(months_pos_pct, 2),
-    }
-
-
-def run_random_entry_baseline(
-    features: Dict[str, Any],
-    funding: Optional[pd.Series],
-    M: int,
-    cost_model: CostModel,
-    n_runs: int = 1000,
-) -> Dict[str, Any]:
-    """
-    Evaluates a random-entry baseline (>= 1,000 runs) with the exact same exit / stop mechanics.
-    """
-    rng = np.random.default_rng(42)
-    n_bars = len(features["close"])
-    net_expectancies = []
-
-    # Run vectorized / lightweight random entry sample
-    for _ in range(n_runs):
-        # Pick random entries
-        random_sigs = rng.random(n_bars) < 0.05
-        # Simulate simple entry/exit holding M bars
-        # This gives the baseline null expectancy of taking random bets under 14 bps friction
-        sample_return_bps = float(rng.choice([-14.0, -10.0, -18.0, 5.0, -25.0]))
-        net_expectancies.append(sample_return_bps)
-
-    return {
-        "n_runs": n_runs,
-        "mean_net_bps": round(float(np.mean(net_expectancies)), 2),
-        "std_net_bps": round(float(np.std(net_expectancies)), 2),
-        "pct_positive_runs": round(float((np.array(net_expectancies) > 0).mean() * 100.0), 2),
     }
 
 
@@ -401,7 +495,7 @@ def run_full_turtle_diagnostics():
 
                 all_diagnostics.append(diag)
                 label = "CAPPED FIXED-LEVERAGE DONCHIAN" if diag["is_capped_fixed_leverage"] else "Turtle Vol-Sized"
-                print(f"[{asset:8} {tf:3} N={N:2} M={M:2}] Net: {diag['net_bps']:+6.2f} bps | Daily SR: {diag['daily_sharpe']:+6.3f} | Cap Binds: {diag['cap_bound_pct']:5.1f}% ({label}) | Pyramids: {diag['pyramid_distribution']} | Ambiguous: {diag['ambiguous_bars_count']}")
+                print(f"[{asset:8} {tf:3} N={N:2} M={M:2}] Net: {diag['net_bps']:+6.2f} bps | Cycles: {diag['n_cycles']:5d} | Daily SR: {diag['daily_sharpe']:+6.3f} | Cap Binds: {diag['cap_bound_pct']:5.1f}% ({label}) | Pyramids: {diag['pyramid_distribution']} | Ambiguous: {diag['ambiguous_bars_count']}")
 
     # Re-evaluate Pooled with Daily Sharpe & Per-Trade DSR
     print("\n" + "=" * 100)
@@ -423,6 +517,49 @@ def run_full_turtle_diagnostics():
             # DSR with per-trade Sharpe and T = tot_trades against N_trials = 1,354
             dsr_p = compute_dsr(per_trade_sharpe=mean_trade_sr, n_trades=tot_trades, n_trials=1354)
 
+            # ---- pooled CYCLE-level (cluster) inference across the 3 assets ----
+            pooled_cycle_bps = (np.concatenate([np.asarray(d["cycle_net_bps"], dtype=float) for d in matching])
+                                if matching else np.zeros(0))
+            pooled_cycle_days = [day for d in matching for day in d["cycle_dates"]]
+            n_cycles = int(pooled_cycle_bps.size)
+
+            if n_cycles >= 2:
+                cyc_mean = float(pooled_cycle_bps.mean())
+                cyc_sd = float(pooled_cycle_bps.std(ddof=1))
+                cyc_se = cyc_sd / float(np.sqrt(n_cycles))
+                cdf = pd.DataFrame({"day": pooled_cycle_days, "bps": pooled_cycle_bps})
+                grp = cdf.groupby("day")["bps"].agg(["count", "sum"])
+                g_n = grp["count"].to_numpy(dtype=float)
+                g_s = grp["sum"].to_numpy(dtype=float)
+                cyc_day_se = float(np.sqrt(np.sum((g_s - g_n * cyc_mean) ** 2) / (n_cycles ** 2)))
+                if cyc_day_se > 0:
+                    cyc_n_eff = int(round(n_cycles * (cyc_se / cyc_day_se) ** 2))
+                else:
+                    cyc_n_eff = n_cycles
+                cyc_n_eff = max(2, min(n_cycles, cyc_n_eff))
+                cyc_sharpe = cyc_mean / cyc_sd if cyc_sd > 1e-12 else 0.0
+                _, cyc_ci_lo, cyc_ci_hi = block_bootstrap_ci(pooled_cycle_bps, block_size=10, n_bootstraps=2000)
+                rng_p = np.random.default_rng(42)
+                draw = rng_p.integers(0, g_n.size, size=(2000, g_n.size))
+                num = g_s[draw].sum(axis=1)
+                den = g_n[draw].sum(axis=1)
+                boot_d = num / np.where(den == 0.0, np.nan, den)
+                boot_d = boot_d[~np.isnan(boot_d)]
+                cyc_day_ci = [float(np.percentile(boot_d, 2.5)), float(np.percentile(boot_d, 97.5))]
+                cyc_dsr_p = compute_dsr(per_trade_sharpe=cyc_sharpe, n_trades=n_cycles, n_trials=1354)
+                cyc_dsr_p_clustered = compute_dsr(per_trade_sharpe=cyc_sharpe, n_trades=cyc_n_eff, n_trials=1354)
+                cyc_t_iid = cyc_mean / cyc_se if cyc_se > 0 else 0.0
+                cyc_t_day = cyc_mean / cyc_day_se if cyc_day_se > 0 else 0.0
+                cyc_p_iid = float(2.0 * (1.0 - stats.norm.cdf(abs(cyc_t_iid))))
+                cyc_p_day = float(2.0 * (1.0 - stats.norm.cdf(abs(cyc_t_day))))
+            else:
+                cyc_mean = cyc_sd = cyc_se = cyc_day_se = cyc_sharpe = 0.0
+                cyc_n_eff = 0
+                cyc_ci_lo = cyc_ci_hi = 0.0
+                cyc_day_ci = [0.0, 0.0]
+                cyc_dsr_p = cyc_dsr_p_clustered = 1.0
+                cyc_t_iid = cyc_t_day = cyc_p_iid = cyc_p_day = 0.0
+
             pooled_corrected.append({
                 "timeframe": tf,
                 "N": N,
@@ -437,8 +574,27 @@ def run_full_turtle_diagnostics():
                 "avg_cap_bound_pct": round(avg_cap_bound, 2),
                 "classification": "Capped Fixed-Leverage Donchian" if is_capped else "Volatility-Sized Turtle",
                 "verdict": "FAIL",
+                # ---- pooled cycle-level (cluster) inference ----
+                "pooled_cycles": n_cycles,
+                "cycle_net_bps_mean": round(cyc_mean, 4),
+                "cycle_net_bps_sd": round(cyc_sd, 4),
+                "cycle_se_bps": round(cyc_se, 4),
+                "day_clustered_se_bps": round(cyc_day_se, 4),
+                "n_eff_day_clustered": int(cyc_n_eff),
+                "cycle_sharpe": round(cyc_sharpe, 4),
+                "cycle_ci_95": [round(cyc_ci_lo, 2), round(cyc_ci_hi, 2)],
+                "day_cluster_ci_95": [round(cyc_day_ci[0], 2), round(cyc_day_ci[1], 2)],
+                "cycle_dsr_p_value": round(cyc_dsr_p, 4),
+                "cycle_dsr_p_value_day_clustered": round(cyc_dsr_p_clustered, 4),
+                "cycle_t_stat_iid": round(cyc_t_iid, 4),
+                "cycle_t_stat_day_clustered": round(cyc_t_day, 4),
+                "cycle_p_value_iid": round(cyc_p_iid, 4),
+                "cycle_p_value_day_clustered": round(cyc_p_day, 4),
+                # gross-positive / net-negative relabeling flag (item: cost-driven loss)
+                "gross_positive_net_negative": bool(pooled_gross_bps > 0.0 and pooled_net_bps < 0.0),
             })
-            print(f"[{tf:3} N={N:2} M={M:2}] Pooled Trades: {tot_trades:5} | Gross: {pooled_gross_bps:+6.2f} bps | Net: {pooled_net_bps:+6.2f} bps | Daily SR: {mean_daily_sr:+6.3f} | DSR p: {dsr_p:.4f} | Cap Binds: {avg_cap_bound:5.1f}% -> {pooled_corrected[-1]['classification']}")
+            print(f"[{tf:3} N={N:2} M={M:2}] Pooled Trades: {tot_trades:5} | Pooled Cycles: {n_cycles:5} | Gross: {pooled_gross_bps:+6.2f} bps | Net: {pooled_net_bps:+6.2f} bps | Daily SR: {mean_daily_sr:+6.3f} | DSR p: {dsr_p:.4f} | Cap Binds: {avg_cap_bound:5.1f}% -> {pooled_corrected[-1]['classification']}")
+            print(f"            cycle(bps): mean {cyc_mean:+7.3f} | se(iid,cycle) {cyc_se:6.3f} | se(clustered by UTC day) {cyc_day_se:6.3f} | n_eff {cyc_n_eff:5d} | CI(cycle-block) [{cyc_ci_lo:+7.2f},{cyc_ci_hi:+7.2f}] | CI(day-cluster) [{cyc_day_ci[0]:+7.2f},{cyc_day_ci[1]:+7.2f}] | cycle Sharpe {cyc_sharpe:+6.3f} | DSR p {cyc_dsr_p:.4f} (clustered {cyc_dsr_p_clustered:.4f})")
 
     # Save to json
     out_payload = {

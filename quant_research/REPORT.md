@@ -388,18 +388,20 @@ All temporary scratch files remain localized in the conversation scratch directo
 ### B. Expectancy & Block-Bootstrap 95% Confidence Intervals
 Computed using moving-block bootstrap (block size = 10 trades, 2,000 iterations):
 
-| Symbol | Trades | Gross Expectancy (bps) | 95% Bootstrap CI (Gross) | Net Expectancy (bps) | 95% Bootstrap CI (Net) | Volume Net Bps |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **SOLUSDT** | 195 | +9.09 bps | [-1.77, +19.89] bps | -0.92 bps | [-11.76, +9.88] bps | +0.60 bps |
-| **BTCUSDT** | 35 | +9.77 bps | [-1.83, +22.96] bps | -0.35 bps | [-11.82, +12.85] bps | -4.44 bps |
-| **ETHUSDT** | 25 | -13.74 bps | [-42.46, +9.61] bps | -23.83 bps | [-52.44, -0.53] bps | -16.96 bps |
-| **BNBUSDT** | 2 | +7.21 bps | [+6.37, +8.05] bps | -2.79 bps | [-3.63, -1.95] bps | -1.30 bps |
-| **ALL POOLED** | **257** | **+6.94 bps** | **[-1.61, +17.15] bps** | **-3.08 bps** | **[-11.64, +7.09] bps** | **-0.83 bps** |
+| Symbol | Trades | Gross Exp (bps, per-trade mean) | 95% Bootstrap CI (Gross) | Net Exp (bps, per-trade mean) | 95% Bootstrap CI (Net) | Gross bps (per round-trip notional) | Fee bps (per round-trip notional) | Net bps (per round-trip notional) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **SOLUSDT** | 195 | +9.09 bps | [-1.77, +19.89] bps | -0.92 bps | [-11.76, +9.88] bps | +11.15 bps | -10.00 bps | +1.16 bps |
+| **BTCUSDT** | 35 | +9.77 bps | [-1.83, +22.96] bps | -0.35 bps | [-11.82, +12.85] bps | +1.14 bps | -10.00 bps | -8.87 bps |
+| **ETHUSDT** | 25 | -13.74 bps | [-42.46, +9.61] bps | -23.83 bps | [-52.44, -0.53] bps | -21.60 bps | -10.00 bps | -31.64 bps |
+| **BNBUSDT** | 2 | +7.21 bps | [+6.37, +8.05] bps | -2.79 bps | [-3.63, -1.95] bps | +7.41 bps | -9.99 bps | -2.62 bps |
+| **ALL POOLED** | **257** | **+6.94 bps** | **[-1.61, +17.15] bps** | **-3.08 bps** | **[-11.64, +7.09] bps** | **+8.43 bps** | **-10.00 bps** | **-1.57 bps** |
 
 > [!NOTE]
-> **Reconciliation of Bps Metrics:**
-> 1. **Per-Trade Arithmetic Mean (+6.94 gross / -3.08 net bps):** Unweighted average across 257 trades; smaller notional positions had higher percentage gains.
-> 2. **Per-Round-Trip Volume Bps (+4.21 gross / -0.83 net bps):** Dollar-weighted return across $2,279,063.79 round-trip traded notional. Both metrics uniformly confirm negative net expectancy under exchange taker fees.
+> **Reconciliation of Bps Metrics - the denominator is now stated in every column header.**
+> * **Per-trade mean columns** divide each trade's PnL by that trade's own notional and average over the 257 trades (equal-weighted). Source: `results/test_3_replay_trades.csv`.
+> * **Per round-trip notional columns** divide the summed PnL by the summed one-side notional, `sum(entry_notional) = $1,139,460.63`. The committed summary's `total_volume_usd = $2,279,063.79` is BOTH sides (entry + exit), so `volume/2 = $1,139,531.90` is the same basis within $71.26. The previously printed "+4.21 gross / -0.83 net bps" divided by the both-sides volume while the label said round-trip: on the stated round-trip basis the pooled figures are **+8.43 gross / -10.00 fees / -1.57 net bps**. The entire difference between "+4.21" and "+8.43" is the denominator, not the data.
+> * **Why equal-weighted and notional-weighted differ (computed, not asserted):** `mean(notional-weighted) - mean(equal)` = `sum_i (w_i - 1/n)(x_i - mean(x))` with `w_i` the trade's notional share, i.e. the covariance between dollar weight and bps outcome. From the committed CSV: gross `+8.4274 - (+6.9433) = +1.4841` bps and net `-1.5673 - (-3.0823) = +1.5150` bps, with `corr(entry_notional, gross_bps) = +0.0280`. The covariance is POSITIVE, i.e. the larger trades earned slightly higher bps, which makes the equal-weighted mean the lower one. The earlier statement that "smaller notional positions had higher percentage gains" has the sign backwards.
+> * **Ledger vs replay gap (previously unreported):** `results/test_3_replay_summary.json` reports commissions **-$1,139.53** and net **-$178.59**, while the ledger reconciliation in `results/test_3_proper_results.json` reports commissions **-$1,131.47**, funding **+$0.68**, insurance **-$18.76** and net **-$189.28**. The two committed artifacts disagree by **$8.06** on commissions and **$10.69** on net; section 9-A above quotes only the ledger figures.
 
 ### C. Isolated-Margin Liquidation Modeling (20x and 50x)
 Evaluating maximum adverse excursions (MAE) on 1m klines during trade holding periods:
@@ -409,67 +411,98 @@ Evaluating maximum adverse excursions (MAE) on 1m klines during trade holding pe
 ### D. Replay on 1m Data Across 6 Pre-Registered Variants (10 bps vs 14 bps RT Fees)
 Replaying entries on 1m continuous data with hard stop $d \in \{0.3\%, 0.5\%, 1.0\%\}$, sizing to 1% risk, leverage caps in $\{5\times, 10\times\}$, 3% daily loss cap:
 
-| Variant | Trades Taken | Gross Return % | Net Ret (10 bps) % | Net Ret (14 bps) % | Fee Drag (10 bps) | Fee Drag (14 bps) | Matched No-Stop Gross % |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Stop_0.3%_Cap_5x** | 111 | -15.63% | -41.80% | -49.85% | 37.00% | 51.80% | **+12.62%** |
-| **Stop_0.3%_Cap_10x** | 111 | -15.63% | -41.80% | -49.85% | 37.00% | 51.80% | **+12.62%** |
-| **Stop_0.5%_Cap_5x** | 119 | -27.78% | -43.13% | -48.32% | 23.80% | 33.32% | **+9.37%** |
-| **Stop_0.5%_Cap_10x** | 119 | -27.78% | -43.13% | -48.32% | 23.80% | 33.32% | **+9.37%** |
-| **Stop_1.0%_Cap_5x** | 169 | -24.03% | -35.87% | -40.07% | 16.90% | 23.66% | **+9.42%** |
-| **Stop_1.0%_Cap_10x** | 169 | -24.03% | -35.87% | -40.07% | 16.90% | 23.66% | **+9.42%** |
-| **No-Stop Baseline (1x)** | 257 | +18.16% | -7.54% | -17.17% | 25.70% | 35.33% | **+18.16%** |
+| Variant | Lev | Taken@10bps | Skipped@10bps | Taken@14bps | Skipped@14bps | Gross % (stop, fee-free) | Net % @10bps | Net % @14bps | Same-set no-stop net % @10bps | Same-set no-stop net % @14bps | Stop minus no-stop gross (pp) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Stop_0.3%_Cap_5x** | 3.33 | 115 | 142 | 111 | 146 | -13.88% | -43.63% | -49.85% | -11.18% | -18.69% | -32.44 |
+| **Stop_0.3%_Cap_10x** | 3.33 | 115 | 142 | 111 | 146 | -13.88% | -43.63% | -49.85% | -11.18% | -18.69% | -32.44 |
+| **Stop_0.5%_Cap_5x** | 2.00 | 124 | 133 | 119 | 138 | -23.22% | -42.61% | -48.32% | -5.28% | -13.46% | -37.33 |
+| **Stop_0.5%_Cap_10x** | 2.00 | 124 | 133 | 119 | 138 | -23.22% | -42.61% | -48.32% | -5.28% | -13.46% | -37.33 |
+| **Stop_1.0%_Cap_5x** | 1.00 | 178 | 79 | 169 | 88 | -23.19% | -37.81% | -40.07% | -5.09% | -10.24% | -32.72 |
+| **Stop_1.0%_Cap_10x** | 1.00 | 178 | 79 | 169 | 88 | -23.19% | -37.81% | -40.07% | -5.09% | -10.24% | -32.72 |
+| **1x no-stop, all 257 trades, no cap** | 1.00 | 257 | 0 | 257 | 0 | n/a | **-8.19%** | -17.17% | -8.19% | -17.17% | n/a |
 
 > [!IMPORTANT]
-> **Empirical Fact: Stops Reduce Gross Return.** Across all variants, the matched no-stop gross return is positive (+9.37% to +18.16%), whereas the stopped gross return is uniformly negative (-15.63% to -27.78%). Tight hard stops cut winning positions prematurely while turning normal market noise into locked-in capital losses.
->
-> **Explanation of Skipped Trades:** Exactly 146 trades were skipped in 0.3% variants because the 3% daily loss cap triggered after consecutive intrabar stop-outs on volatile days (`2025-04-05`, `2025-04-12`, `2025-04-14`, `2025-05-12`).
+> **Corrections applied to this table (see `results/audit_results_rerun.json`, key `replay_10bps_vs_14bps`).**
+> * **Each fee level now has its own independent path.** The 3% daily-loss cap is evaluated on that path's own equity, so the 10 bps and 14 bps trade sets genuinely differ (0.3% stops: 115 taken / 142 skipped at 10 bps vs 111 taken / 146 skipped at 14 bps). The previously committed table implicitly shared one trade set across both fee levels.
+> * **The no-stop column is now a same-trade-set, same-sizing counterfactual per variant and per fee level** (identical entries, identical notional path, stop removed, exit at the recorded user exit). The previous "matched no-stop gross" figure carried a single equity path across variants.
+> * **The leverage-cap pairs coincide** (5x and 10x give identical rows) because `min(cap, 1%/stop)` binds below 5x for 0.3%/0.5% stops and equals 1x for 1.0% stops.
+> * **Deleted claim - "Empirical Fact: Stops Reduce Gross Return".** The supported statement is narrower: on every variant and fee level the same-trade-set no-stop counterfactual ends higher, and every stopped path is negative net at both 10 and 14 bps. The gap is mechanical (a touched stop sets the exit price and removes any later recovery on that trade). This replay does not measure volatility regimes or the risk the stops removed, and the no-stop arm carries unbounded adverse excursion, so it is not an investable alternative.
+> * **Deleted claim - "exactly 146 trades were skipped".** That number came from `audit_and_reconciliation.item_7_replay_no_stop_and_fee_drag`, which simulated each trade's PnL as a constant (`-100` if `net_bps < 0` else `+50`) unrelated to any committed replay trade. The real skip counts are the Skipped@10bps / Skipped@14bps columns above.
 
 ---
 
 ## 10. Classical Turtle / Donchian Breakout Multi-Asset Diagnostics
 
 > [!WARNING]
-> **Methodological Pre-Registration Limitation:** The amended Turtle criteria (pooled $\ge 150$-trade hurdle, ETH veto hold-out rule, and multi-asset search space) were committed in git commit `acb5979` shortly before the addendum execution (`2026-10-10 23:19:57+03:00`), rather than at the initial project pre-registration (`888867e`). Regardless, all 36 configurations failed both the base criteria and the amended pooled criteria.
+> **Pre-registration provenance, verified against git.** Commit `acb5979` (`docs(prereg): commit pre-registration addendum...`, the only commit that has ever touched `quant_research/PREREG.md` after the initial `888867e`) added the entire 61-line section 7 addendum: the multi-asset search space (7.1), sizing/pyramiding rules (7.2), execution and the **1m sub-bar resolution clause** (7.3), the OOS/hold-out protocol (7.4), **all six pass/fail criteria** (7.5: net >= +5 bps, stress > 0, pooled trades >= 150, DSR p < 0.05 with N_trials = 1,354, DD < 30%, PF >= 1.25), the Test 3 replay protocol (7.6) and trial-logging governance (7.7). It is therefore not accurate to describe only the pooled >= 150-trade hurdle as pre-registered: all six clauses were. What is true is that (a) the runner's pass gate implements only four of the six (DD and PF are reported per asset but not part of the pooled verdict) and (b) the 7.3 sub-bar clause was **never implemented in the committed runners** - see the deviations block below. The diagnostics reported in this section (bootstrap CI, months-positive %, random-entry baseline, +/-20% parameter perturbation, cap-binding %) appear nowhere in `PREREG.md` and are labelled **POST HOC** throughout.
 
-*(All numbers cited directly from `quant_research/results/turtle_diagnostics.json` and `quant_research/results/audit_results.json`)*
+*(All numbers below are cited from `results/turtle_results.json` (regenerated by this audit run with the canonical daily Sharpe and `core.metrics.compute_dsr`), `results/turtle_diagnostics.json` (regenerated, cycle-level inference added) and `results/audit_results_rerun.json`. The per-asset trade counts, expectancies, returns, drawdowns and profit factors are byte-identical to the committed versions; only the Sharpe definition, the DSR implementation and the added cycle statistics differ.)*
 
-### Pooled Multi-Asset Performance (Daily Sharpe & Per-Trade DSR)
+### Pooled Multi-Asset Performance (canonical daily Sharpe, per-trade DSR, cycle counts)
 
-| Timeframe | Parameters | Pooled Trades | Gross Exp (bps) | Net Exp (bps) | Daily Sharpe ($\sqrt{365}$) | DSR $p$-value ($N=1,354$) | Cap Binding % | System Classification | Verdict |
+| Timeframe | Parameters | Pooled Trades | Pooled Cycles | Gross Exp (bps) | Net Exp (bps) | Daily Sharpe (sqrt 365) | Legacy bar Sharpe | Per-Trade Sharpe | DSR p (N=1,354) | Cap Binding % | System Classification | Verdict |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **5m** | N=20, M=10 | 14,904 | 10,002 | -0.62 | -17.11 | -9.734 | -10.233 | -0.1991 | 1.0000 | 59.1% | Capped Fixed-Leverage Donchian | **FAIL** |
+| **5m** | N=20, M=20 | 13,665 | 8,703 | -0.63 | -17.93 | -8.193 | -8.437 | -0.1865 | 1.0000 | 57.2% | Capped Fixed-Leverage Donchian | **FAIL** |
+| **5m** | N=55, M=10 | 9,960 | 6,146 | **+0.28** | -16.49 | -7.782 | -8.063 | -0.1884 | 1.0000 | 54.9% | Capped Fixed-Leverage Donchian | **FAIL** |
+| **5m** | N=55, M=20 | 9,589 | 5,734 | -0.07 | -17.51 | -6.956 | -7.108 | -0.1830 | 1.0000 | 54.6% | Capped Fixed-Leverage Donchian | **FAIL** |
+| **15m** | N=20, M=10 | 6,682 | 3,438 | -0.70 | -18.23 | -3.984 | -4.034 | -0.1592 | 1.0000 | 18.2% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | N=20, M=20 | 5,826 | 2,923 | **+1.58** | -15.89 | -2.593 | -2.535 | -0.1213 | 1.0000 | 18.1% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | N=55, M=10 | 3,859 | 2,032 | -0.44 | -16.17 | -2.963 | -3.050 | -0.1429 | 1.0000 | 16.0% | Volatility-Sized Turtle | **FAIL** |
+| **15m** | N=55, M=20 | 3,629 | 1,873 | **+1.93** | -13.52 | -2.030 | -2.049 | -0.1084 | 1.0000 | 16.1% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | N=20, M=10 | 1,815 | 850 | **+8.18** | -8.51 | -0.615 | -0.643 | -0.0678 | 1.0000 | 0.5% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | N=20, M=20 | 1,613 | 727 | **+12.43** | -5.38 | **+0.126** | +0.121 | -0.0347 | 1.0000 | 0.4% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | N=55, M=10 | 1,103 | 528 | -11.84 | -27.82 | -1.561 | -1.553 | -0.1530 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
+| **1h** | N=55, M=20 | 1,061 | 497 | -16.35 | -33.19 | -1.060 | -1.042 | -0.1485 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
+
+> [!CAUTION]
+> **Five of the twelve pooled rows are GROSS-POSITIVE / NET-NEGATIVE** (5m 55/10, 15m 20/20, 15m 55/20, 1h 20/10, 1h 20/20, shown in bold above). These are cost-driven losses, not positive edge: the gross expectancy is positive before the 14 bps round trip and negative after it. Any summary that reports the gross column alone would invert the conclusion.
+>
+> **DSR p = 1.0000 is now correct for the right reason.** The regenerated column uses `core.metrics.compute_dsr` on the per-trade Sharpe with T = pooled trades: the per-trade Sharpe is negative for all twelve rows, and the function returns 1.0 by construction when the Sharpe is <= 0. The previously committed 1.0000 came from a dimensional bug in `turtle_runner.compute_dsr_pvalue` (an expected-max term in z units was compared directly against a per-bar Sharpe), which made the statistic return 1.0 regardless of the data. `results/audit_results_rerun.json` -> `sharpe_drift_resolution` demonstrates both formulas side by side: for a POSITIVE Sharpe of +0.121 with T=1,613 and N_trials=1,354 the legacy formula gives p = 1.0000 while the canonical one gives p = 0.0650.
+
+### Cycle-level inference (observation = completed cycle; cluster = UTC exit day) - POST HOC
+
+| Timeframe | Params | Cycles | Cycle mean net bps | SE (cycle) | SE (UTC day cluster) | n_eff | 95% CI (cycle block bootstrap) | 95% CI (day-cluster bootstrap) | Cycle Sharpe |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **5m** | $N=20, M=10$ | 14,904 | -0.62 | -17.11 | -9.730 | 1.0000 | 59.1% | **Capped Fixed-Leverage Donchian** | **FAIL** |
-| **5m** | $N=20, M=20$ | 13,665 | -0.63 | -17.93 | -8.198 | 1.0000 | 57.2% | **Capped Fixed-Leverage Donchian** | **FAIL** |
-| **5m** | $N=55, M=10$ | 9,960 | +0.28 | -16.49 | -7.806 | 1.0000 | 54.9% | **Capped Fixed-Leverage Donchian** | **FAIL** |
-| **5m** | $N=55, M=20$ | 9,589 | -0.07 | -17.51 | -6.975 | 1.0000 | 54.6% | **Capped Fixed-Leverage Donchian** | **FAIL** |
-| **15m** | $N=20, M=10$ | 6,682 | -0.70 | -18.23 | -3.988 | 1.0000 | 18.2% | Volatility-Sized Turtle | **FAIL** |
-| **15m** | $N=20, M=20$ | 5,826 | +1.58 | -15.89 | -2.597 | 1.0000 | 18.1% | Volatility-Sized Turtle | **FAIL** |
-| **15m** | $N=55, M=10$ | 3,859 | -0.44 | -16.17 | -2.953 | 1.0000 | 16.0% | Volatility-Sized Turtle | **FAIL** |
-| **15m** | $N=55, M=20$ | 3,629 | +1.93 | -13.52 | -2.027 | 1.0000 | 16.1% | Volatility-Sized Turtle | **FAIL** |
-| **1h** | $N=20, M=10$ | 1,815 | +8.18 | -8.51 | -0.619 | 1.0000 | 0.5% | Volatility-Sized Turtle | **FAIL** |
-| **1h** | $N=20, M=20$ | 1,613 | +12.43 | -5.38 | +0.127 | 1.0000 | 0.4% | Volatility-Sized Turtle | **FAIL** |
-| **1h** | $N=55, M=10$ | 1,103 | -11.84 | -27.82 | -1.551 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
-| **1h** | $N=55, M=20$ | 1,061 | -16.35 | -33.19 | -1.055 | 1.0000 | 0.0% | Volatility-Sized Turtle | **FAIL** |
+| **5m** | N=20, M=10 | 10,002 | -25.14 | 0.79 | 1.09 | 5,205 | [-26.7, -23.6] | [-27.2, -22.9] | -0.319 |
+| **5m** | N=20, M=20 | 8,703 | -27.26 | 0.99 | 1.27 | 5,301 | [-29.1, -25.4] | [-29.7, -24.8] | -0.295 |
+| **5m** | N=55, M=10 | 6,146 | -28.07 | 0.98 | 1.37 | 3,159 | [-30.0, -26.2] | [-30.7, -25.3] | -0.364 |
+| **5m** | N=55, M=20 | 5,734 | -29.18 | 1.19 | 1.57 | 3,300 | [-31.4, -26.8] | [-32.2, -26.0] | -0.323 |
+| **15m** | N=20, M=10 | 3,438 | -43.65 | 2.09 | 2.76 | 1,965 | [-47.4, -39.7] | [-48.6, -38.2] | -0.357 |
+| **15m** | N=20, M=20 | 2,923 | -42.39 | 2.86 | 3.31 | 2,175 | [-47.6, -36.6] | [-48.8, -35.1] | -0.274 |
+| **15m** | N=55, M=10 | 2,032 | -42.51 | 2.84 | 3.78 | 1,147 | [-47.9, -36.7] | [-49.4, -34.0] | -0.332 |
+| **15m** | N=55, M=20 | 1,873 | -40.78 | 3.84 | 4.31 | 1,488 | [-47.7, -32.9] | [-49.0, -31.8] | -0.245 |
+| **1h** | N=20, M=10 | 850 | -78.31 | 8.35 | 10.43 | 544 | [-92.9, -62.0] | [-98.7, -57.2] | -0.322 |
+| **1h** | N=20, M=20 | 727 | -76.13 | 11.24 | 14.15 | 459 | [-94.7, -53.6] | [-102.1, -47.3] | -0.251 |
+| **1h** | N=55, M=10 | 528 | -90.51 | 9.95 | 10.93 | 438 | [-107.8, -70.7] | [-110.8, -67.8] | -0.396 |
+| **1h** | N=55, M=20 | 497 | -95.96 | 10.99 | 12.76 | 368 | [-115.4, -71.3] | [-118.5, -71.0] | -0.392 |
 
-### Diagnostics & Mathematical Resolutions
-1. **Classification as "Capped Fixed-Leverage Donchian":** On the 5m timeframe, the 2x leverage cap binds on **54.6% to 59.1% of entries** (>25% threshold). Because 5m ATR is small relative to asset price ($ATR / price < 0.25\%$), 1% risk targeting would require >2x leverage; the cap clamps notional to exactly 2.0x equity, converting the system into a fixed-leverage breakout strategy.
-2. **Explanation of the 1h $N=20, M=20$ Row (Sharpe +0.127 vs. Net Expectancy -5.38 bps):**
-   - On ETHUSDT 1h ($N=20, M=20$): Daily Sharpe was **+0.952** (Net +17.58 bps) due to the strong 2025–2026 ETH trend.
-   - On SOLUSDT 1h ($N=20, M=20$): Daily Sharpe was **+0.616** (Net +5.19 bps).
-   - On BTCUSDT 1h ($N=20, M=20$): Daily Sharpe was **-1.188** (Net -39.32 bps).
-   - The unweighted mean Daily Sharpe is $(+0.952 + 0.616 - 1.188) / 3 = \mathbf{+0.127}$.
-   - However, the trade-weighted net expectancy across all 1,613 trades was **-5.38 bps** because BTC suffered large whipsaw losses that outweighed ETH and SOL gains.
-   - When fed into the Deflated Sharpe Ratio with $T = 1,613$ trades against $N_{\text{trials}} = 1,354$ trials, the per-trade Sharpe ratio ($0.005$) yields **DSR $p$-value = 1.0000** (no statistical significance).
-3. **Random-Entry Baseline Test (1,000 Runs):** Evaluated across 1,000 runs using the same 2N stops, 20-bar holding periods, and 14 bps friction:
-   - Mean Net Expectancy: **-12.14 bps** (Std Dev: 12.19 bps)
-   - 90% Confidence Interval: [-31.11, +8.60] bps
-   - Percentage of Runs Positive: **16.20%**
-   - The 5m and 15m Turtle net expectancies (-13 to -18 bps) are statistically indistinguishable from the random-entry baseline.
-4. **Mechanical Unit Tests:** Real tests in [`tests/test_turtle_mechanics.py`](file:///d:/Work/Attempts%20to%20Code/BTC%20Strategy/BTC%20Strategy/tests/test_turtle_mechanics.py) prove:
-   - Pyramiding adds up to 4 units at 0.5N increments (`test_turtle_pyramid_up_to_four_units_and_stop_ratchet`).
-   - Stop ratcheting moves stop loss to 2N below newest unit.
-   - 2.0x leverage cap binds when $ATR/price < 0.25\%$ (`test_turtle_leverage_cap_binding`).
-   - In-bar exit ordering prioritizes Stop Loss before Channel Exit (`test_pessimistic_intrabar_exit_ordering`).
-5. **Fresh Veto Hold-Out Status:** Because zero configurations passed the pre-registered hurdles, the fresh **ETH Hold-Out (`2026-04-01` to `2026-10-09`) remains completely untouched, pristine, and unpolluted**.
+> [!NOTE]
+> **Cycle counts per config, recomputed (see `results/audit_results_rerun.json` -> `pyramids_and_cycles`).** The previously printed "5m: 10,002 / 15m: 4,402 / 1h: 1,228 cycles" verified as: 10,002 is exactly the 5m N=20/M=10 pooled cycle count (a single config, not a timeframe total); 4,402 and 1,228 match no cycle sum in the diagnostics file. The real per-config cycle counts are in the table above (5m: 10,002 / 8,703 / 6,146 / 5,734; 15m: 3,438 / 2,923 / 2,032 / 1,873; 1h: 850 / 727 / 528 / 497). The "7,380 / 2,126 / 569 / 631 = 15,863" figures have no source in any committed artifact and were deleted rather than restated.
+>
+> **Why cycle means are far more negative than the pooled per-unit nets** (e.g. 1h 20/20: -76.13 vs -5.38 bps): the pooled net weights every pyramid UNIT equally, and units 2-4 are only added after price has moved favourably, so multi-unit cycles are over-represented in the unit-weighted average. The cycle-level statistic gives every completed cycle one vote. Both are reported because the pre-registered hurdle is stated in per-trade bps while the COUNT of independent observations is the number of cycles.
+>
+> **Clustering matters for 1h:** the day-clustered SE exceeds the cycle SE (14.15 vs 11.24 at 1h 20/20), implying only n_eff = 459 of 727 cycles are independent observations, and the day-cluster CI is wider ([-102.1, -47.3] vs [-94.7, -53.6]). Every clustered and unclustered interval is entirely below zero, so the sign of the conclusion is unchanged; the sampling error of the magnitude is larger than the unit-level bootstrap CI (-18.74, -10.05 at SOL 5m 20/10) would suggest.
+
+### Diagnostics & Deviations Found by This Audit
+
+**POST HOC diagnostics** (none of the following appears in `PREREG.md`, so none of it can be reconciled as pre-registered): the bootstrap CIs, the percentage of months positive, the random-entry baseline, the +/-20% parameter perturbation, and the leverage-cap-binding threshold. They are descriptive robustness checks of a family that already failed.
+
+1. **Classification as "Capped Fixed-Leverage Donchian" (POST HOC):** on the 5m timeframe the 2x leverage cap binds on 54.6% to 59.1% of entries (>25% threshold). Because 5m ATR is small relative to price, 1% risk sizing would require >2x leverage; the cap clamps notional to 2.0x equity, converting the system into a fixed-leverage breakout strategy.
+2. **The 1h N=20, M=20 row (Sharpe +0.126 daily vs. net expectancy -5.38 bps):** per-asset canonical daily Sharpes are ETHUSDT **+0.952** (net +17.58 bps, 507 units), SOLUSDT **+0.616** (net +5.19 bps, 582 units) and BTCUSDT **-1.188** (net -39.32 bps, 524 units); the unweighted mean is **(+0.952 + 0.616 - 1.188)/3 = +0.127** in the diagnostics module and **+0.126** in the runner module. The residual 0.001 is drift between the two independent simulator implementations (runner vs diagnostics), not a definitional difference: both now use `core.metrics.calculate_daily_sharpe` on a timestamped equity curve. The trade-weighted net expectancy across all 1,613 units is **-5.38 bps** because BTC's whipsaw losses outweigh the ETH and SOL gains. At the cycle level (727 cycles, equal-weighted) the mean is **-76.13 bps** with a day-clustered SE of 14.15 (n_eff = 459).
+3. **Random-Entry Baseline - corrected (POST HOC):** the only simulated random-entry baseline in the repo is `quant_research/turtle_random_entry_test.py` (1,000 runs, BTCUSDT 1h OOS): mean **-12.14 bps**, std 12.19, 90% CI **[-31.11, +8.60]**, 16.20% of runs positive. The earlier text applied that single BTC-1h figure to the 5m/15m rows, which is not supported: a single-asset 1h baseline cannot speak for 14,904 pooled 5m units. What is now reported instead (see `audit_results_rerun.json` -> `random_baseline_per_config`) is a **zero-mean null with dispersion matched to each config's own cycle dispersion**, with the null SE and the strategy SE printed side by side and Holm-Bonferroni adjustment across all 36 configs. The strategy beats that null on **zero** of the 36 configs (Holm-adjusted p < 0.05 on all 36, but every significant z rejects zero-mean in the direction of a LOSS), and at the asset x timeframe level **15 of the 36 configs are gross-positive yet net-negative** - cost-driven losses that a gross-only summary would misreport as edge. The previously printed "150/sqrt(trades)" null SE was mis-scaled (it used the 150 bps unit dispersion and the number of UNITS).
+4. **Mechanical unit tests (real assertions, executed by pytest):**
+   - `tests/test_turtle_mechanics.py::test_turtle_pyramid_up_to_four_units_and_stop_ratchet` and `::test_turtle_leverage_cap_binding` (pyramiding and cap binding).
+   - `::test_ratchet_then_stop_order_within_one_bar` - rewritten during this audit: it now reads `N` from `params`, recomputes the stops from `features["atr"]`, and asserts the exact ratcheted stop (107.23525), the exact executed exit price after slippage (107.160185325) and the exact exit bar, replacing comments that said ATR=2.0, stops 106.0/108.0 and "old stop 105.0".
+   - `tests/test_ambiguous_bars.py::test_turtle_ambiguous_bar_pyramid_stop_and_subbar_resolution` (NEW) - builds a bar that simultaneously triggers a pyramid add, the ratcheted stop and the channel exit, and shows that 1m sub-bars change the exit price, the exit reason and the exit bar (stop at 108.467 on bar 60 without sub-bars vs channel exit 128.08 on bar 61 with them). It also unit-tests `QuantEngine.resolve_intrabar_exit_levels`, the two-same-side-level resolver added because a long's stop and its Donchian line are both below price and the old stop-vs-target helper could not express that case.
+5. **Fresh Veto Hold-Out Status:** because zero configurations passed the pre-registered hurdles, the fresh **ETH Hold-Out (`2026-04-01` to `2026-10-09`) remains untouched and unpolluted**. The verdict does not depend on the sub-bar deviation recorded below: all twelve pooled rows fail the net expectancy hurdle (-5.38 to -33.19 bps against a >= +5 bps requirement, i.e. shortfalls of 10.4 to 38.2 bps), and the most favourable re-measured 1h arm (ETHUSDT +19.74 bps with sub-bars resolved at 1m) is a single asset, not a pooled result.
+
+### Deviations Between the Pre-Registration and the Committed Implementation
+
+1. **PREREG 7.3 "1m Sub-Bar Resolution" was never implemented in the committed Turtle runners (DEVIATION).** The clause states that all 5m/15m/1h bars pass 1m sub-bars into the engine's intrabar resolver. The committed `turtle_runner.py` and `turtle_diagnostics.py` never passed `df_1m`, and `run_turtle_simulation` contained no intrabar resolver call at all, so every committed Turtle number uses the pessimistic stop-first fallback on ambiguous bars. There are **6,182 ambiguous bars across the 36 configs** (SOL 5m 20/10: 655). The resolver and the sub-bar wiring now exist (`resolve_intrabar_exit_levels`, `df_1m=` parameter) and the regenerated artifacts deliberately keep the committed stop-first behaviour so every other audited number stays comparable. Measured sensitivity on the 1h 20/20 config in `audit_results_rerun.json` -> `ambiguous_and_subbars`: SOLUSDT +5.19 -> +4.72 bps, BTCUSDT -39.32 -> -39.28 bps, ETHUSDT +17.58 -> +19.74 bps.
+2. **Funding is charged direction-agnostically (DEFECT).** PREREG 3 says long positions pay `rate x notional` and short positions receive it. `run_turtle_simulation` and `run_turtle_diagnostic_sim` instead charge `-qty * close * rate` for every position regardless of direction, so a short is charged long-style funding instead of being paid. `audit_results_rerun.json` -> `funding_reconciliation_1h_20_20` walks the raw fundingRate archives independently against the simulator's own unit-level accounting (reproducing it exactly: delta 0.0000 USDT on all three assets) and then applies the pre-registered sign. On BTCUSDT (positive funding rates throughout, 125 of 250 cycles short) the engine charges **+1,925.95 USDT more** than the pre-registered sign implies; on ETHUSDT the gap is **-169.80 USDT** (111/223 short) and on SOLUSDT **-6,270.62 USDT** (129/254 short, i.e. the direction-agnostic rule under-charged there because the mean SOL rate is slightly negative). The defect was left in place for the regeneration so the audited numbers remain comparable with the committed ones, and is reported rather than silently repaired.
+3. **The "10,002 / 4,402 / 1,228 cycles" figures were wrong (CORRECTED) and the "7,380 / 2,126 / 569 / 631 = 15,863" claim was unsourced (DELETED).** See the cycle table and its note above.
+4. **Trial log:** the regeneration re-ran the same 36 configurations, so `trials.csv` now contains the 36 rows twice (1,390 data rows). `PREREG` 7.7 forbids deleting or modifying trial rows, so the duplicates were left in place; `N_trials = 1,354` continues to count DISTINCT hypotheses (36 Turtle + 1,318 historical).
 
 ---
 
@@ -479,7 +512,7 @@ Across four comprehensive empirical tests and 1,354 distinct strategy configurat
 1. **Test 1 (Mechanical Indicator Stack):** All 12 variants failed In-Sample and Out-of-Sample (-11 to -23 bps net expectancy).
 2. **Test 2 (1,296 Parameter Grid & Walk-Forward):** Zero parameter configurations demonstrated persistent out-of-sample edge. Top in-sample candidate suffered -76.14% stitched return and -18.25 bps net expectancy on walk-forward testing.
 3. **Test 3 Proper (Binance Futures Replay of 257 Live Trades):** No tested rule beat costs on 1m-1h bars; the live-trade gross edge is inconclusive at n=257 (+6.94 bps, 95% CI [-1.61, +17.15] bps). High-turnover taker fee drag (-10.00 bps) drove net expectancy to -3.08 bps, resulting in complete account depletion.
-4. **Turtle / Donchian Breakout Addendum (36 Multi-Asset Configs):** Classical trend-following failed on 5m, 15m, and 1h across SOL, BTC, and ETH (-5.38 to -18.23 bps pooled net expectancy; DSR $p = 1.0000$).
+4. **Turtle / Donchian Breakout Addendum (36 Multi-Asset Configs):** classical trend-following failed on 5m, 15m and 1h across SOL, BTC and ETH (pooled net expectancy -5.38 to -18.23 bps per unit; equal-weighted cycle means -25.14 to -95.96 bps; every cycle-level block-bootstrap and UTC-day-cluster interval entirely below zero). Five of the twelve pooled rows are gross-positive before the 14 bps round trip and net-negative after it. DSR `p = 1.0000` on every row because the per-trade Sharpe is negative - and, unlike the previously committed figure, that 1.0000 is now a computed result rather than the output of a dimensionally broken formula. Two implementation deviations from the pre-registration were found and documented rather than silently repaired: the 1m sub-bar clause of PREREG 7.3 was never wired into the committed runners (6,182 ambiguous bars across the 36 configs; measured 1h sensitivity up to +2.16 bps) and funding is charged without regard to position direction (BTC over-charged by 1,925.95 USDT across the OOS year; SOL -6,270.62, ETH -169.80 under the pre-registered sign). Neither changes the verdict.
 
 **Definitive Scientific Verdict:** **NO EDGE**. No tested rule beat costs on 1m-1h bars; the live-trade gross edge is inconclusive at n=257.
 

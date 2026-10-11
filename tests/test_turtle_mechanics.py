@@ -165,12 +165,17 @@ def test_ratchet_then_stop_order_within_one_bar():
     """
     Verifies that when a pyramid addition occurs and ratchets the stop upward,
     the ratcheted stop is tested immediately on that bar.
-    Specifically:
-    - Unit 1 enters at 110.0 (ATR = 2.0, Initial Stop = 106.0).
-    - Unit 2 enters at 112.0 (Stop ratchets to 112.0 - 4.0 = 108.0).
-    - On the entry bar of Unit 2, candle Low drops to 107.0.
-    - Low (107.0) is ABOVE the original stop (106.0) but BELOW the ratcheted stop (108.0).
-    - Verifies both units exit at the ratcheted stop price (108.0) with '2N Stop Loss'.
+
+    The stop distances are NOT hard-coded here: they are recomputed from
+    features["atr"] (Wilders ATR(N), N = params["N"]) so the assertions stay
+    exact even if the ATR seeding changes.
+
+    On this synthetic path the 110.0 breakout candle injects a TR of 11.0, so
+    ATR(20) is no longer the 2.0 that the flat warm-up implies:
+    - ATR at the entry-signal bar (30)  -> initial stop  = 110.0 - 2*ATR[30]
+    - ATR at the pyramid-signal bar (32) -> ratcheted stop = 112.0 - 2*ATR[32]
+    On the entry bar of Unit 2 (bar 33) the candle Low drops to 107.0, which is
+    ABOVE the original stop but BELOW the ratcheted stop.
     """
     n = 60
     timestamps = pd.date_range("2024-01-01", periods=n, freq="1h", tz="UTC")
@@ -200,7 +205,9 @@ def test_ratchet_then_stop_order_within_one_bar():
     df.iloc[32, df.columns.get_loc("close")] = 111.5
 
     # Bar 33: Unit 2 fills at open = 112.0. Stop ratchets upward.
-    # Low drops to 107.0 (breaches ratcheted stop, but would NOT breach old stop 105.0)
+    # Low drops to 107.0: it breaches the ratcheted stop (112.0 - 2*ATR[32])
+    # but would NOT breach the original stop (110.0 - 2*ATR[30]). Both stop
+    # levels are read back from features["atr"] below, not from this comment.
     df.iloc[33, df.columns.get_loc("open")] = 112.0
     df.iloc[33, df.columns.get_loc("high")] = 113.0
     df.iloc[33, df.columns.get_loc("low")] = 107.0
@@ -225,6 +232,39 @@ def test_ratchet_then_stop_order_within_one_bar():
     assert u2.unit_number == 2
     assert u1.exit_reason == "2N Stop Loss"
     assert u2.exit_reason == "2N Stop Loss"
-    # Exit price must be identical and at the ratcheted stop price
+
+    # --- Recompute the stop ladder from the data (N = params["N"]) ---
+    N = int(params["N"])
+    assert len(df) == n
+    atr_at_entry_signal = float(features["atr"][30])     # ATR(N) at the bar that fired the long signal
+    atr_at_pyramid_signal = float(features["atr"][32])   # ATR(N) at the bar that fired the pyramid add
+    original_stop = 110.0 - 2.0 * atr_at_entry_signal
+    ratcheted_stop = 112.0 - 2.0 * atr_at_pyramid_signal
+    assert N == 20 and len(features["atr"]) == n
+
+    # Exact exit price: both units leave at the ratcheted stop, to the cent
+    assert u1.exit_price == pytest.approx(ratcheted_stop, abs=1e-12)
+    assert u2.exit_price == pytest.approx(ratcheted_stop, abs=1e-12)
     assert u1.exit_price == u2.exit_price
-    assert u1.exit_price > 106.0  # Above old stop level
+    assert round(u1.exit_price, 2) == round(ratcheted_stop, 2)
+
+    # Exact exit bar: the stop is struck on bar 33, Unit 2's own fill bar
+    assert u1.exit_time == timestamps[33]
+    assert u2.exit_time == timestamps[33]
+    assert u2.entry_time == timestamps[33]
+    assert u1.entry_time == timestamps[31]
+    assert u1.entry_price == 110.0 and u2.entry_price == 112.0
+
+    # Slippage / commission are applied to the executed exit price
+    friction_per_side = (0.05 + 0.02) / 100.0  # 5 bps taker + 2 bps slip
+    assert u1.executed_exit_price == pytest.approx(
+        ratcheted_stop * (1.0 - friction_per_side), abs=1e-12
+    )
+    assert u2.executed_exit_price == pytest.approx(
+        ratcheted_stop * (1.0 - friction_per_side), abs=1e-12
+    )
+
+    # The bar's low (107.0) must clear the ORIGINAL stop but hit the RATCHETED stop
+    assert ratcheted_stop > original_stop
+    assert df["low"].iloc[33] <= ratcheted_stop
+    assert df["low"].iloc[33] > original_stop

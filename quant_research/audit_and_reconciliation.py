@@ -178,43 +178,28 @@ def item_7_replay_no_stop_and_fee_drag():
     df_trades["exit_time"] = pd.to_datetime(df_trades["exit_time"])
     df_trades = df_trades.sort_values("entry_time").reset_index(drop=True)
 
-    # 1. Explain the 146 skipped trades
-    # Replay with 0.3% stop and 3% daily loss cap
-    daily_cap_blocks = {}
-    current_day = None
-    daily_loss = 0.0
-    daily_start_eq = 10000.0
-    sim_eq = 10000.0
-    skipped_count = 0
-    taken_count = 0
-
-    for _, tr in df_trades.iterrows():
-        t_day = tr["entry_time"].date()
-        if t_day != current_day:
-            current_day = t_day
-            daily_start_eq = sim_eq
-            daily_loss = 0.0
-
-        if daily_loss >= 0.03 * daily_start_eq:
-            skipped_count += 1
-            daily_cap_blocks[t_day] = daily_cap_blocks.get(t_day, 0) + 1
-            continue
-
-        taken_count += 1
-        # Simulated trade PnL from stop
-        # In actual runner, 0.3% stop yielded 70 stops out of 111 taken trades
-        sim_pnl = -100.0 if tr["net_bps"] < 0 else 50.0
-        if sim_pnl < 0:
-            daily_loss += abs(sim_pnl)
-        sim_eq += sim_pnl
-
-    print(f"Trade Execution Accounting (0.3% Hard Stop):")
-    print(f"  Total Candidate Entry Signals:   {len(df_trades)}")
-    print(f"  Trades Taken:                    {taken_count}")
-    print(f"  Trades Skipped:                  {skipped_count} (due to 3% daily loss cap)")
-    print(f"  Top Dates Where 3% Cap Blocked Entries:")
-    for d, cnt in sorted(daily_cap_blocks.items(), key=lambda x: x[1], reverse=True)[:5]:
-        print(f"    - {d}: {cnt} trades skipped")
+    # 1. Skipped-trade accounting, READ from the regenerated path simulation.
+    # The previous version of this block simulated each trade's PnL as
+    # 'sim_pnl = -100.0 if net_bps < 0 else 50.0' - constants unrelated to any
+    # committed replay trade - and then reported the resulting count as
+    # 'exactly 146 trades skipped'. That claim is deleted: the skips below are the
+    # ones the leverage paths actually produced (run_all_reconciliations.py item 7).
+    rerun_path = "quant_research/results/audit_results_rerun.json"
+    if os.path.exists(rerun_path):
+        with open(rerun_path) as fh:
+            replay_rows = json.load(fh)["replay_10bps_vs_14bps"]
+        print("Trade Execution Accounting (real paths, 3% daily-loss cap evaluated per fee level):")
+        print(f"  {'Variant':20s} | {'Taken@10bps':11s} | {'Skipped@10bps':13s} | {'Taken@14bps':11s} | {'Skipped@14bps':13s}")
+        print("  " + "-" * 78)
+        for r in replay_rows:
+            print(f"  {r['variant']:20s} | {r['trades_taken_10bps']:11d} | {r['trades_skipped_10bps']:13d} | "
+                  f"{r['trades_taken_14bps']:11d} | {r['trades_skipped_14bps']:13d}")
+        print(f"  (parallel fee levels are independent paths: {len(df_trades)} candidate entries each, before the cap.)")
+    else:
+        print("Trade Execution Accounting: skipped, because quant_research/results/audit_results_rerun.json")
+        print("  does not exist. Run quant_research/run_all_reconciliations.py first: the previous")
+        print("  hard-coded '146 trades skipped' claim was fabricated from simulated constant PnL and has")
+        print("  been deleted rather than reprinted.")
 
     # 2. Variants comparison reporting % of equity and fee drag
     with open("quant_research/results/test_3_proper_results.json") as f:
@@ -246,6 +231,17 @@ def item_7_replay_no_stop_and_fee_drag():
     no_stop_ret_pct = (no_stop_eq - init_eq) / init_eq * 100.0
     no_stop_fee_drag_pct = no_stop_fees / init_eq * 100.0
 
+    # Same 1x no-stop arm at 10 bps per round trip (requested alongside the 14 bps figure).
+    no_stop_eq_10 = init_eq
+    no_stop_fees_10 = 0.0
+    for _, tr in df_trades.iterrows():
+        notional = no_stop_eq_10 * 1.0
+        trade_gross = notional * (tr["gross_bps"] / 10000.0)
+        trade_fee = notional * 0.0010
+        no_stop_fees_10 += trade_fee
+        no_stop_eq_10 += trade_gross - trade_fee
+    no_stop_ret_pct_10 = (no_stop_eq_10 - init_eq) / init_eq * 100.0
+
     print("\nReplay Results Expressed as % of Equity:")
     print(f"{'Variant':22s} | {'Trades':6s} | {'Final Eq %':10s} | {'Net Ret %':10s} | {'Max DD %':10s} | {'Fee Drag %':10s}")
     print("-" * 82)
@@ -258,6 +254,9 @@ def item_7_replay_no_stop_and_fee_drag():
         print(f"{v['variant']:22s} | {v['trades_taken']:6d} | {final_pct:9.2f}% | {v['total_return_pct']:+9.2f}% | {v['max_drawdown_pct']:9.2f}% | {fee_drag_pct:9.2f}%")
 
     print(f"{'No-Stop Baseline (1x)':22s} | {no_stop_trades:6d} | {no_stop_eq/init_eq*100:9.2f}% | {no_stop_ret_pct:+9.2f}% | {no_stop_max_dd:9.2f}% | {no_stop_fee_drag_pct:9.2f}%")
+    print(f"  1x no-stop NET at 10 bps per round trip: {no_stop_ret_pct_10:+.2f}% (fee drag {no_stop_fees_10/init_eq*100:.2f}%); "
+          f"at 14 bps: {no_stop_ret_pct:+.2f}% (fee drag {no_stop_fee_drag_pct:.2f}%).")
+    print("  NOTE: this 1x no-stop arm carries no stop and no cap; it is a counterfactual, not an investable alternative.")
 
 
 def item_5_per_config_diagnostics():
@@ -268,20 +267,29 @@ def item_5_per_config_diagnostics():
         diag_data = json.load(f)
 
     diag_list = diag_data["diagnostics_individual"]
-    print(f"{'Config (Asset TF N/M)':24s} | {'Trades':6s} | {'RealRisk/U':10s} | {'Ambiguous':9s} | {'PF':5s} | {'Net 95% CI':18s} | {'%Mo Pos':7s} | {'Random Baseline':16s}")
-    print("-" * 105)
+    print("These columns (CI, months-positive, perturbation, cap-bound %, matched null) are POST HOC")
+    print("diagnostics: none of them appear in quant_research/PREREG.md. They are descriptive only.")
+    print(f"{'Config (Asset TF N/M)':24s} | {'Trades':6s} | {'Cycles':6s} | {'RealRisk/U':10s} | {'Ambiguous':9s} | {'PF':5s} | {'Net 95% CI (unit)':18s} | {'%Mo Pos':7s} | {'Matched null (cycle)':26s}")
+    print("-" * 140)
 
     for c in diag_list:
         cfg_name = f"{c['asset']} {c['timeframe']} {c['N']}/{c['M']}"
         trades = c["n_trades"]
+        cycles = c["n_cycles"]
         rr_u = f"{c['avg_realized_risk_pct']:.2f}%"
         amb = c["ambiguous_bars_count"]
         pf = f"{c['profit_factor']:.2f}"
         ci_str = f"[{c['net_ci_95'][0]:+5.1f}, {c['net_ci_95'][1]:+5.1f}]"
         mo_pos = f"{c['months_positive_pct']:.1f}%"
-        # Per config random baseline expectancy under same friction:
-        rand_base = "-12.1 bps [-31, +9]"
-        print(f"{cfg_name:24s} | {trades:6d} | {rr_u:10s} | {amb:9d} | {pf:5s} | {ci_str:18s} | {mo_pos:7s} | {rand_base:16s}")
+        # Matched null: zero mean, dispersion matched to the CYCLE dispersion, so the null SE
+        # equals the strategy's cycle SE by construction. The old -12.1 bps [-31, +9] string that
+        # was printed for every config was the BTCUSDT-1h-only simulated baseline, not per-config.
+        se_cyc = float(c["cycle_se_bps"])
+        mean_cyc = float(c["cycle_net_bps_mean"])
+        z_cyc = mean_cyc / se_cyc if se_cyc > 0 else 0.0
+        p_cyc = 2.0 * (1.0 - stats.norm.cdf(abs(z_cyc)))
+        null_str = f"mean 0, SE {se_cyc:.2f}, z {z_cyc:+.2f}, p {p_cyc:.3f}"
+        print(f"{cfg_name:24s} | {trades:6d} | {cycles:6d} | {rr_u:10s} | {amb:9d} | {pf:5s} | {ci_str:18s} | {mo_pos:7s} | {null_str:26s}")
 
 
 if __name__ == "__main__":

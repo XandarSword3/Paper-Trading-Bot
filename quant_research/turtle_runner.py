@@ -11,6 +11,20 @@ Pre-registered criteria:
 - Pooled trade hurdle: >= 150 trades pooled across the 3 assets.
 - BTC 2025+ and SOL 2026-04+ are BURNED (OOS only).
 - ETH 2026-04-01+ is FRESH veto hold-out, accessed strictly once for survivors.
+
+GATE COVERAGE vs quant_research/PREREG.md section 7.5 (all six clauses were
+committed in acb5979 before any Turtle run):
+  1. Net expectancy >= +5 bps            -> implemented (pooled OOS)
+  2. Stress expectancy > 0 bps           -> implemented (pooled OOS, 18 bps RT)
+  3. Pooled trades >= 150                -> implemented (pooled OOS)
+  4. DSR p-value < 0.05 (N_trials=1354)  -> implemented via core.metrics.compute_dsr
+                                            on the PER-TRADE Sharpe and T = pooled trades
+  5. Max drawdown < 30%                  -> NOT evaluated at the pooled level
+                                            (section 7.5 ties it to stitched walk-forward equity)
+  6. Profit factor >= 1.25               -> NOT part of the pass gate (reported per asset only)
+The Sharpe column below is the canonical daily-equity Sharpe
+(core.metrics.calculate_daily_sharpe, sqrt(365)); the legacy per-bar Sharpe is
+reported alongside as mean_oos_bar_sharpe for traceability only.
 """
 import os
 import sys
@@ -26,6 +40,7 @@ from typing import Dict, List, Any, Tuple
 from concurrent.futures import ProcessPoolExecutor
 
 from quant_research.core.engine import CostModel
+from quant_research.core.metrics import compute_dsr
 from quant_research.strategies.turtle_strategy import prepare_turtle_features, run_turtle_simulation
 
 DATA_DIR = "quant_research/data/processed"
@@ -50,21 +65,13 @@ def slice_features(features: Dict[str, Any], start_str: str, end_str: str) -> Di
     }
 
 
-def compute_dsr_pvalue(sharpe: float, n_trades: int, n_trials: int, skew: float = 0.0, kurt: float = 3.0) -> float:
-    """
-    Computes Bailey & Lopez de Prado Deflated Sharpe Ratio (DSR) p-value.
-    """
-    if n_trades < 5 or sharpe <= 0:
-        return 1.0
-    import scipy.stats as stats
-    gamma = 0.5772156649
-    # Expected maximum Sharpe under null hypothesis of zero true edge
-    e_max_sharpe = (1.0 - gamma) * stats.norm.ppf(1.0 - 1.0 / n_trials) + gamma * stats.norm.ppf(1.0 - 1.0 / (n_trials * np.e))
-    # Standard deviation of Sharpe ratio estimator
-    sr_std = np.sqrt((1.0 + 0.5 * (sharpe ** 2) - skew * sharpe + ((kurt - 3.0) / 4.0) * (sharpe ** 2)) / float(n_trades))
-    z = (sharpe - e_max_sharpe) / sr_std if sr_std > 0 else 0.0
-    p_val = float(1.0 - stats.norm.cdf(z))
-    return p_val
+def per_trade_sharpe(trades) -> float:
+    """Sharpe of the per-trade net return distribution (mean/stdev of bps)."""
+    if not trades:
+        return 0.0
+    bps = np.array([t.return_bps for t in trades], dtype=np.float64)
+    sd = float(np.std(bps))
+    return float(np.mean(bps) / sd) if sd > 1e-12 else 0.0
 
 
 def evaluate_asset_tf_config(args: Tuple[str, str, int, int, str]) -> Dict[str, Any]:
@@ -116,6 +123,8 @@ def evaluate_asset_tf_config(args: Tuple[str, str, int, int, str]) -> Dict[str, 
         "is_exp_bps": m_is_base["expectancy_bps"],
         "is_return_pct": m_is_base["total_return_pct"],
         "is_sharpe": m_is_base["sharpe_ratio"],
+        "is_daily_sharpe": m_is_base.get("daily_sharpe", 0.0),
+        "is_per_trade_sharpe": round(per_trade_sharpe(trades_is), 4),
         "is_max_dd": m_is_base["max_drawdown_pct"],
         "is_pf": m_is_base["profit_factor"],
         "is_win_rate": m_is_base["win_rate_pct"],
@@ -124,6 +133,8 @@ def evaluate_asset_tf_config(args: Tuple[str, str, int, int, str]) -> Dict[str, 
         "oos_exp_bps": m_oos_base["expectancy_bps"],
         "oos_return_pct": m_oos_base["total_return_pct"],
         "oos_sharpe": m_oos_base["sharpe_ratio"],
+        "oos_daily_sharpe": m_oos_base.get("daily_sharpe", 0.0),
+        "oos_per_trade_sharpe": round(per_trade_sharpe(trades_oos), 4),
         "oos_max_dd": m_oos_base["max_drawdown_pct"],
         "oos_pf": m_oos_base["profit_factor"],
         "oos_win_rate": m_oos_base["win_rate_pct"],
@@ -208,11 +219,19 @@ def run_all_turtle_tests():
             pooled_oos_exp = (sum(r["oos_exp_bps"] * r["oos_trades"] for r in matching) / pooled_oos_trades) if pooled_oos_trades > 0 else 0.0
             pooled_oos_stress = (sum(r["oos_stress_exp_bps"] * r["oos_trades"] for r in matching) / pooled_oos_trades) if pooled_oos_trades > 0 else 0.0
 
-            # Mean Sharpe ratio across the 3 assets
-            mean_oos_sharpe = float(np.mean([r["oos_sharpe"] for r in matching]))
+            # Sharpe ratios across the 3 assets: canonical DAILY equity Sharpe
+            # (sqrt(365)) plus the legacy per-bar Sharpe kept for traceability.
+            mean_oos_daily_sharpe = float(np.mean([r["oos_daily_sharpe"] for r in matching]))
+            mean_oos_bar_sharpe = float(np.mean([r["oos_sharpe"] for r in matching]))
+            mean_oos_trade_sharpe = float(np.mean([r["oos_per_trade_sharpe"] for r in matching]))
 
-            # DSR p-value with N_trials = 1,354 (36 Turtle configs + 1,318 historical configs)
-            dsr_p = compute_dsr_pvalue(sharpe=mean_oos_sharpe, n_trades=pooled_oos_trades, n_trials=1354)
+            # DSR p-value with N_trials = 1,354 (36 Turtle configs + 1,318 historical configs).
+            # Uses the CANONICAL core.metrics.compute_dsr on the PER-TRADE Sharpe with
+            # T = pooled OOS trade count (the null expected-max Sharpe is scaled by the
+            # standard error 1/sqrt(T), unlike the legacy local helper that compared a
+            # per-bar Sharpe against an unscaled expected max and therefore always
+            # returned 1.0000).
+            dsr_p = compute_dsr(per_trade_sharpe=mean_oos_trade_sharpe, n_trades=pooled_oos_trades, n_trials=1354)
 
             # Check Hurdle Criteria
             # 1. Net expectancy >= +5 bps
@@ -237,7 +256,8 @@ def run_all_turtle_tests():
                     "pooled_oos_trades": pooled_oos_trades,
                     "pooled_oos_exp": pooled_oos_exp,
                     "pooled_oos_stress": pooled_oos_stress,
-                    "mean_oos_sharpe": mean_oos_sharpe,
+                    "mean_oos_sharpe": mean_oos_daily_sharpe,
+                    "mean_oos_bar_sharpe": mean_oos_bar_sharpe,
                     "dsr_p": dsr_p,
                 })
 
@@ -251,13 +271,15 @@ def run_all_turtle_tests():
                 "pooled_oos_trades": pooled_oos_trades,
                 "pooled_oos_exp_bps": round(pooled_oos_exp, 2),
                 "pooled_oos_stress_bps": round(pooled_oos_stress, 2),
-                "mean_oos_sharpe": round(mean_oos_sharpe, 3),
+                "mean_oos_sharpe": round(mean_oos_daily_sharpe, 3),
+                "mean_oos_bar_sharpe": round(mean_oos_bar_sharpe, 3),
+                "mean_oos_per_trade_sharpe": round(mean_oos_trade_sharpe, 4),
                 "dsr_p_value": round(dsr_p, 4),
                 "verdict": verdict,
                 "per_asset": matching,
             })
 
-            print(f"[{tf:3} N={N:2} M={M:2}] Pooled IS: {pooled_is_trades:4} tr ({pooled_is_exp:+.2f} bps) | Pooled OOS: {pooled_oos_trades:4} tr ({pooled_oos_exp:+.2f} bps, Stress: {pooled_oos_stress:+.2f} bps, Sharpe: {mean_oos_sharpe:+.3f}, DSR p={dsr_p:.4f}) -> {verdict}")
+            print(f"[{tf:3} N={N:2} M={M:2}] Pooled IS: {pooled_is_trades:4} tr ({pooled_is_exp:+.2f} bps) | Pooled OOS: {pooled_oos_trades:4} tr ({pooled_oos_exp:+.2f} bps, Stress: {pooled_oos_stress:+.2f} bps, Daily SR: {mean_oos_daily_sharpe:+.3f}, Per-Trade SR: {mean_oos_trade_sharpe:+.4f}, DSR p={dsr_p:.4f}) -> {verdict}")
 
     print("\n" + "=" * 100)
     print(f"SURVIVING CANDIDATES CLEARING ALL PRE-REGISTERED OOS HURDLES: {len(survivors)}")

@@ -1,0 +1,1242 @@
+{
+  "timestamp_utc": "2026-10-11T08:56:40.360351+00:00",
+  "funding_reconciliation_1h_20_20": {
+    "SOLUSDT": {
+      "units": 582,
+      "avg_hold_hours": 27.306,
+      "funding_events_per_unit": 3.473,
+      "mean_raw_funding_rate": -6.459086757990866e-06,
+      "sim_funding_usd": 1257.3135,
+      "raw_csv_funding_usd": 1257.3135,
+      "delta_usd": -0.0,
+      "raw_csv_dir_aware_funding_usd": -5013.3016,
+      "dir_aware_minus_sim_usd": -6270.6151,
+      "short_cycles": 129,
+      "total_cycles": 254,
+      "trades": 582,
+      "expectancy_bps": 5.19
+    },
+    "BTCUSDT": {
+      "units": 524,
+      "avg_hold_hours": 23.263,
+      "funding_events_per_unit": 2.868,
+      "mean_raw_funding_rate": 3.7756821917808217e-05,
+      "sim_funding_usd": -2501.5012,
+      "raw_csv_funding_usd": -2501.5012,
+      "delta_usd": -0.0,
+      "raw_csv_dir_aware_funding_usd": -575.5544,
+      "dir_aware_minus_sim_usd": 1925.9468,
+      "short_cycles": 125,
+      "total_cycles": 250,
+      "trades": 524,
+      "expectancy_bps": -39.32
+    },
+    "ETHUSDT": {
+      "units": 507,
+      "avg_hold_hours": 26.022,
+      "funding_events_per_unit": 3.239,
+      "mean_raw_funding_rate": 3.3649378995433794e-05,
+      "sim_funding_usd": -3984.0829,
+      "raw_csv_funding_usd": -3984.0829,
+      "delta_usd": 0.0,
+      "raw_csv_dir_aware_funding_usd": -4153.8784,
+      "dir_aware_minus_sim_usd": -169.7955,
+      "short_cycles": 111,
+      "total_cycles": 223,
+      "trades": 507,
+      "expectancy_bps": 17.58
+    }
+  },
+  "cost_reconciliation": {
+    "SOLUSDT": {
+      "trades": 582,
+      "gross_bps": 18.18,
+      "fee_bps": 14.0,
+      "funding_bps": 1.01,
+      "net_bps_with_funding": 5.19,
+      "net_bps_no_funding": 4.18,
+      "total_gap_bps": 12.99,
+      "mean_raw_funding_rate": -6.459086757990866e-06,
+      "annualized_mean_funding_pct": -0.707,
+      "denominator": "per-UNIT entry notional (quantity * entry_price), equal-weighted across units"
+    },
+    "BTCUSDT": {
+      "trades": 524,
+      "gross_bps": -13.34,
+      "fee_bps": 13.99,
+      "funding_bps": -11.99,
+      "net_bps_with_funding": -39.32,
+      "net_bps_no_funding": -27.27,
+      "total_gap_bps": 25.98,
+      "mean_raw_funding_rate": 3.7756821917808217e-05,
+      "annualized_mean_funding_pct": 4.134,
+      "denominator": "per-UNIT entry notional (quantity * entry_price), equal-weighted across units"
+    },
+    "ETHUSDT": {
+      "trades": 507,
+      "gross_bps": 32.47,
+      "fee_bps": 14.01,
+      "funding_bps": -0.88,
+      "net_bps_with_funding": 17.58,
+      "net_bps_no_funding": 18.45,
+      "total_gap_bps": 14.89,
+      "mean_raw_funding_rate": 3.3649378995433794e-05,
+      "annualized_mean_funding_pct": 3.685,
+      "denominator": "per-UNIT entry notional (quantity * entry_price), equal-weighted across units"
+    }
+  },
+  "pyramids_and_cycles": [
+    {
+      "config": "SOLUSDT 5m 20/10",
+      "distribution": {
+        "1": 1914,
+        "2": 1053,
+        "3": 224,
+        "4": 234
+      },
+      "cycles": 3425,
+      "units": 5628,
+      "trades": 5628,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 20/20",
+      "distribution": {
+        "1": 1503,
+        "2": 918,
+        "3": 238,
+        "4": 268
+      },
+      "cycles": 2927,
+      "units": 5125,
+      "trades": 5125,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 55/10",
+      "distribution": {
+        "1": 1013,
+        "2": 647,
+        "3": 170,
+        "4": 233
+      },
+      "cycles": 2063,
+      "units": 3749,
+      "trades": 3749,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 55/20",
+      "distribution": {
+        "1": 914,
+        "2": 605,
+        "3": 169,
+        "4": 233
+      },
+      "cycles": 1921,
+      "units": 3563,
+      "trades": 3563,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 20/10",
+      "distribution": {
+        "1": 436,
+        "2": 367,
+        "3": 186,
+        "4": 179
+      },
+      "cycles": 1168,
+      "units": 2444,
+      "trades": 2444,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 20/20",
+      "distribution": {
+        "1": 363,
+        "2": 303,
+        "3": 170,
+        "4": 169
+      },
+      "cycles": 1005,
+      "units": 2155,
+      "trades": 2155,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 55/10",
+      "distribution": {
+        "1": 267,
+        "2": 226,
+        "3": 116,
+        "4": 88
+      },
+      "cycles": 697,
+      "units": 1419,
+      "trades": 1419,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 55/20",
+      "distribution": {
+        "1": 244,
+        "2": 202,
+        "3": 111,
+        "4": 91
+      },
+      "cycles": 648,
+      "units": 1345,
+      "trades": 1345,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 20/10",
+      "distribution": {
+        "1": 121,
+        "2": 65,
+        "3": 44,
+        "4": 69
+      },
+      "cycles": 299,
+      "units": 659,
+      "trades": 659,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 20/20",
+      "distribution": {
+        "1": 93,
+        "2": 59,
+        "3": 37,
+        "4": 65
+      },
+      "cycles": 254,
+      "units": 582,
+      "trades": 582,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 55/10",
+      "distribution": {
+        "1": 78,
+        "2": 41,
+        "3": 30,
+        "4": 38
+      },
+      "cycles": 187,
+      "units": 402,
+      "trades": 402,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 55/20",
+      "distribution": {
+        "1": 68,
+        "2": 43,
+        "3": 28,
+        "4": 37
+      },
+      "cycles": 176,
+      "units": 386,
+      "trades": 386,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 20/10",
+      "distribution": {
+        "1": 2725,
+        "2": 310,
+        "3": 104,
+        "4": 140
+      },
+      "cycles": 3279,
+      "units": 4217,
+      "trades": 4217,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 20/20",
+      "distribution": {
+        "1": 2365,
+        "2": 338,
+        "3": 134,
+        "4": 128
+      },
+      "cycles": 2965,
+      "units": 3955,
+      "trades": 3955,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 55/10",
+      "distribution": {
+        "1": 1620,
+        "2": 298,
+        "3": 88,
+        "4": 132
+      },
+      "cycles": 2138,
+      "units": 3008,
+      "trades": 3008,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 55/20",
+      "distribution": {
+        "1": 1455,
+        "2": 289,
+        "3": 98,
+        "4": 151
+      },
+      "cycles": 1993,
+      "units": 2931,
+      "trades": 2931,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 20/10",
+      "distribution": {
+        "1": 615,
+        "2": 333,
+        "3": 104,
+        "4": 130
+      },
+      "cycles": 1182,
+      "units": 2113,
+      "trades": 2113,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 20/20",
+      "distribution": {
+        "1": 497,
+        "2": 290,
+        "3": 83,
+        "4": 124
+      },
+      "cycles": 994,
+      "units": 1822,
+      "trades": 1822,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 55/10",
+      "distribution": {
+        "1": 396,
+        "2": 178,
+        "3": 62,
+        "4": 71
+      },
+      "cycles": 707,
+      "units": 1222,
+      "trades": 1222,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 55/20",
+      "distribution": {
+        "1": 350,
+        "2": 170,
+        "3": 59,
+        "4": 70
+      },
+      "cycles": 649,
+      "units": 1147,
+      "trades": 1147,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 20/10",
+      "distribution": {
+        "1": 112,
+        "2": 91,
+        "3": 42,
+        "4": 43
+      },
+      "cycles": 288,
+      "units": 592,
+      "trades": 592,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 20/20",
+      "distribution": {
+        "1": 93,
+        "2": 81,
+        "3": 35,
+        "4": 41
+      },
+      "cycles": 250,
+      "units": 524,
+      "trades": 524,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 55/10",
+      "distribution": {
+        "1": 74,
+        "2": 55,
+        "3": 25,
+        "4": 25
+      },
+      "cycles": 179,
+      "units": 359,
+      "trades": 359,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 55/20",
+      "distribution": {
+        "1": 67,
+        "2": 48,
+        "3": 24,
+        "4": 26
+      },
+      "cycles": 165,
+      "units": 339,
+      "trades": 339,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 20/10",
+      "distribution": {
+        "1": 2101,
+        "2": 819,
+        "3": 192,
+        "4": 186
+      },
+      "cycles": 3298,
+      "units": 5059,
+      "trades": 5059,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 20/20",
+      "distribution": {
+        "1": 1657,
+        "2": 751,
+        "3": 186,
+        "4": 217
+      },
+      "cycles": 2811,
+      "units": 4585,
+      "trades": 4585,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 55/10",
+      "distribution": {
+        "1": 1136,
+        "2": 520,
+        "3": 129,
+        "4": 160
+      },
+      "cycles": 1945,
+      "units": 3203,
+      "trades": 3203,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 55/20",
+      "distribution": {
+        "1": 1026,
+        "2": 491,
+        "3": 125,
+        "4": 178
+      },
+      "cycles": 1820,
+      "units": 3095,
+      "trades": 3095,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 20/10",
+      "distribution": {
+        "1": 456,
+        "2": 365,
+        "3": 129,
+        "4": 138
+      },
+      "cycles": 1088,
+      "units": 2125,
+      "trades": 2125,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 20/20",
+      "distribution": {
+        "1": 378,
+        "2": 297,
+        "3": 119,
+        "4": 130
+      },
+      "cycles": 924,
+      "units": 1849,
+      "trades": 1849,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 55/10",
+      "distribution": {
+        "1": 265,
+        "2": 213,
+        "3": 73,
+        "4": 77
+      },
+      "cycles": 628,
+      "units": 1218,
+      "trades": 1218,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 55/20",
+      "distribution": {
+        "1": 238,
+        "2": 191,
+        "3": 71,
+        "4": 76
+      },
+      "cycles": 576,
+      "units": 1137,
+      "trades": 1137,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/10",
+      "distribution": {
+        "1": 110,
+        "2": 60,
+        "3": 38,
+        "4": 55
+      },
+      "cycles": 263,
+      "units": 564,
+      "trades": 564,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/20",
+      "distribution": {
+        "1": 80,
+        "2": 52,
+        "3": 41,
+        "4": 50
+      },
+      "cycles": 223,
+      "units": 507,
+      "trades": 507,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/10",
+      "distribution": {
+        "1": 68,
+        "2": 35,
+        "3": 32,
+        "4": 27
+      },
+      "cycles": 162,
+      "units": 342,
+      "trades": 342,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/20",
+      "distribution": {
+        "1": 63,
+        "2": 33,
+        "3": 33,
+        "4": 27
+      },
+      "cycles": 156,
+      "units": 336,
+      "trades": 336,
+      "units_equal_trades": true
+    }
+  ],
+  "ambiguous_and_subbars": [
+    {
+      "asset": "SOLUSDT",
+      "default_net_bps": 5.19,
+      "subbars_net_bps": 4.72,
+      "delta_bps": -0.47000000000000064
+    },
+    {
+      "asset": "BTCUSDT",
+      "default_net_bps": -39.32,
+      "subbars_net_bps": -39.28,
+      "delta_bps": 0.03999999999999915
+    },
+    {
+      "asset": "ETHUSDT",
+      "default_net_bps": 17.58,
+      "subbars_net_bps": 19.74,
+      "delta_bps": 2.16
+    }
+  ],
+  "random_baseline_per_config": [
+    {
+      "config": "SOLUSDT 5m 20/10",
+      "cycles": 3425,
+      "units": 5628,
+      "gross_bps": 0.45,
+      "net_bps": -14.54,
+      "cycle_mean_bps": -28.2861,
+      "strategy_se_bps": 1.5953,
+      "null_se_bps_matched": 1.5953,
+      "old_null_se_bps": 1.9995,
+      "z": -17.730897009966778,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 5m 20/20",
+      "cycles": 2927,
+      "units": 5125,
+      "gross_bps": 0.74,
+      "net_bps": -14.14,
+      "cycle_mean_bps": -30.0054,
+      "strategy_se_bps": 1.9195,
+      "null_se_bps_matched": 1.9195,
+      "old_null_se_bps": 2.0953,
+      "z": -15.631883302943477,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 5m 55/10",
+      "cycles": 2063,
+      "units": 3749,
+      "gross_bps": 1.52,
+      "net_bps": -13.2,
+      "cycle_mean_bps": -30.4891,
+      "strategy_se_bps": 2.0205,
+      "null_se_bps_matched": 2.0205,
+      "old_null_se_bps": 2.4498,
+      "z": -15.089878742885423,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 5m 55/20",
+      "cycles": 1921,
+      "units": 3563,
+      "gross_bps": 0.25,
+      "net_bps": -14.46,
+      "cycle_mean_bps": -31.8975,
+      "strategy_se_bps": 2.2699,
+      "null_se_bps_matched": 2.2699,
+      "old_null_se_bps": 2.5129,
+      "z": -14.052381162165736,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 15m 20/10",
+      "cycles": 1168,
+      "units": 2444,
+      "gross_bps": 2.26,
+      "net_bps": -11.11,
+      "cycle_mean_bps": -47.5088,
+      "strategy_se_bps": 4.0038,
+      "null_se_bps_matched": 4.0038,
+      "old_null_se_bps": 3.0342,
+      "z": -11.86592736899945,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 15m 20/20",
+      "cycles": 1005,
+      "units": 2155,
+      "gross_bps": 4.42,
+      "net_bps": -7.63,
+      "cycle_mean_bps": -45.6541,
+      "strategy_se_bps": 5.2075,
+      "null_se_bps_matched": 5.2075,
+      "old_null_se_bps": 3.2312,
+      "z": -8.766989918386942,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 15m 55/10",
+      "cycles": 697,
+      "units": 1419,
+      "gross_bps": 1.6,
+      "net_bps": -9.74,
+      "cycle_mean_bps": -48.1727,
+      "strategy_se_bps": 5.4672,
+      "null_se_bps_matched": 5.4672,
+      "old_null_se_bps": 3.982,
+      "z": -8.811219637108575,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "SOLUSDT 15m 55/20",
+      "cycles": 648,
+      "units": 1345,
+      "gross_bps": 2.2,
+      "net_bps": -6.8,
+      "cycle_mean_bps": -47.0447,
+      "strategy_se_bps": 7.2606,
+      "null_se_bps_matched": 7.2606,
+      "old_null_se_bps": 4.0901,
+      "z": -6.47945073409911,
+      "p_two_sided": 9.205702866665888e-11,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 8.285132579999299e-10
+    },
+    {
+      "config": "SOLUSDT 1h 20/10",
+      "cycles": 299,
+      "units": 659,
+      "gross_bps": 8.19,
+      "net_bps": -6.92,
+      "cycle_mean_bps": -93.9872,
+      "strategy_se_bps": 14.7195,
+      "null_se_bps_matched": 14.7195,
+      "old_null_se_bps": 5.8432,
+      "z": -6.385216889160637,
+      "p_two_sided": 1.7115464601147323e-10,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 1.3692371680917859e-09
+    },
+    {
+      "config": "SOLUSDT 1h 20/20",
+      "cycles": 254,
+      "units": 582,
+      "gross_bps": 18.18,
+      "net_bps": 5.19,
+      "cycle_mean_bps": -87.5744,
+      "strategy_se_bps": 21.7025,
+      "null_se_bps_matched": 21.7025,
+      "old_null_se_bps": 6.2177,
+      "z": -4.035221748646469,
+      "p_two_sided": 5.455075291926903e-05,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.00027275376459634515
+    },
+    {
+      "config": "SOLUSDT 1h 55/10",
+      "cycles": 187,
+      "units": 402,
+      "gross_bps": -36.19,
+      "net_bps": -50.68,
+      "cycle_mean_bps": -121.7183,
+      "strategy_se_bps": 15.0103,
+      "null_se_bps_matched": 15.0103,
+      "old_null_se_bps": 7.4813,
+      "z": -8.108985163521048,
+      "p_two_sided": 4.440892098500626e-16,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 6.217248937900877e-15
+    },
+    {
+      "config": "SOLUSDT 1h 55/20",
+      "cycles": 176,
+      "units": 386,
+      "gross_bps": -35.64,
+      "net_bps": -51.04,
+      "cycle_mean_bps": -126.326,
+      "strategy_se_bps": 17.8047,
+      "null_se_bps_matched": 17.8047,
+      "old_null_se_bps": 7.6348,
+      "z": -7.095092868736906,
+      "p_two_sided": 1.2927436898735323e-12,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 1.680566796835592e-11
+    },
+    {
+      "config": "BTCUSDT 5m 20/10",
+      "cycles": 3279,
+      "units": 4217,
+      "gross_bps": -1.17,
+      "net_bps": -19.84,
+      "cycle_mean_bps": -20.3996,
+      "strategy_se_bps": 0.9305,
+      "null_se_bps_matched": 0.9305,
+      "old_null_se_bps": 2.3099,
+      "z": -21.923267060720043,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 5m 20/20",
+      "cycles": 2965,
+      "units": 3955,
+      "gross_bps": -1.6,
+      "net_bps": -22.31,
+      "cycle_mean_bps": -23.2659,
+      "strategy_se_bps": 1.1106,
+      "null_se_bps_matched": 1.1106,
+      "old_null_se_bps": 2.3852,
+      "z": -20.94894651539708,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 5m 55/10",
+      "cycles": 2138,
+      "units": 3008,
+      "gross_bps": -1.02,
+      "net_bps": -20.83,
+      "cycle_mean_bps": -24.1247,
+      "strategy_se_bps": 1.1342,
+      "null_se_bps_matched": 1.1342,
+      "old_null_se_bps": 2.735,
+      "z": -21.270234526538527,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 5m 55/20",
+      "cycles": 1993,
+      "units": 2931,
+      "gross_bps": -1.31,
+      "net_bps": -23.26,
+      "cycle_mean_bps": -26.2902,
+      "strategy_se_bps": 1.2382,
+      "null_se_bps_matched": 1.2382,
+      "old_null_se_bps": 2.7707,
+      "z": -21.232595703440477,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 15m 20/10",
+      "cycles": 1182,
+      "units": 2113,
+      "gross_bps": -7.03,
+      "net_bps": -31.11,
+      "cycle_mean_bps": -39.0752,
+      "strategy_se_bps": 2.0491,
+      "null_se_bps_matched": 2.0491,
+      "old_null_se_bps": 3.2632,
+      "z": -19.06944512224879,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 15m 20/20",
+      "cycles": 994,
+      "units": 1822,
+      "gross_bps": -5.65,
+      "net_bps": -31.57,
+      "cycle_mean_bps": -39.4488,
+      "strategy_se_bps": 2.8191,
+      "null_se_bps_matched": 2.8191,
+      "old_null_se_bps": 3.5141,
+      "z": -13.993402149622218,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 15m 55/10",
+      "cycles": 707,
+      "units": 1222,
+      "gross_bps": -7.11,
+      "net_bps": -28.68,
+      "cycle_mean_bps": -38.2128,
+      "strategy_se_bps": 2.614,
+      "null_se_bps_matched": 2.614,
+      "old_null_se_bps": 4.291,
+      "z": -14.618515684774293,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 15m 55/20",
+      "cycles": 649,
+      "units": 1147,
+      "gross_bps": -6.57,
+      "net_bps": -30.39,
+      "cycle_mean_bps": -38.5964,
+      "strategy_se_bps": 3.4206,
+      "null_se_bps_matched": 3.4206,
+      "old_null_se_bps": 4.429,
+      "z": -11.283517511547682,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 1h 20/10",
+      "cycles": 288,
+      "units": 592,
+      "gross_bps": -14.92,
+      "net_bps": -35.46,
+      "cycle_mean_bps": -65.8484,
+      "strategy_se_bps": 6.9291,
+      "null_se_bps_matched": 6.9291,
+      "old_null_se_bps": 6.165,
+      "z": -9.50316779956993,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 1h 20/20",
+      "cycles": 250,
+      "units": 524,
+      "gross_bps": -13.34,
+      "net_bps": -39.32,
+      "cycle_mean_bps": -69.0524,
+      "strategy_se_bps": 12.4367,
+      "null_se_bps_matched": 12.4367,
+      "old_null_se_bps": 6.5528,
+      "z": -5.552308892230254,
+      "p_two_sided": 2.819208533288986e-08,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 1.9734459733022902e-07
+    },
+    {
+      "config": "BTCUSDT 1h 55/10",
+      "cycles": 179,
+      "units": 359,
+      "gross_bps": -24.41,
+      "net_bps": -42.79,
+      "cycle_mean_bps": -70.1145,
+      "strategy_se_bps": 7.6473,
+      "null_se_bps_matched": 7.6473,
+      "old_null_se_bps": 7.9167,
+      "z": -9.168530069436272,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "BTCUSDT 1h 55/20",
+      "cycles": 165,
+      "units": 339,
+      "gross_bps": -26.33,
+      "net_bps": -46.05,
+      "cycle_mean_bps": -72.019,
+      "strategy_se_bps": 10.4877,
+      "null_se_bps_matched": 10.4877,
+      "old_null_se_bps": 8.1469,
+      "z": -6.866996576942514,
+      "p_two_sided": 6.5567551388312495e-12,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 7.8681061665975e-11
+    },
+    {
+      "config": "ETHUSDT 5m 20/10",
+      "cycles": 3298,
+      "units": 5059,
+      "gross_bps": -1.34,
+      "net_bps": -17.68,
+      "cycle_mean_bps": -26.5917,
+      "strategy_se_bps": 1.4477,
+      "null_se_bps_matched": 1.4477,
+      "old_null_se_bps": 2.1089,
+      "z": -18.368239276093114,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "ETHUSDT 5m 20/20",
+      "cycles": 2811,
+      "units": 4585,
+      "gross_bps": -1.33,
+      "net_bps": -18.39,
+      "cycle_mean_bps": -28.6153,
+      "strategy_se_bps": 2.0005,
+      "null_se_bps_matched": 2.0005,
+      "old_null_se_bps": 2.2152,
+      "z": -14.304073981504624,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "ETHUSDT 5m 55/10",
+      "cycles": 1945,
+      "units": 3203,
+      "gross_bps": 0.05,
+      "net_bps": -16.26,
+      "cycle_mean_bps": -29.8453,
+      "strategy_se_bps": 1.8723,
+      "null_se_bps_matched": 1.8723,
+      "old_null_se_bps": 2.6504,
+      "z": -15.94044757784543,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "ETHUSDT 5m 55/20",
+      "cycles": 1820,
+      "units": 3095,
+      "gross_bps": 0.73,
+      "net_bps": -15.57,
+      "cycle_mean_bps": -29.4676,
+      "strategy_se_bps": 2.5514,
+      "null_se_bps_matched": 2.5514,
+      "old_null_se_bps": 2.6963,
+      "z": -11.549580622403386,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "ETHUSDT 15m 20/10",
+      "cycles": 1088,
+      "units": 2125,
+      "gross_bps": 2.2,
+      "net_bps": -13.6,
+      "cycle_mean_bps": -44.4659,
+      "strategy_se_bps": 4.472,
+      "null_se_bps_matched": 4.472,
+      "old_null_se_bps": 3.254,
+      "z": -9.943179785330946,
+      "p_two_sided": 0.0,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0
+    },
+    {
+      "config": "ETHUSDT 15m 20/20",
+      "cycles": 924,
+      "units": 1849,
+      "gross_bps": 5.41,
+      "net_bps": -10.07,
+      "cycle_mean_bps": -41.9903,
+      "strategy_se_bps": 6.3687,
+      "null_se_bps_matched": 6.3687,
+      "old_null_se_bps": 3.4884,
+      "z": -6.5932293874731105,
+      "p_two_sided": 4.303601919275479e-11,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 4.733962111203027e-10
+    },
+    {
+      "config": "ETHUSDT 15m 55/10",
+      "cycles": 628,
+      "units": 1218,
+      "gross_bps": 3.87,
+      "net_bps": -11.12,
+      "cycle_mean_bps": -41.0475,
+      "strategy_se_bps": 6.2415,
+      "null_se_bps_matched": 6.2415,
+      "old_null_se_bps": 4.298,
+      "z": -6.576544099975967,
+      "p_two_sided": 4.815081666720289e-11,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 4.815081666720289e-10
+    },
+    {
+      "config": "ETHUSDT 15m 55/20",
+      "cycles": 576,
+      "units": 1137,
+      "gross_bps": 10.2,
+      "net_bps": -4.46,
+      "cycle_mean_bps": -36.2027,
+      "strategy_se_bps": 8.6433,
+      "null_se_bps_matched": 8.6433,
+      "old_null_se_bps": 4.4485,
+      "z": -4.188527529994331,
+      "p_two_sided": 2.8077025488792984e-05,
+      "gross_positive_net_negative": true,
+      "holm_adjusted_p": 0.0001684621529327579
+    },
+    {
+      "config": "ETHUSDT 1h 20/10",
+      "cycles": 263,
+      "units": 564,
+      "gross_bps": 32.4,
+      "net_bps": 17.93,
+      "cycle_mean_bps": -74.1491,
+      "strategy_se_bps": 19.7431,
+      "null_se_bps_matched": 19.7431,
+      "old_null_se_bps": 6.3161,
+      "z": -3.755696927027671,
+      "p_two_sided": 0.00017285977714465162,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0006914391085786065
+    },
+    {
+      "config": "ETHUSDT 1h 20/20",
+      "cycles": 223,
+      "units": 507,
+      "gross_bps": 32.47,
+      "net_bps": 17.58,
+      "cycle_mean_bps": -71.0324,
+      "strategy_se_bps": 23.2599,
+      "null_se_bps_matched": 23.2599,
+      "old_null_se_bps": 6.6617,
+      "z": -3.0538566373888107,
+      "p_two_sided": 0.0022592001451726684,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.004518400290345337
+    },
+    {
+      "config": "ETHUSDT 1h 55/10",
+      "cycles": 162,
+      "units": 342,
+      "gross_bps": 29.98,
+      "net_bps": 14.78,
+      "cycle_mean_bps": -77.0061,
+      "strategy_se_bps": 25.9526,
+      "null_se_bps_matched": 25.9526,
+      "old_null_se_bps": 8.1111,
+      "z": -2.967182478826784,
+      "p_two_sided": 0.003005425288317154,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.004518400290345337
+    },
+    {
+      "config": "ETHUSDT 1h 55/20",
+      "cycles": 156,
+      "units": 336,
+      "gross_bps": 15.89,
+      "net_bps": 0.29,
+      "cycle_mean_bps": -87.0362,
+      "strategy_se_bps": 26.3187,
+      "null_se_bps_matched": 26.3187,
+      "old_null_se_bps": 8.1832,
+      "z": -3.3070098447111747,
+      "p_two_sided": 0.0009429757796115545,
+      "gross_positive_net_negative": false,
+      "holm_adjusted_p": 0.0028289273388346636
+    }
+  ],
+  "autopsy_pure_curve": {
+    "initial_deposit": 195.0,
+    "peak_equity": 687.3364184,
+    "peak_time": "2025-04-12 11:06:47",
+    "trough_equity": 5.7189232300003425,
+    "trough_time": "2025-05-12 18:04:46",
+    "final_equity": 5.7189232300003425,
+    "max_drawdown_pct": 99.16795864777353,
+    "replay_trades": 257,
+    "round_trip_notional_usd": 1139460.63,
+    "volume_both_sides_usd": 2279063.79,
+    "gross_bps_per_round_trip_notional": 8.4274,
+    "fee_bps_per_round_trip_notional": -10.0006,
+    "funding_bps_per_round_trip_notional": 0.0059,
+    "net_bps_per_round_trip_notional": -1.5673,
+    "gross_bps_per_both_sides_volume": 4.2134,
+    "net_bps_per_both_sides_volume": -0.7836,
+    "gross_bps_per_trade_mean": 6.9433,
+    "fee_bps_per_trade_mean": 9.999,
+    "net_bps_per_trade_mean": -3.0823
+  },
+  "replay_10bps_vs_14bps": [
+    {
+      "variant": "Stop_0.3%_Cap_5x",
+      "leverage": 3.3333333333333335,
+      "trades_taken_10bps": 115,
+      "trades_taken_14bps": 111,
+      "trades_skipped_10bps": 142,
+      "trades_skipped_14bps": 146,
+      "gross_return_stop_pct": -13.88,
+      "same_set_nostop_gross_pct": 18.56,
+      "net_return_10bps_pct": -43.63,
+      "net_return_14bps_pct": -49.85,
+      "same_set_nostop_net_10bps_pct": -11.18,
+      "same_set_nostop_net_14bps_pct": -18.69,
+      "stop_minus_nostop_gross_pp": -32.44
+    },
+    {
+      "variant": "Stop_0.3%_Cap_10x",
+      "leverage": 3.3333333333333335,
+      "trades_taken_10bps": 115,
+      "trades_taken_14bps": 111,
+      "trades_skipped_10bps": 142,
+      "trades_skipped_14bps": 146,
+      "gross_return_stop_pct": -13.88,
+      "same_set_nostop_gross_pct": 18.56,
+      "net_return_10bps_pct": -43.63,
+      "net_return_14bps_pct": -49.85,
+      "same_set_nostop_net_10bps_pct": -11.18,
+      "same_set_nostop_net_14bps_pct": -18.69,
+      "stop_minus_nostop_gross_pp": -32.44
+    },
+    {
+      "variant": "Stop_0.5%_Cap_5x",
+      "leverage": 2.0,
+      "trades_taken_10bps": 124,
+      "trades_taken_14bps": 119,
+      "trades_skipped_10bps": 133,
+      "trades_skipped_14bps": 138,
+      "gross_return_stop_pct": -23.22,
+      "same_set_nostop_gross_pct": 14.11,
+      "net_return_10bps_pct": -42.61,
+      "net_return_14bps_pct": -48.32,
+      "same_set_nostop_net_10bps_pct": -5.28,
+      "same_set_nostop_net_14bps_pct": -13.46,
+      "stop_minus_nostop_gross_pp": -37.33
+    },
+    {
+      "variant": "Stop_0.5%_Cap_10x",
+      "leverage": 2.0,
+      "trades_taken_10bps": 124,
+      "trades_taken_14bps": 119,
+      "trades_skipped_10bps": 133,
+      "trades_skipped_14bps": 138,
+      "gross_return_stop_pct": -23.22,
+      "same_set_nostop_gross_pct": 14.11,
+      "net_return_10bps_pct": -42.61,
+      "net_return_14bps_pct": -48.32,
+      "same_set_nostop_net_10bps_pct": -5.28,
+      "same_set_nostop_net_14bps_pct": -13.46,
+      "stop_minus_nostop_gross_pp": -37.33
+    },
+    {
+      "variant": "Stop_1.0%_Cap_5x",
+      "leverage": 1.0,
+      "trades_taken_10bps": 178,
+      "trades_taken_14bps": 169,
+      "trades_skipped_10bps": 79,
+      "trades_skipped_14bps": 88,
+      "gross_return_stop_pct": -23.19,
+      "same_set_nostop_gross_pct": 9.52,
+      "net_return_10bps_pct": -37.81,
+      "net_return_14bps_pct": -40.07,
+      "same_set_nostop_net_10bps_pct": -5.09,
+      "same_set_nostop_net_14bps_pct": -10.24,
+      "stop_minus_nostop_gross_pp": -32.72
+    },
+    {
+      "variant": "Stop_1.0%_Cap_10x",
+      "leverage": 1.0,
+      "trades_taken_10bps": 178,
+      "trades_taken_14bps": 169,
+      "trades_skipped_10bps": 79,
+      "trades_skipped_14bps": 88,
+      "gross_return_stop_pct": -23.19,
+      "same_set_nostop_gross_pct": 9.52,
+      "net_return_10bps_pct": -37.81,
+      "net_return_14bps_pct": -40.07,
+      "same_set_nostop_net_10bps_pct": -5.09,
+      "same_set_nostop_net_14bps_pct": -10.24,
+      "stop_minus_nostop_gross_pp": -32.72
+    }
+  ],
+  "sharpe_drift_resolution": {
+    "runner_mean_oos_bar_sharpe": 0.121,
+    "runner_mean_oos_daily_sharpe": 0.126,
+    "diagnostics_mean_daily_sharpe": 0.127,
+    "diagnostics_cycle_sharpe": -0.2511,
+    "legacy_dsr_p_positive_sharpe_demo": 1.0,
+    "canonical_dsr_p_positive_sharpe_demo": 0.065,
+    "unattributable_trade_calendar_sharpe": "+0.134 appears in audit_and_reconciliation.py prose only"
+  }
+}

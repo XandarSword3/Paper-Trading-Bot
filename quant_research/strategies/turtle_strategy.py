@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, List, Optional, Tuple
 from quant_research.core.engine import CostModel, QuantEngine, EngineTrade, assert_no_same_bar_pyramiding
+from quant_research.core.metrics import calculate_daily_sharpe
 
 
 def prepare_turtle_features(df: pd.DataFrame, N: int, M: int) -> Dict[str, Any]:
@@ -100,6 +101,8 @@ def run_turtle_simulation(
 
     # Pre-align 1m sub-bars if passed
     has_subbars = df_1m is not None and len(df_1m) > 0
+    sub_index = df_1m.index if has_subbars else None
+    ambiguous_bars = 0
 
     equity = initial_capital
     units: List[Dict[str, Any]] = []  # active units
@@ -158,7 +161,45 @@ def run_turtle_simulation(
             elif direction == -1 and close > exit_high_arr[i]:
                 channel_hit = True
 
-            if stop_hit:
+            if stop_hit and channel_hit:
+                # AMBIGUOUS BAR: the protective stop AND the M-bar channel-exit line
+                # both lie inside this bar's range.
+                ambiguous_bars += 1
+                channel_level = exit_low_arr[i] if direction == 1 else exit_high_arr[i]
+                dir_str = "long" if direction == 1 else "short"
+
+                sub_bars = None
+                if has_subbars:
+                    lo = int(np.searchsorted(sub_index, ts, side="left"))
+                    hi = int(np.searchsorted(sub_index, next_ts, side="left"))
+                    if hi > lo:
+                        sub_bars = df_1m.iloc[lo:hi]
+
+                if sub_bars is not None and len(sub_bars) > 0:
+                    # 1m sub-bars are handed to the exit logic; the first level they
+                    # actually reach decides the exit.
+                    _, side, _ = engine.resolve_intrabar_exit_levels(
+                        stop_price=active_stop,
+                        level_price=channel_level,
+                        direction=dir_str,
+                        bar_high=high,
+                        bar_low=low,
+                        sub_bars_df=sub_bars,
+                    )
+                    if side == "level":
+                        exit_triggered = True
+                        exit_price = next_open
+                        exit_reason = f"{M}-Bar Donchian Exit (1m resolved)"
+                    else:
+                        exit_triggered = True
+                        exit_price = active_stop
+                        exit_reason = "2N Stop Loss (1m resolved)"
+                else:
+                    # No sub-bars available -> pessimistic stop-loss-first fallback
+                    exit_triggered = True
+                    exit_price = active_stop
+                    exit_reason = "2N Stop Loss"
+            elif stop_hit:
                 # Stop loss hit intrabar!
                 exit_triggered = True
                 exit_price = active_stop
@@ -186,7 +227,7 @@ def run_turtle_simulation(
                     completed_trades.append(
                         EngineTrade(
                             entry_time=u["entry_time"],
-                            exit_time=ts if exit_reason == "2N Stop Loss" else next_ts,
+                            exit_time=ts if exit_reason.startswith("2N Stop Loss") else next_ts,
                             direction=dir_str,
                             entry_price=u["entry_price"],
                             executed_entry_price=exec_entry,
@@ -284,15 +325,23 @@ def run_turtle_simulation(
     # Invariant validator
     assert_no_same_bar_pyramiding(completed_trades)
 
-    # Calculate metrics
-    eq_series = pd.Series(equity_curve)
+    # Calculate metrics. The equity curve is indexed by the bar timestamps so
+    # that the canonical daily-equity Sharpe (calculate_daily_sharpe, sqrt(365))
+    # is well defined; the legacy per-bar Sharpe is left untouched for
+    # comparability with previously committed numbers.
+    eq_series = pd.Series(
+        np.asarray(equity_curve, dtype=np.float64),
+        index=pd.DatetimeIndex(timestamps[: len(equity_curve)]),
+    )
     metrics = engine.calculate_metrics(
         trades=completed_trades,
         equity_series=eq_series,
         initial_capital=initial_capital,
         bars_per_year=bars_per_year,
     )
+    metrics["daily_sharpe"] = round(calculate_daily_sharpe(eq_series), 3)
     metrics["final_equity"] = round(equity, 2)
+    metrics["ambiguous_bars"] = ambiguous_bars
     metrics["config"] = params
 
     return (metrics, completed_trades) if return_trades else metrics

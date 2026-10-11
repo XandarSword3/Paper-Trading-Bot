@@ -170,6 +170,66 @@ class QuantEngine:
         # Pessimistic default rule: Stop loss hit first
         return stop_price, "Stop Loss (Pessimistic fallback)"
 
+    def resolve_intrabar_exit_levels(
+        self,
+        stop_price: float,
+        level_price: float,
+        direction: str,
+        bar_high: float,
+        bar_low: float,
+        sub_bars_df: Optional[pd.DataFrame] = None,
+    ) -> Tuple[Optional[float], Optional[str], Optional[str]]:
+        """
+        Resolves the ordering of TWO SAME-SIDE levels inside a single bar:
+        the protective stop and a second level (e.g. the Donchian channel-exit line).
+
+        Both levels sit on the losing side for the position (a long's stop and its
+        channel-exit line are both BELOW price), so resolve_intrabar_exit()'s
+        stop/target asymmetry cannot be reused here.
+
+        Returns (exit_price, side, reason) where side is "stop" or "level":
+          - exactly one level touched -> that level
+          - both touched, sub-bars supplied -> whichever the 1m sub-bars reach first
+          - both touched and a single sub-bar touches both -> pessimistic "stop"
+          - both touched and no sub-bars            -> pessimistic "stop"
+        """
+        if direction == "long":
+            stop_touched = bar_low <= stop_price
+            level_touched = bar_low <= level_price
+        else:
+            stop_touched = bar_high >= stop_price
+            level_touched = bar_high >= level_price
+
+        if stop_touched and not level_touched:
+            return stop_price, "stop", "Stop Loss"
+        if level_touched and not stop_touched:
+            return level_price, "level", "Level"
+        if not stop_touched and not level_touched:
+            return None, None, None
+
+        # Ambiguous bar: both levels were inside the range.
+        if sub_bars_df is not None and len(sub_bars_df) > 0:
+            for _, sub in sub_bars_df.iterrows():
+                s_high = sub["high"]
+                s_low = sub["low"]
+                if direction == "long":
+                    s_stop = s_low <= stop_price
+                    s_level = s_low <= level_price
+                else:
+                    s_stop = s_high >= stop_price
+                    s_level = s_high >= level_price
+
+                if s_stop and not s_level:
+                    return stop_price, "stop", "Stop Loss (1m resolved)"
+                if s_level and not s_stop:
+                    return level_price, "level", "Level (1m resolved)"
+                if s_stop and s_level:
+                    # Ambiguous even at 1m -> pessimistic stop loss first
+                    return stop_price, "stop", "Stop Loss (1m same-bar fallback)"
+
+        # Pessimistic default rule: stop loss hit first
+        return stop_price, "stop", "Stop Loss (Pessimistic fallback)"
+
     def calculate_metrics(
         self,
         trades: List[EngineTrade],
