@@ -1,0 +1,893 @@
+{
+  "timestamp_utc": "2026-10-11T07:21:32.042607+00:00",
+  "cost_reconciliation": {
+    "SOLUSDT": {
+      "trades": 582,
+      "gross_bps": 18.18,
+      "fee_bps": 14.0,
+      "funding_bps": 1.01,
+      "net_bps_with_funding": 5.19,
+      "net_bps_no_funding": 4.18,
+      "total_gap_bps": 12.99
+    },
+    "BTCUSDT": {
+      "trades": 524,
+      "gross_bps": -13.34,
+      "fee_bps": 13.99,
+      "funding_bps": -11.99,
+      "net_bps_with_funding": -39.32,
+      "net_bps_no_funding": -27.27,
+      "total_gap_bps": 25.98
+    },
+    "ETHUSDT": {
+      "trades": 507,
+      "gross_bps": 32.47,
+      "fee_bps": 14.01,
+      "funding_bps": -0.88,
+      "net_bps_with_funding": 17.58,
+      "net_bps_no_funding": 18.45,
+      "total_gap_bps": 14.89
+    }
+  },
+  "pyramids_and_cycles": [
+    {
+      "config": "SOLUSDT 5m 20/10",
+      "distribution": {
+        "1": 1914,
+        "2": 1053,
+        "3": 224,
+        "4": 234
+      },
+      "cycles": 3425,
+      "units": 5628,
+      "trades": 5628,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 20/20",
+      "distribution": {
+        "1": 1503,
+        "2": 918,
+        "3": 238,
+        "4": 268
+      },
+      "cycles": 2927,
+      "units": 5125,
+      "trades": 5125,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 55/10",
+      "distribution": {
+        "1": 1013,
+        "2": 647,
+        "3": 170,
+        "4": 233
+      },
+      "cycles": 2063,
+      "units": 3749,
+      "trades": 3749,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 5m 55/20",
+      "distribution": {
+        "1": 914,
+        "2": 605,
+        "3": 169,
+        "4": 233
+      },
+      "cycles": 1921,
+      "units": 3563,
+      "trades": 3563,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 20/10",
+      "distribution": {
+        "1": 436,
+        "2": 367,
+        "3": 186,
+        "4": 179
+      },
+      "cycles": 1168,
+      "units": 2444,
+      "trades": 2444,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 20/20",
+      "distribution": {
+        "1": 363,
+        "2": 303,
+        "3": 170,
+        "4": 169
+      },
+      "cycles": 1005,
+      "units": 2155,
+      "trades": 2155,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 55/10",
+      "distribution": {
+        "1": 267,
+        "2": 226,
+        "3": 116,
+        "4": 88
+      },
+      "cycles": 697,
+      "units": 1419,
+      "trades": 1419,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 15m 55/20",
+      "distribution": {
+        "1": 244,
+        "2": 202,
+        "3": 111,
+        "4": 91
+      },
+      "cycles": 648,
+      "units": 1345,
+      "trades": 1345,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 20/10",
+      "distribution": {
+        "1": 121,
+        "2": 65,
+        "3": 44,
+        "4": 69
+      },
+      "cycles": 299,
+      "units": 659,
+      "trades": 659,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 20/20",
+      "distribution": {
+        "1": 93,
+        "2": 59,
+        "3": 37,
+        "4": 65
+      },
+      "cycles": 254,
+      "units": 582,
+      "trades": 582,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 55/10",
+      "distribution": {
+        "1": 78,
+        "2": 41,
+        "3": 30,
+        "4": 38
+      },
+      "cycles": 187,
+      "units": 402,
+      "trades": 402,
+      "units_equal_trades": true
+    },
+    {
+      "config": "SOLUSDT 1h 55/20",
+      "distribution": {
+        "1": 68,
+        "2": 43,
+        "3": 28,
+        "4": 37
+      },
+      "cycles": 176,
+      "units": 386,
+      "trades": 386,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 20/10",
+      "distribution": {
+        "1": 2725,
+        "2": 310,
+        "3": 104,
+        "4": 140
+      },
+      "cycles": 3279,
+      "units": 4217,
+      "trades": 4217,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 20/20",
+      "distribution": {
+        "1": 2365,
+        "2": 338,
+        "3": 134,
+        "4": 128
+      },
+      "cycles": 2965,
+      "units": 3955,
+      "trades": 3955,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 55/10",
+      "distribution": {
+        "1": 1620,
+        "2": 298,
+        "3": 88,
+        "4": 132
+      },
+      "cycles": 2138,
+      "units": 3008,
+      "trades": 3008,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 5m 55/20",
+      "distribution": {
+        "1": 1455,
+        "2": 289,
+        "3": 98,
+        "4": 151
+      },
+      "cycles": 1993,
+      "units": 2931,
+      "trades": 2931,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 20/10",
+      "distribution": {
+        "1": 615,
+        "2": 333,
+        "3": 104,
+        "4": 130
+      },
+      "cycles": 1182,
+      "units": 2113,
+      "trades": 2113,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 20/20",
+      "distribution": {
+        "1": 497,
+        "2": 290,
+        "3": 83,
+        "4": 124
+      },
+      "cycles": 994,
+      "units": 1822,
+      "trades": 1822,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 55/10",
+      "distribution": {
+        "1": 396,
+        "2": 178,
+        "3": 62,
+        "4": 71
+      },
+      "cycles": 707,
+      "units": 1222,
+      "trades": 1222,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 15m 55/20",
+      "distribution": {
+        "1": 350,
+        "2": 170,
+        "3": 59,
+        "4": 70
+      },
+      "cycles": 649,
+      "units": 1147,
+      "trades": 1147,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 20/10",
+      "distribution": {
+        "1": 112,
+        "2": 91,
+        "3": 42,
+        "4": 43
+      },
+      "cycles": 288,
+      "units": 592,
+      "trades": 592,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 20/20",
+      "distribution": {
+        "1": 93,
+        "2": 81,
+        "3": 35,
+        "4": 41
+      },
+      "cycles": 250,
+      "units": 524,
+      "trades": 524,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 55/10",
+      "distribution": {
+        "1": 74,
+        "2": 55,
+        "3": 25,
+        "4": 25
+      },
+      "cycles": 179,
+      "units": 359,
+      "trades": 359,
+      "units_equal_trades": true
+    },
+    {
+      "config": "BTCUSDT 1h 55/20",
+      "distribution": {
+        "1": 67,
+        "2": 48,
+        "3": 24,
+        "4": 26
+      },
+      "cycles": 165,
+      "units": 339,
+      "trades": 339,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 20/10",
+      "distribution": {
+        "1": 2101,
+        "2": 819,
+        "3": 192,
+        "4": 186
+      },
+      "cycles": 3298,
+      "units": 5059,
+      "trades": 5059,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 20/20",
+      "distribution": {
+        "1": 1657,
+        "2": 751,
+        "3": 186,
+        "4": 217
+      },
+      "cycles": 2811,
+      "units": 4585,
+      "trades": 4585,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 55/10",
+      "distribution": {
+        "1": 1136,
+        "2": 520,
+        "3": 129,
+        "4": 160
+      },
+      "cycles": 1945,
+      "units": 3203,
+      "trades": 3203,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 5m 55/20",
+      "distribution": {
+        "1": 1026,
+        "2": 491,
+        "3": 125,
+        "4": 178
+      },
+      "cycles": 1820,
+      "units": 3095,
+      "trades": 3095,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 20/10",
+      "distribution": {
+        "1": 456,
+        "2": 365,
+        "3": 129,
+        "4": 138
+      },
+      "cycles": 1088,
+      "units": 2125,
+      "trades": 2125,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 20/20",
+      "distribution": {
+        "1": 378,
+        "2": 297,
+        "3": 119,
+        "4": 130
+      },
+      "cycles": 924,
+      "units": 1849,
+      "trades": 1849,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 55/10",
+      "distribution": {
+        "1": 265,
+        "2": 213,
+        "3": 73,
+        "4": 77
+      },
+      "cycles": 628,
+      "units": 1218,
+      "trades": 1218,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 15m 55/20",
+      "distribution": {
+        "1": 238,
+        "2": 191,
+        "3": 71,
+        "4": 76
+      },
+      "cycles": 576,
+      "units": 1137,
+      "trades": 1137,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/10",
+      "distribution": {
+        "1": 110,
+        "2": 60,
+        "3": 38,
+        "4": 55
+      },
+      "cycles": 263,
+      "units": 564,
+      "trades": 564,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/20",
+      "distribution": {
+        "1": 80,
+        "2": 52,
+        "3": 41,
+        "4": 50
+      },
+      "cycles": 223,
+      "units": 507,
+      "trades": 507,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/10",
+      "distribution": {
+        "1": 68,
+        "2": 35,
+        "3": 32,
+        "4": 27
+      },
+      "cycles": 162,
+      "units": 342,
+      "trades": 342,
+      "units_equal_trades": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/20",
+      "distribution": {
+        "1": 63,
+        "2": 33,
+        "3": 33,
+        "4": 27
+      },
+      "cycles": 156,
+      "units": 336,
+      "trades": 336,
+      "units_equal_trades": true
+    }
+  ],
+  "ambiguous_and_subbars": [
+    {
+      "asset": "SOLUSDT",
+      "default_net_bps": 5.19,
+      "subbars_net_bps": 5.19,
+      "delta_bps": 0.0
+    },
+    {
+      "asset": "BTCUSDT",
+      "default_net_bps": -39.32,
+      "subbars_net_bps": -39.32,
+      "delta_bps": 0.0
+    },
+    {
+      "asset": "ETHUSDT",
+      "default_net_bps": 17.58,
+      "subbars_net_bps": 17.58,
+      "delta_bps": 0.0
+    }
+  ],
+  "random_baseline_per_config": [
+    {
+      "config": "SOLUSDT 5m 20/10",
+      "trades": 5628,
+      "strategy_net_bps": -14.54,
+      "random_mean_bps": -14.06,
+      "random_p95_bps": -10.77,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 5m 20/20",
+      "trades": 5125,
+      "strategy_net_bps": -14.14,
+      "random_mean_bps": -14.17,
+      "random_p95_bps": -10.79,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 5m 55/10",
+      "trades": 3749,
+      "strategy_net_bps": -13.2,
+      "random_mean_bps": -13.92,
+      "random_p95_bps": -9.94,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 5m 55/20",
+      "trades": 3563,
+      "strategy_net_bps": -14.46,
+      "random_mean_bps": -14.0,
+      "random_p95_bps": -9.94,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 15m 20/10",
+      "trades": 2444,
+      "strategy_net_bps": -11.11,
+      "random_mean_bps": -14.06,
+      "random_p95_bps": -9.01,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 15m 20/20",
+      "trades": 2155,
+      "strategy_net_bps": -7.63,
+      "random_mean_bps": -13.84,
+      "random_p95_bps": -8.55,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "SOLUSDT 15m 55/10",
+      "trades": 1419,
+      "strategy_net_bps": -9.74,
+      "random_mean_bps": -13.94,
+      "random_p95_bps": -7.06,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 15m 55/20",
+      "trades": 1345,
+      "strategy_net_bps": -6.8,
+      "random_mean_bps": -14.18,
+      "random_p95_bps": -7.68,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "SOLUSDT 1h 20/10",
+      "trades": 659,
+      "strategy_net_bps": -6.92,
+      "random_mean_bps": -13.9,
+      "random_p95_bps": -4.57,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 1h 20/20",
+      "trades": 582,
+      "strategy_net_bps": 5.19,
+      "random_mean_bps": -14.26,
+      "random_p95_bps": -3.52,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "SOLUSDT 1h 55/10",
+      "trades": 402,
+      "strategy_net_bps": -50.68,
+      "random_mean_bps": -14.1,
+      "random_p95_bps": -1.16,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "SOLUSDT 1h 55/20",
+      "trades": 386,
+      "strategy_net_bps": -51.04,
+      "random_mean_bps": -14.19,
+      "random_p95_bps": -1.62,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 5m 20/10",
+      "trades": 4217,
+      "strategy_net_bps": -19.84,
+      "random_mean_bps": -14.1,
+      "random_p95_bps": -10.19,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 5m 20/20",
+      "trades": 3955,
+      "strategy_net_bps": -22.31,
+      "random_mean_bps": -13.91,
+      "random_p95_bps": -9.9,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 5m 55/10",
+      "trades": 3008,
+      "strategy_net_bps": -20.83,
+      "random_mean_bps": -14.0,
+      "random_p95_bps": -9.23,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 5m 55/20",
+      "trades": 2931,
+      "strategy_net_bps": -23.26,
+      "random_mean_bps": -14.0,
+      "random_p95_bps": -9.59,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 15m 20/10",
+      "trades": 2113,
+      "strategy_net_bps": -31.11,
+      "random_mean_bps": -13.81,
+      "random_p95_bps": -8.52,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 15m 20/20",
+      "trades": 1822,
+      "strategy_net_bps": -31.57,
+      "random_mean_bps": -13.79,
+      "random_p95_bps": -7.93,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 15m 55/10",
+      "trades": 1222,
+      "strategy_net_bps": -28.68,
+      "random_mean_bps": -13.9,
+      "random_p95_bps": -7.07,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 15m 55/20",
+      "trades": 1147,
+      "strategy_net_bps": -30.39,
+      "random_mean_bps": -13.53,
+      "random_p95_bps": -5.85,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 1h 20/10",
+      "trades": 592,
+      "strategy_net_bps": -35.46,
+      "random_mean_bps": -14.0,
+      "random_p95_bps": -3.75,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 1h 20/20",
+      "trades": 524,
+      "strategy_net_bps": -39.32,
+      "random_mean_bps": -14.02,
+      "random_p95_bps": -3.42,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 1h 55/10",
+      "trades": 359,
+      "strategy_net_bps": -42.79,
+      "random_mean_bps": -14.06,
+      "random_p95_bps": -1.28,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "BTCUSDT 1h 55/20",
+      "trades": 339,
+      "strategy_net_bps": -46.05,
+      "random_mean_bps": -13.35,
+      "random_p95_bps": 0.31,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 5m 20/10",
+      "trades": 5059,
+      "strategy_net_bps": -17.68,
+      "random_mean_bps": -13.92,
+      "random_p95_bps": -10.45,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 5m 20/20",
+      "trades": 4585,
+      "strategy_net_bps": -18.39,
+      "random_mean_bps": -13.95,
+      "random_p95_bps": -10.21,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 5m 55/10",
+      "trades": 3203,
+      "strategy_net_bps": -16.26,
+      "random_mean_bps": -13.83,
+      "random_p95_bps": -9.32,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 5m 55/20",
+      "trades": 3095,
+      "strategy_net_bps": -15.57,
+      "random_mean_bps": -13.98,
+      "random_p95_bps": -9.58,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 15m 20/10",
+      "trades": 2125,
+      "strategy_net_bps": -13.6,
+      "random_mean_bps": -14.17,
+      "random_p95_bps": -8.93,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 15m 20/20",
+      "trades": 1849,
+      "strategy_net_bps": -10.07,
+      "random_mean_bps": -14.01,
+      "random_p95_bps": -8.24,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 15m 55/10",
+      "trades": 1218,
+      "strategy_net_bps": -11.12,
+      "random_mean_bps": -13.77,
+      "random_p95_bps": -6.65,
+      "beats_95th_percentile": false
+    },
+    {
+      "config": "ETHUSDT 15m 55/20",
+      "trades": 1137,
+      "strategy_net_bps": -4.46,
+      "random_mean_bps": -14.1,
+      "random_p95_bps": -7.1,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/10",
+      "trades": 564,
+      "strategy_net_bps": 17.93,
+      "random_mean_bps": -13.96,
+      "random_p95_bps": -3.3,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "ETHUSDT 1h 20/20",
+      "trades": 507,
+      "strategy_net_bps": 17.58,
+      "random_mean_bps": -14.0,
+      "random_p95_bps": -3.14,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/10",
+      "trades": 342,
+      "strategy_net_bps": 14.78,
+      "random_mean_bps": -14.11,
+      "random_p95_bps": -0.87,
+      "beats_95th_percentile": true
+    },
+    {
+      "config": "ETHUSDT 1h 55/20",
+      "trades": 336,
+      "strategy_net_bps": 0.29,
+      "random_mean_bps": -13.97,
+      "random_p95_bps": -0.79,
+      "beats_95th_percentile": true
+    }
+  ],
+  "autopsy_pure_curve": {
+    "initial_deposit": 195.0,
+    "peak_equity": 687.3364184,
+    "peak_time": "2025-04-12 11:06:47",
+    "trough_equity": 5.7189232300003425,
+    "trough_time": "2025-05-12 18:04:46",
+    "final_equity": 5.7189232300003425,
+    "max_drawdown_pct": 99.16795864777353,
+    "gross_bps_volume": 4.21,
+    "net_bps_volume": -0.83,
+    "gross_bps_per_trade_mean": 6.94,
+    "net_bps_per_trade_mean": -3.08
+  },
+  "replay_10bps_vs_14bps": [
+    {
+      "variant": "Stop_0.3%_Cap_5x",
+      "trades_taken": 111,
+      "gross_return_pct": -15.63,
+      "net_10bps_return_pct": -41.8,
+      "net_14bps_return_pct": -49.85,
+      "fee_drag_10bps_pct": 37.0,
+      "fee_drag_14bps_pct": 51.8,
+      "matched_nostop_gross_return_pct": 12.62
+    },
+    {
+      "variant": "Stop_0.3%_Cap_10x",
+      "trades_taken": 111,
+      "gross_return_pct": -15.63,
+      "net_10bps_return_pct": -41.8,
+      "net_14bps_return_pct": -49.85,
+      "fee_drag_10bps_pct": 37.0,
+      "fee_drag_14bps_pct": 51.8,
+      "matched_nostop_gross_return_pct": 12.62
+    },
+    {
+      "variant": "Stop_0.5%_Cap_5x",
+      "trades_taken": 119,
+      "gross_return_pct": -27.78,
+      "net_10bps_return_pct": -43.13,
+      "net_14bps_return_pct": -48.32,
+      "fee_drag_10bps_pct": 23.8,
+      "fee_drag_14bps_pct": 33.32,
+      "matched_nostop_gross_return_pct": 9.37
+    },
+    {
+      "variant": "Stop_0.5%_Cap_10x",
+      "trades_taken": 119,
+      "gross_return_pct": -27.78,
+      "net_10bps_return_pct": -43.13,
+      "net_14bps_return_pct": -48.32,
+      "fee_drag_10bps_pct": 23.8,
+      "fee_drag_14bps_pct": 33.32,
+      "matched_nostop_gross_return_pct": 9.37
+    },
+    {
+      "variant": "Stop_1.0%_Cap_5x",
+      "trades_taken": 169,
+      "gross_return_pct": -24.03,
+      "net_10bps_return_pct": -35.87,
+      "net_14bps_return_pct": -40.07,
+      "fee_drag_10bps_pct": 16.9,
+      "fee_drag_14bps_pct": 23.66,
+      "matched_nostop_gross_return_pct": 9.42
+    },
+    {
+      "variant": "Stop_1.0%_Cap_10x",
+      "trades_taken": 169,
+      "gross_return_pct": -24.03,
+      "net_10bps_return_pct": -35.87,
+      "net_14bps_return_pct": -40.07,
+      "fee_drag_10bps_pct": 16.9,
+      "fee_drag_14bps_pct": 23.66,
+      "matched_nostop_gross_return_pct": 9.42
+    }
+  ],
+  "sharpe_drift_resolution": {
+    "runner_hourly_sharpe": 0.121,
+    "diagnostics_daily_sharpe": 0.127,
+    "trade_calendar_daily_sharpe": 0.134,
+    "pooled_portfolio_daily_sharpe": 0.455
+  }
+}

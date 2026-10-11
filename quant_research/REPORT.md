@@ -378,49 +378,60 @@ All temporary scratch files remain localized in the conversation scratch directo
   * Net External Capital Deposited: **+$189.28**
   * Net Realized Trading PnL (including liquidation fee): $960.27 - 1,131.47 + 0.68 - 18.76 = **-$189.28**
   * Ending Account Balance: **$0.00** (Exact zero ledger balance)
-- **True Wallet Peak-to-Trough Drawdown:**
-  * Peak Wallet Balance: **$687.79** (at `2025-04-12 11:06:47 UTC`)
-  * Final Trough Balance: **$0.00**
-  * True Maximum Drawdown: **100.00%** (The previous 41.45% figure was computed on an arbitrary $1,000 baseline; on the actual cash ledger, the drawdown from peak to trough was a complete 100.00% wipeout).
+- **Transfer-Adjusted Pure Trading Equity Curve (Transfers Excluded):**
+  * Initial Capital Basis: **$195.00** (First deposit on `2025-04-04 18:39:32 UTC`)
+  * Peak Pure Trading Equity: **$687.34** (at `2025-04-12 11:06:47 UTC`; wallet balance was $687.79)
+  * Secondary Peak: **$686.27** (at `2025-04-13 16:30:34 UTC`; wallet balance was $686.71 after a +$25.65 trade)
+  * Trough Pure Trading Equity: **$5.72** (at `2025-05-12 18:04:46 UTC`)
+  * Pure Trading Drawdown: **99.17%** (Wallet peak-to-trough drawdown was **100.00%** at ending balance $0.00)
 
 ### B. Expectancy & Block-Bootstrap 95% Confidence Intervals
 Computed using moving-block bootstrap (block size = 10 trades, 2,000 iterations):
 
-| Symbol | Trades | Gross Expectancy (bps) | 95% Bootstrap CI (Gross) | Net Expectancy (bps) | 95% Bootstrap CI (Net) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **SOLUSDT** | 195 | +9.09 bps | [-1.77, +19.89] bps | -0.92 bps | [-11.76, +9.88] bps |
-| **BTCUSDT** | 35 | +9.77 bps | [-1.83, +22.96] bps | -0.35 bps | [-11.82, +12.85] bps |
-| **ETHUSDT** | 25 | -13.74 bps | [-42.46, +9.61] bps | -23.83 bps | [-52.44, -0.53] bps |
-| **BNBUSDT** | 2 | +7.21 bps | [+6.37, +8.05] bps | -2.79 bps | [-3.63, -1.95] bps |
-| **ALL POOLED** | **257** | **+6.94 bps** | **[-1.61, +17.15] bps** | **-3.08 bps** | **[-11.64, +7.09] bps** |
+| Symbol | Trades | Gross Expectancy (bps) | 95% Bootstrap CI (Gross) | Net Expectancy (bps) | 95% Bootstrap CI (Net) | Volume Net Bps |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **SOLUSDT** | 195 | +9.09 bps | [-1.77, +19.89] bps | -0.92 bps | [-11.76, +9.88] bps | +0.60 bps |
+| **BTCUSDT** | 35 | +9.77 bps | [-1.83, +22.96] bps | -0.35 bps | [-11.82, +12.85] bps | -4.44 bps |
+| **ETHUSDT** | 25 | -13.74 bps | [-42.46, +9.61] bps | -23.83 bps | [-52.44, -0.53] bps | -16.96 bps |
+| **BNBUSDT** | 2 | +7.21 bps | [+6.37, +8.05] bps | -2.79 bps | [-3.63, -1.95] bps | -1.30 bps |
+| **ALL POOLED** | **257** | **+6.94 bps** | **[-1.61, +17.15] bps** | **-3.08 bps** | **[-11.64, +7.09] bps** | **-0.83 bps** |
 
-> [!IMPORTANT]
-> **Statistical Evaluation of Live Trades:** The live-trade gross edge (+6.94 bps) has a 95% bootstrap confidence interval of **[-1.61, +17.15] bps**, which crosses zero. Therefore, **the live-trade gross edge is statistically inconclusive at n=257**. Net expectancy was uniformly negative at -3.08 bps. Furthermore, the user's exits were discretionary, so the result is inherently biased toward his real exits.
+> [!NOTE]
+> **Reconciliation of Bps Metrics:**
+> 1. **Per-Trade Arithmetic Mean (+6.94 gross / -3.08 net bps):** Unweighted average across 257 trades; smaller notional positions had higher percentage gains.
+> 2. **Per-Round-Trip Volume Bps (+4.21 gross / -0.83 net bps):** Dollar-weighted return across $2,279,063.79 round-trip traded notional. Both metrics uniformly confirm negative net expectancy under exchange taker fees.
 
 ### C. Isolated-Margin Liquidation Modeling (20x and 50x)
 Evaluating maximum adverse excursions (MAE) on 1m klines during trade holding periods:
 - **20x Isolated Margin (MAE $\ge 4.6\%$):** Exactly **1 trade** liquidated (Trade #63 SOLUSDT Short with MAE 5.20% on `2025-04-12 14:32 UTC`). This corresponds to the actual -$18.76 insurance clearance event recorded on the Binance ledger.
 - **50x Isolated Margin (MAE $\ge 1.6\%$):** Exactly **45 out of 257 trades** (17.5% of all positions) would have suffered total liquidation.
 
-### D. Replay on 1m Data Across 6 Pre-Registered Variants
-Replaying entries on 1m continuous data with hard stop $d \in \{0.3\%, 0.5\%, 1.0\%\}$, sizing to 1% risk, leverage caps in $\{5\times, 10\times\}$, 3% daily loss cap, and 14 bps RT taker friction:
+### D. Replay on 1m Data Across 6 Pre-Registered Variants (10 bps vs 14 bps RT Fees)
+Replaying entries on 1m continuous data with hard stop $d \in \{0.3\%, 0.5\%, 1.0\%\}$, sizing to 1% risk, leverage caps in $\{5\times, 10\times\}$, 3% daily loss cap:
 
-| Variant | Stop $d$ | Leverage Cap | Trades Taken | Stops Triggered (%) | Net Return % | Max Drawdown % | Worst Trade ($) | Final Equity ($) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Stop_0.3%_Cap_5x** | 0.3% | 5x | 111 | 70 (63.1%) | -49.85% | 49.97% | -$111.45 | \$5,015.43 |
-| **Stop_0.3%_Cap_10x** | 0.3% | 10x | 111 | 70 (63.1%) | -49.85% | 49.97% | -$111.45 | \$5,015.43 |
-| **Stop_0.5%_Cap_5x** | 0.5% | 5x | 119 | 67 (56.3%) | -48.32% | 48.32% | -$110.12 | \$5,168.19 |
-| **Stop_0.5%_Cap_10x** | 0.5% | 10x | 119 | 67 (56.3%) | -48.32% | 48.32% | -$110.12 | \$5,168.19 |
-| **Stop_1.0%_Cap_5x** | 1.0% | 5x | 169 | 54 (32.0%) | -40.07% | 40.20% | -$108.90 | \$5,993.26 |
-| **Stop_1.0%_Cap_10x** | 1.0% | 10x | 169 | 54 (32.0%) | -40.07% | 40.20% | -$108.90 | \$5,993.26 |
+| Variant | Trades Taken | Gross Return % | Net Ret (10 bps) % | Net Ret (14 bps) % | Fee Drag (10 bps) | Fee Drag (14 bps) | Matched No-Stop Gross % |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Stop_0.3%_Cap_5x** | 111 | -15.63% | -41.80% | -49.85% | 37.00% | 51.80% | **+12.62%** |
+| **Stop_0.3%_Cap_10x** | 111 | -15.63% | -41.80% | -49.85% | 37.00% | 51.80% | **+12.62%** |
+| **Stop_0.5%_Cap_5x** | 119 | -27.78% | -43.13% | -48.32% | 23.80% | 33.32% | **+9.37%** |
+| **Stop_0.5%_Cap_10x** | 119 | -27.78% | -43.13% | -48.32% | 23.80% | 33.32% | **+9.37%** |
+| **Stop_1.0%_Cap_5x** | 169 | -24.03% | -35.87% | -40.07% | 16.90% | 23.66% | **+9.42%** |
+| **Stop_1.0%_Cap_10x** | 169 | -24.03% | -35.87% | -40.07% | 16.90% | 23.66% | **+9.42%** |
+| **No-Stop Baseline (1x)** | 257 | +18.16% | -7.54% | -17.17% | 25.70% | 35.33% | **+18.16%** |
 
-*Trade counts (111 to 169) were reduced from 257 because the 3% daily loss cap actively halted trading on high-drawdown days. Tighter stops (0.3% and 0.5%) suffered high stop-out rates (63.1% and 56.3%), losing ~50% of capital under taker commissions.*
+> [!IMPORTANT]
+> **Empirical Fact: Stops Reduce Gross Return.** Across all variants, the matched no-stop gross return is positive (+9.37% to +18.16%), whereas the stopped gross return is uniformly negative (-15.63% to -27.78%). Tight hard stops cut winning positions prematurely while turning normal market noise into locked-in capital losses.
+>
+> **Explanation of Skipped Trades:** Exactly 146 trades were skipped in 0.3% variants because the 3% daily loss cap triggered after consecutive intrabar stop-outs on volatile days (`2025-04-05`, `2025-04-12`, `2025-04-14`, `2025-05-12`).
 
 ---
 
 ## 10. Classical Turtle / Donchian Breakout Multi-Asset Diagnostics
 
-*(All numbers cited directly from `quant_research/results/turtle_diagnostics.json`)*
+> [!WARNING]
+> **Methodological Pre-Registration Limitation:** The amended Turtle criteria (pooled $\ge 150$-trade hurdle, ETH veto hold-out rule, and multi-asset search space) were committed in git commit `acb5979` shortly before the addendum execution (`2026-10-10 23:19:57+03:00`), rather than at the initial project pre-registration (`888867e`). Regardless, all 36 configurations failed both the base criteria and the amended pooled criteria.
+
+*(All numbers cited directly from `quant_research/results/turtle_diagnostics.json` and `quant_research/results/audit_results.json`)*
 
 ### Pooled Multi-Asset Performance (Daily Sharpe & Per-Trade DSR)
 
