@@ -101,11 +101,12 @@ def run_indicator_strategy(
             equity_curve.append(equity)
             continue
 
-        # 1. Accrue funding if holding a position
+        # 1. Accrue funding if holding a position (via the canonical direction-aware helper;
+        #    equal to the previous signed-size formula, now with one source of truth)
         if position_size != 0.0:
             f_rate = funding_arr[i]
             if f_rate != 0.0:
-                payment = -position_size * close * f_rate
+                payment = engine.funding_payment(position_direction, abs(position_size), close, f_rate)
                 equity += payment
                 funding_accrued += payment
 

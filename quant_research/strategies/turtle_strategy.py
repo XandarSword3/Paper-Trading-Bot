@@ -132,12 +132,12 @@ def run_turtle_simulation(
             equity_curve.append(equity)
             continue
 
-        # 1. Accrue funding if holding units
+        # 1. Accrue funding if holding units (direction-aware: PREREG section 3)
         if direction != 0 and len(units) > 0:
             f_rate = funding_arr[i]
             if f_rate != 0.0:
                 tot_pos = sum(u["quantity"] for u in units)
-                payment = -tot_pos * close * f_rate
+                payment = engine.funding_payment(direction, tot_pos, close, f_rate)
                 equity += payment
                 funding_accrued += payment
 

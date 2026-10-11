@@ -64,6 +64,44 @@ class QuantEngine:
     def __init__(self, cost_model: Optional[CostModel] = None):
         self.costs = cost_model or CostModel()
 
+    @staticmethod
+    def position_side(direction: Any) -> float:
+        """
+        Canonical direction sign: +1 for a long, -1 for a short, 0 for flat.
+        Accepts 'long'/'short' (case-insensitive, prefix match) and numeric
+        directions (1 / -1 / 0) so every simulator can share one convention.
+        """
+        if isinstance(direction, str):
+            d = direction.strip().lower()
+            if d.startswith("long"):
+                return 1.0
+            if d.startswith("short"):
+                return -1.0
+            return 0.0
+        val = float(direction)
+        if val > 0:
+            return 1.0
+        if val < 0:
+            return -1.0
+        return 0.0
+
+    def funding_payment(self, direction: Any, quantity: float, close_price: float, funding_rate: float) -> float:
+        """
+        Cash flow of ONE funding settlement, per PREREG section 3:
+        long positions PAY rate * notional, short positions RECEIVE it
+        (both reversed when the rate is negative).
+
+        Returns  -side * quantity * close_price * funding_rate
+        with side = +1 long / -1 short, and quantity supplied as a positive magnitude.
+
+        NOTE: this is the single source of truth for funding direction. The Turtle
+        simulators previously charged  -quantity * close * rate  regardless of
+        direction, which made SHORTS pay long-style funding; that defect is fixed
+        here and every caller below uses this method.
+        """
+        side = self.position_side(direction)
+        return -side * float(quantity) * float(close_price) * float(funding_rate)
+
     def apply_execution_costs(self, price: float, direction: str, is_entry: bool) -> float:
         """
         Applies slippage and commission penalty to execution prices.

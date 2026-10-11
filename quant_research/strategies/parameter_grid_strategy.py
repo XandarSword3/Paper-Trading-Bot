@@ -85,11 +85,13 @@ def run_fast_grid_simulation(
         if i < warmup or np.isnan(atr):
             continue
 
-        # 1. Accrue funding
+        # 1. Accrue funding (canonical direction-aware sign: longs pay, shorts receive).
+        # This fast simulator keeps its own local engine-free arithmetic, so it uses
+        # QuantEngine.position_side rather than a method call.
         if position_direction != 0 and apply_funding:
             f_rate = funding_arr[i]
             if f_rate != 0.0:
-                payment = -position_size * close * f_rate
+                payment = -QuantEngine.position_side(position_direction) * abs(position_size) * close * f_rate
                 equity += payment
                 funding_accrued += payment
 
@@ -322,7 +324,7 @@ def run_grid_simulation(
         if position_size != 0.0:
             f_rate = funding_arr[i]
             if f_rate != 0.0:
-                payment = -position_size * close * f_rate
+                payment = engine.funding_payment(position_direction, abs(position_size), close, f_rate)
                 equity += payment
                 funding_accrued += payment
 

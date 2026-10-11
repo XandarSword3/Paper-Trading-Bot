@@ -93,7 +93,8 @@ def run_v1_simulation(df: pd.DataFrame, funding_series: pd.Series, cost_model: C
         f_rate = get_funding_between(prev_ts, ts)
         funding_cashflow = 0.0
         if pos_size > 0 and f_rate != 0.0:
-            funding_cashflow = -pos_size * close * f_rate
+            # This strategy is long-only; the helper keeps the sign convention in one place.
+            funding_cashflow = engine.funding_payment("long", pos_size, close, f_rate)
             equity += funding_cashflow
 
         # Check exits
@@ -269,7 +270,8 @@ def run_trail_after_profit_simulation(df: pd.DataFrame, funding_series: pd.Serie
         if active_trade is not None:
             f_rate = get_funding_between(prev_ts, ts)
             if f_rate != 0.0:
-                payment = -active_trade["size"] * close * f_rate
+                # Long-only strategy: helper keeps the sign convention in one place.
+                payment = engine.funding_payment("long", active_trade["size"], close, f_rate)
                 equity += payment
                 active_trade["funding_accrued"] += payment
 

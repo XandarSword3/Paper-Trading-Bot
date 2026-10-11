@@ -140,12 +140,12 @@ def run_turtle_diagnostic_sim(
             equity_dates.append(timestamps[i])
             continue
 
-        # 1. Accrue funding
+        # 1. Accrue funding (direction-aware: PREREG section 3; longs pay, shorts receive)
         if direction != 0 and len(units) > 0:
             f_rate = funding_arr[i]
             if f_rate != 0.0:
                 tot_pos = sum(u["quantity"] for u in units)
-                payment = -tot_pos * close * f_rate
+                payment = engine.funding_payment(direction, tot_pos, close, f_rate)
                 equity += payment
                 funding_accrued += payment
 
@@ -178,6 +178,8 @@ def run_turtle_diagnostic_sim(
                 pyramid_distribution[max_units_in_cycle] += 1
 
                 cycle_unit_bps = []
+                cycle_net_dollars = 0.0
+                cycle_notional = 0.0
                 for u in units:
                     exec_entry, exec_exit, gross, cost, net, bps = engine.calculate_trade_pnl(
                         entry_price=u["entry_price"],
@@ -191,6 +193,8 @@ def run_turtle_diagnostic_sim(
                     gross_bps = (gross / notional * 10000.0) if notional > 0 else 0.0
                     fee_bps = (cost / notional * 10000.0) if notional > 0 else 0.0
                     cycle_unit_bps.append(bps)
+                    cycle_net_dollars += net
+                    cycle_notional += u["quantity"] * u["entry_price"]
 
                     completed_trades.append({
                         "entry_time": u["entry_time"],
@@ -198,6 +202,8 @@ def run_turtle_diagnostic_sim(
                         "direction": dir_str,
                         "gross_pnl": gross,
                         "fee_cost": cost,
+                        "funding_pnl": unit_funding,
+                        "notional": notional,
                         "net_pnl": net,
                         "gross_bps": gross_bps,
                         "fee_bps": fee_bps,
@@ -212,12 +218,19 @@ def run_turtle_diagnostic_sim(
                 # units, stamped with the cycle's EXIT bar (UTC day is the cluster
                 # label used for the day-clustered inference below).
                 cycle_exit_ts = ts if exit_reason == "Stop Loss" else next_ts
+                cycle_dollar = float(sum(u["quantity"] * (exit_price - u["entry_price"]) * (1.0 if dir_str == "long" else -1.0)
+                                        for u in units))
                 completed_cycles.append({
                     "cycle": len(completed_cycles) + 1,
                     "exit_time": cycle_exit_ts,
                     "exit_day": str(pd.Timestamp(cycle_exit_ts).date()),
                     "units_in_cycle": len(units),
                     "net_bps": float(np.mean(cycle_unit_bps)) if cycle_unit_bps else 0.0,
+                    # audit detail: dollar P&L / entry notional / direction of the cycle
+                    "net_pnl_usd": round(float(cycle_net_dollars), 6),
+                    "gross_pnl_usd": round(cycle_dollar, 6),
+                    "entry_notional_usd": round(cycle_notional, 6),
+                    "direction": dir_str,
                 })
 
                 units = []
@@ -283,6 +296,18 @@ def run_turtle_diagnostic_sim(
     # Convert equity curve to series
     eq_series = pd.Series(equity_curve, index=pd.DatetimeIndex(equity_dates))
     daily_sr = calculate_daily_sharpe(eq_series)
+
+    # Per-UTC-day PORTFOLIO return series: mean / SE / t-stat (audit detail)
+    daily_eq_sr = eq_series.resample("1D").last().ffill().dropna()
+    daily_ret = daily_eq_sr.pct_change().dropna()
+    if len(daily_ret) >= 2:
+        dr_mean_bps = float(daily_ret.mean()) * 10000.0
+        dr_se_bps = float(daily_ret.std(ddof=1)) / float(np.sqrt(len(daily_ret))) * 10000.0
+        dr_t = (dr_mean_bps / dr_se_bps) if dr_se_bps > 0 else 0.0
+        dr_days = int(len(daily_ret))
+    else:
+        dr_mean_bps = dr_se_bps = dr_t = 0.0
+        dr_days = 0
 
     # ---------------- CYCLE-LEVEL (CLUSTER) INFERENCE ----------------
     # The pyramid UNIT is not an independent observation: up to 4 units share one
@@ -353,6 +378,21 @@ def run_turtle_diagnostic_sim(
         t_iid = t_day = 0.0
         p_cycle_iid = p_day_clustered = 1.0
 
+    # Cycle composition and dollar-weighted cycle bps (audit detail)
+    cyc_units = np.array([c["units_in_cycle"] for c in completed_cycles], dtype=float)
+    cyc_dollars = np.array([c["net_pnl_usd"] for c in completed_cycles], dtype=float)
+    cyc_notional = np.array([c["entry_notional_usd"] for c in completed_cycles], dtype=float)
+    cyc_dirs = [c["direction"] for c in completed_cycles]
+    one_unit = cyc_units == 1.0
+    n_1unit = int(one_unit.sum())
+    cycle_1unit_share_pct = (100.0 * n_1unit / n_cycles) if n_cycles > 0 else 0.0
+    cycle_1unit_mean_bps = float(cycle_bps[one_unit].mean()) if n_1unit > 0 else 0.0
+    cycle_multiunit_mean_bps = float(cycle_bps[~one_unit].mean()) if (n_cycles - n_1unit) > 0 else 0.0
+    cycle_dollar_pnl_total = float(cyc_dollars.sum())
+    cycle_notional_total = float(cyc_notional.sum())
+    cycle_dollar_weighted_bps = (cycle_dollar_pnl_total / cycle_notional_total * 10000.0) if cycle_notional_total > 0 else 0.0
+    cycle_long_share_pct = (100.0 * sum(1 for d in cyc_dirs if d == "long") / n_cycles) if n_cycles > 0 else 0.0
+
     # Trade stats
     n_trades = len(completed_trades)
     if n_trades > 0:
@@ -360,6 +400,7 @@ def run_turtle_diagnostic_sim(
         gross_bps_mean = float(trades_df["gross_bps"].mean())
         net_bps_mean = float(trades_df["net_bps"].mean())
         fee_bps_mean = float(trades_df["fee_bps"].mean())
+        funding_bps_mean = float((trades_df["funding_pnl"] / trades_df["notional"] * 10000.0).mean())
         realized_risks = trades_df[trades_df["realized_risk_pct"] > 0]["realized_risk_pct"]
         avg_realized_risk_pct = float(realized_risks.mean()) if len(realized_risks) > 0 else 0.0
 
@@ -382,6 +423,7 @@ def run_turtle_diagnostic_sim(
         gross_bps_mean = 0.0
         net_bps_mean = 0.0
         fee_bps_mean = 0.0
+        funding_bps_mean = 0.0
         avg_realized_risk_pct = 0.0
         profit_factor = 0.0
         trade_sr = 0.0
@@ -407,7 +449,18 @@ def run_turtle_diagnostic_sim(
         "ambiguous_bars_count": ambiguous_bars_count,
         "gross_bps": round(gross_bps_mean, 2),
         "fee_bps": round(fee_bps_mean, 2),
+        "funding_bps": round(funding_bps_mean, 4),
         "net_bps": round(net_bps_mean, 2),
+        # ---- cycle composition / dollar-weighted detail (audit) ----
+        "cycle_1unit_share_pct": round(cycle_1unit_share_pct, 2),
+        "n_1unit_cycles": n_1unit,
+        "n_multiunit_cycles": n_cycles - n_1unit,
+        "cycle_1unit_mean_bps": round(cycle_1unit_mean_bps, 4),
+        "cycle_multiunit_mean_bps": round(cycle_multiunit_mean_bps, 4),
+        "cycle_dollar_pnl_total": round(cycle_dollar_pnl_total, 4),
+        "cycle_notional_total": round(cycle_notional_total, 4),
+        "cycle_dollar_weighted_bps": round(cycle_dollar_weighted_bps, 4),
+        "cycle_long_share_pct": round(cycle_long_share_pct, 2),
         "net_ci_95": [round(net_ci_low, 2), round(net_ci_high, 2)],
         # ---- cycle-level (cluster) inference ----
         "n_cycles": n_cycles,
@@ -434,12 +487,17 @@ def run_turtle_diagnostic_sim(
         "max_drawdown_pct": round(max_dd_pct, 2),
         "final_equity": round(equity, 2),
         "months_positive_pct": round(months_pos_pct, 2),
+        "daily_return_bps_mean": round(dr_mean_bps, 4),
+        "daily_return_bps_se": round(dr_se_bps, 4),
+        "daily_return_bps_t": round(dr_t, 4),
+        "n_days": dr_days,
     }
 
 
-def run_full_turtle_diagnostics():
+def run_full_turtle_diagnostics(out_path: str = "quant_research/results/turtle_diagnostics.json"):
     print("=" * 100)
     print("TURTLE FULL DIAGNOSTICS & RE-EVALUATION SUITE (36 CONFIGS)")
+    print(f"(funding sign: direction-aware per PREREG section 3; output -> {out_path})")
     print("=" * 100)
 
     assets = ["SOLUSDT", "BTCUSDT", "ETHUSDT"]
@@ -602,7 +660,6 @@ def run_full_turtle_diagnostics():
         "pooled_corrected": pooled_corrected,
         "diagnostics_individual": all_diagnostics,
     }
-    out_path = "quant_research/results/turtle_diagnostics.json"
     with open(out_path, "w") as f:
         json.dump(out_payload, f, indent=2)
     print(f"\nSaved full diagnostics to {out_path}")
