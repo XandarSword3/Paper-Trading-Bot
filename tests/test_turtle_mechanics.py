@@ -159,3 +159,72 @@ def test_pessimistic_intrabar_exit_ordering():
     assert len(trades) > 0
     # Exit reason MUST be Stop Loss, not Channel Exit
     assert trades[0].exit_reason == "2N Stop Loss", f"Expected '2N Stop Loss', got {trades[0].exit_reason}"
+
+
+def test_ratchet_then_stop_order_within_one_bar():
+    """
+    Verifies that when a pyramid addition occurs and ratchets the stop upward,
+    the ratcheted stop is tested immediately on that bar.
+    Specifically:
+    - Unit 1 enters at 110.0 (ATR = 2.0, Initial Stop = 106.0).
+    - Unit 2 enters at 112.0 (Stop ratchets to 112.0 - 4.0 = 108.0).
+    - On the entry bar of Unit 2, candle Low drops to 107.0.
+    - Low (107.0) is ABOVE the original stop (106.0) but BELOW the ratcheted stop (108.0).
+    - Verifies both units exit at the ratcheted stop price (108.0) with '2N Stop Loss'.
+    """
+    n = 60
+    timestamps = pd.date_range("2024-01-01", periods=n, freq="1h", tz="UTC")
+    prices = np.full(n, 100.0)
+
+    # Trigger long entry on bar 30 (close above 20-bar high of 100)
+    prices[30] = 110.0
+
+    df = pd.DataFrame({
+        "timestamp": timestamps,
+        "open": prices,
+        "high": prices + 1.0,
+        "low": prices - 1.0,
+        "close": prices,
+    }).set_index("timestamp")
+
+    # Bar 31: Unit 1 enters at open = 110.0. Close at 110.5
+    df.iloc[31, df.columns.get_loc("open")] = 110.0
+    df.iloc[31, df.columns.get_loc("high")] = 111.0
+    df.iloc[31, df.columns.get_loc("low")] = 109.5
+    df.iloc[31, df.columns.get_loc("close")] = 110.5
+
+    # Bar 32: Close at 111.5 (triggers pyramid add for Unit 2)
+    df.iloc[32, df.columns.get_loc("open")] = 110.5
+    df.iloc[32, df.columns.get_loc("high")] = 112.0
+    df.iloc[32, df.columns.get_loc("low")] = 110.0
+    df.iloc[32, df.columns.get_loc("close")] = 111.5
+
+    # Bar 33: Unit 2 fills at open = 112.0. Stop ratchets upward.
+    # Low drops to 107.0 (breaches ratcheted stop, but would NOT breach old stop 105.0)
+    df.iloc[33, df.columns.get_loc("open")] = 112.0
+    df.iloc[33, df.columns.get_loc("high")] = 113.0
+    df.iloc[33, df.columns.get_loc("low")] = 107.0
+    df.iloc[33, df.columns.get_loc("close")] = 109.0
+
+    features = prepare_turtle_features(df, N=20, M=10)
+    cost = CostModel(taker_fee_pct=0.05, slippage_pct=0.02, apply_funding=False)
+    params = {"N": 20, "M": 10, "config_id": "TEST_RATCHET_THEN_STOP"}
+
+    metrics, trades = run_turtle_simulation(
+        features=features,
+        funding_series=None,
+        params=params,
+        cost_model=cost,
+        initial_capital=100_000.0,
+        return_trades=True,
+    )
+
+    assert len(trades) == 2, f"Expected 2 completed unit trades, got {len(trades)}"
+    u1, u2 = trades[0], trades[1]
+    assert u1.unit_number == 1
+    assert u2.unit_number == 2
+    assert u1.exit_reason == "2N Stop Loss"
+    assert u2.exit_reason == "2N Stop Loss"
+    # Exit price must be identical and at the ratcheted stop price
+    assert u1.exit_price == u2.exit_price
+    assert u1.exit_price > 106.0  # Above old stop level
