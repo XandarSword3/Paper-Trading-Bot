@@ -974,6 +974,37 @@
       }
     }
   },
+  "convention_note": "`repo` / `indicators` are the repository's compute_indicators with the Bollinger bands as they were when this validation first ran (sample std, ddof=1); REPORT 17.4 records the fix to Binance's population std. pre_fix_indicators() applies that one historical difference explicitly so re-running this script reproduces the committed artifact after the fix rather than erasing the evidence of the defect.",
+  "last_completed_candle": {
+    "bucket_open_utc": "2025-05-01 12:24:00+00:00",
+    "bucket_close_utc": "2025-05-01 12:27:00+00:00",
+    "close": 151.4,
+    "indicators": {
+      "bb_up": 152.11574945125562,
+      "bb_mb": 151.703,
+      "bb_dn": 151.29025054874438,
+      "rsi6": 39.28424226808358,
+      "stoch_k": 22.61788864133969,
+      "stoch_d": 15.541742338381772,
+      "macd_dif": -0.06531590318107305,
+      "macd_dea": -0.013280431800532254,
+      "macd_hist": -0.0520354713805408
+    },
+    "bollinger_both_conventions": {
+      "ddof0_population": {
+        "bb_up": 152.10529840173214,
+        "bb_mb": 151.703,
+        "bb_dn": 151.30070159826786
+      },
+      "ddof1_sample": {
+        "bb_up": 152.11574945125562,
+        "bb_mb": 151.703,
+        "bb_dn": 151.29025054874438
+      }
+    },
+    "ground_truth_for_this_candle": null,
+    "note": "the 3m candle that closed immediately before the forming bucket; the screenshot shows the forming candle, so no published values exist to compare this bar against and it is reported rather than tolerance-tested"
+  },
   "convention_ranking_by_family_at_sub_1": {
     "boll": [
       {

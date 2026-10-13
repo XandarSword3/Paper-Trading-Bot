@@ -22,86 +22,67 @@
       "epoch_unit_in_source": [
         "ms"
       ],
-      "n_source_files": 22,
+      "n_source_files": 41,
       "date_range_utc": [
         "2025-04-03",
         "2025-05-13"
       ],
-      "n_rows": 126720,
-      "n_trades_total": 36492653,
+      "n_rows": 236160,
+      "n_trades_total": 57716410,
       "gap_buckets_filled": 0,
       "first_ts": "2025-04-03 00:00:00+00:00",
       "last_ts": "2025-05-13 23:59:45+00:00",
       "grid_step_seconds": [
-        15.0,
-        86415.0,
-        172815.0,
-        1382415.0
+        15.0
       ],
-      "n_gap_boundaries": 3,
-      "contiguous": false,
-      "gaps": [
-        {
-          "after_bucket": "2025-04-09 23:59:45+00:00",
-          "missing_seconds": 86400.0,
-          "missing_buckets": 5760
-        },
-        {
-          "after_bucket": "2025-04-15 23:59:45+00:00",
-          "missing_seconds": 1382400.0,
-          "missing_buckets": 92160
-        },
-        {
-          "after_bucket": "2025-05-04 23:59:45+00:00",
-          "missing_seconds": 172800.0,
-          "missing_buckets": 11520
-        }
-      ],
+      "n_gap_boundaries": 0,
+      "contiguous": true,
+      "gaps": [],
       "bars_path": "quant_research/data/processed/BTCUSDT_15s.parquet",
-      "bars_sha256": "b5f04778fbce7e3a1093a12de431a88ec666d6dd2112c69ffc719bb5ce687d1f",
+      "bars_sha256": "360be249e6242063fe5404807b4ae6736de7da84875a0fa8905d4290fbf212a5",
       "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
         "checked": true,
         "reference": "quant_research/data/processed/BTCUSDT_1m.parquet",
-        "n_minutes_compared": 31680,
+        "n_minutes_compared": 59040,
         "volume_attribution": {
-          "minutes_with_any_difference": 5310,
-          "adjacent_minute_pairs_that_exactly_offset": 2069,
+          "minutes_with_any_difference": 9428,
+          "adjacent_minute_pairs_that_exactly_offset": 3701,
           "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
         },
         "open": {
-          "n_exact": 29775,
-          "n_within_1e-9_rel": 29775,
-          "max_abs_diff": 4.0,
-          "max_rel_diff": 5.357542281053989e-05,
-          "mean_abs_diff": 0.01181818181821976
+          "n_exact": 55795,
+          "n_within_1e-9_rel": 55795,
+          "max_abs_diff": 7.19999999999709,
+          "max_rel_diff": 7.622790449487462e-05,
+          "mean_abs_diff": 0.009617208672125467
         },
         "high": {
-          "n_exact": 31615,
-          "n_within_1e-9_rel": 31615,
+          "n_exact": 58917,
+          "n_within_1e-9_rel": 58917,
           "max_abs_diff": 2.6999999999970896,
           "max_rel_diff": 3.479605644689851e-05,
-          "mean_abs_diff": 0.0006218434343456392
+          "mean_abs_diff": 0.00048102981030071564
         },
         "low": {
-          "n_exact": 31610,
-          "n_within_1e-9_rel": 31610,
+          "n_exact": 58919,
+          "n_within_1e-9_rel": 58919,
           "max_abs_diff": 2.8000000000029104,
           "max_rel_diff": 3.610983580345559e-05,
-          "mean_abs_diff": 0.0007228535353556483
+          "mean_abs_diff": 0.0005978997290000505
         },
         "close": {
-          "n_exact": 31680,
-          "n_within_1e-9_rel": 31680,
+          "n_exact": 59040,
+          "n_within_1e-9_rel": 59040,
           "max_abs_diff": 0.0,
           "max_rel_diff": 0.0,
           "mean_abs_diff": 0.0
         },
         "volume": {
-          "n_exact": 20967,
-          "n_within_1e-9_rel": 26370,
-          "max_abs_diff": 16.249000000000024,
+          "n_exact": 39373,
+          "n_within_1e-9_rel": 49612,
+          "max_abs_diff": 18.681999999999988,
           "max_rel_diff": 0.6134769230769231,
-          "mean_abs_diff": 0.0497119318181851
+          "mean_abs_diff": 0.04307533875339055
         }
       },
       "per_day": [
@@ -183,6 +164,17 @@
           "sha256": "428ac841f534169a7892a4c6a71a68e9c9e9b3f497264913d8d6fdeab23e99e5"
         },
         {
+          "file": "BTCUSDT-aggTrades-2025-04-10.zip",
+          "date_utc": "2025-04-10",
+          "n_trades": 2188105,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-10 00:00:00+00:00",
+          "last_ts": "2025-04-10 23:59:45+00:00",
+          "bytes": 27175206,
+          "sha256": "9f2240407581d30fb50f53b32af93250a14679c1dad4455254ac630c198a8ec1"
+        },
+        {
           "file": "BTCUSDT-aggTrades-2025-04-11.zip",
           "date_utc": "2025-04-11",
           "n_trades": 2045564,
@@ -238,6 +230,182 @@
           "sha256": "99054422bd1c432b96de4c4467b52d3a33f01bf39c95a91ae78e973640fdbf6d"
         },
         {
+          "file": "BTCUSDT-aggTrades-2025-04-16.zip",
+          "date_utc": "2025-04-16",
+          "n_trades": 1451623,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-16 00:00:00+00:00",
+          "last_ts": "2025-04-16 23:59:45+00:00",
+          "bytes": 18305395,
+          "sha256": "9e6bbd0005646cbb91085e56db582a5ab9670163aab9e707ebb6b98e53b272a6"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-17.zip",
+          "date_utc": "2025-04-17",
+          "n_trades": 971982,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-17 00:00:00+00:00",
+          "last_ts": "2025-04-17 23:59:45+00:00",
+          "bytes": 12350182,
+          "sha256": "9405251a5c8f8d8bd8deab926e2507d75d4ffdf26df4171c1656089835afc26c"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-18.zip",
+          "date_utc": "2025-04-18",
+          "n_trades": 431278,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-18 00:00:00+00:00",
+          "last_ts": "2025-04-18 23:59:45+00:00",
+          "bytes": 5583752,
+          "sha256": "98484ab0ad55f7c0f79be26812260d937cdab603211380687f2fb6f4fff7d2bc"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-19.zip",
+          "date_utc": "2025-04-19",
+          "n_trades": 509040,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-19 00:00:00+00:00",
+          "last_ts": "2025-04-19 23:59:45+00:00",
+          "bytes": 6591025,
+          "sha256": "ed0ae61e461906dd44689d4c87cb678805d4bd54ca2c2116033bfaeba8575824"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-20.zip",
+          "date_utc": "2025-04-20",
+          "n_trades": 568594,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-20 00:00:00+00:00",
+          "last_ts": "2025-04-20 23:59:45+00:00",
+          "bytes": 7309676,
+          "sha256": "6df3d4857edc2fe77184d13e02dde6e5e07784d0ac8b28c6f50ffc889af4124b"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-21.zip",
+          "date_utc": "2025-04-21",
+          "n_trades": 1589544,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-21 00:00:00+00:00",
+          "last_ts": "2025-04-21 23:59:45+00:00",
+          "bytes": 20055892,
+          "sha256": "1209c34c807ff5e3e4b751c314cb85c1b797afdc7b98335623740d7cc4b88aba"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-22.zip",
+          "date_utc": "2025-04-22",
+          "n_trades": 1933201,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-22 00:00:00+00:00",
+          "last_ts": "2025-04-22 23:59:45+00:00",
+          "bytes": 24369080,
+          "sha256": "8eef1c5f9205f6d2c8455c7a5ba0843986685d2143fa6d763f51a963f3290c76"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-23.zip",
+          "date_utc": "2025-04-23",
+          "n_trades": 1609592,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-23 00:00:00+00:00",
+          "last_ts": "2025-04-23 23:59:45+00:00",
+          "bytes": 20275382,
+          "sha256": "d06273416f93855a9271c5a86c270d00f45ac91feaf1f704948832b95d32a83a"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-24.zip",
+          "date_utc": "2025-04-24",
+          "n_trades": 1119238,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-24 00:00:00+00:00",
+          "last_ts": "2025-04-24 23:59:45+00:00",
+          "bytes": 14116703,
+          "sha256": "61047ebe7c4253bc91e94ba4d11521f118633d14e56da8b3cc04fce5d3178faf"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-25.zip",
+          "date_utc": "2025-04-25",
+          "n_trades": 1358812,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-25 00:00:00+00:00",
+          "last_ts": "2025-04-25 23:59:45+00:00",
+          "bytes": 17063671,
+          "sha256": "ac60aba559fe9e1a77d553a889102f8364664c1258a8d9522d7b6ed4ad59a65a"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-26.zip",
+          "date_utc": "2025-04-26",
+          "n_trades": 573556,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-26 00:00:00+00:00",
+          "last_ts": "2025-04-26 23:59:45+00:00",
+          "bytes": 7305734,
+          "sha256": "0a3637547c5dbf090bf8e93c362c15774c2dd31f6be04597beb6bc27ff5534e0"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-27.zip",
+          "date_utc": "2025-04-27",
+          "n_trades": 633752,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-27 00:00:00+00:00",
+          "last_ts": "2025-04-27 23:59:45+00:00",
+          "bytes": 8050828,
+          "sha256": "6d736d9e96c45032bcaaffcef10e45e150e52eb39726fd0d72f03e66b72f1828"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-28.zip",
+          "date_utc": "2025-04-28",
+          "n_trades": 1178119,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-28 00:00:00+00:00",
+          "last_ts": "2025-04-28 23:59:45+00:00",
+          "bytes": 14878694,
+          "sha256": "9d09128c943859721e604d089b6b85a2b0e6db53c125411860af19a8b47e5568"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-29.zip",
+          "date_utc": "2025-04-29",
+          "n_trades": 1012639,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-29 00:00:00+00:00",
+          "last_ts": "2025-04-29 23:59:45+00:00",
+          "bytes": 12732631,
+          "sha256": "87de48706dfca20a45f5aa8ccaedb9471af552f6b55d71186e2cd28d4e9527d7"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-30.zip",
+          "date_utc": "2025-04-30",
+          "n_trades": 1042860,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-30 00:00:00+00:00",
+          "last_ts": "2025-04-30 23:59:45+00:00",
+          "bytes": 13126764,
+          "sha256": "b5af06930e8ed47519d7b41bfd8346f79a656961f70eb9953756321e238bd957"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-01.zip",
+          "date_utc": "2025-05-01",
+          "n_trades": 1111824,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-01 00:00:00+00:00",
+          "last_ts": "2025-05-01 23:59:45+00:00",
+          "bytes": 14067207,
+          "sha256": "97df86e83f48b797dec2307879e624a0001ea1fc5174d7dbd82aa3ab14440ea0"
+        },
+        {
           "file": "BTCUSDT-aggTrades-2025-05-02.zip",
           "date_utc": "2025-05-02",
           "n_trades": 900331,
@@ -269,6 +437,28 @@
           "last_ts": "2025-05-04 23:59:45+00:00",
           "bytes": 8005938,
           "sha256": "f212bd35f761a7bd61a2b9bc920dcfae5900bbb6c7e3c34489ad90afe8b2e7cd"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-05.zip",
+          "date_utc": "2025-05-05",
+          "n_trades": 940050,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-05 00:00:00+00:00",
+          "last_ts": "2025-05-05 23:59:45+00:00",
+          "bytes": 11928102,
+          "sha256": "9a8b7853c28b2af54c17b34f4752e0b5c53f154eb2733a6ffeb66dbb49f52b97"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-06.zip",
+          "date_utc": "2025-05-06",
+          "n_trades": 999948,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-06 00:00:00+00:00",
+          "last_ts": "2025-05-06 23:59:45+00:00",
+          "bytes": 12611310,
+          "sha256": "8ff9ca6779b102076fe67cc00d3e4335c451103373f958a2787a16a7f94fafb0"
         },
         {
           "file": "BTCUSDT-aggTrades-2025-05-07.zip",
@@ -357,74 +547,67 @@
       "epoch_unit_in_source": [
         "ms"
       ],
-      "n_source_files": 7,
+      "n_source_files": 40,
       "date_range_utc": [
         "2025-04-04",
         "2025-05-13"
       ],
-      "n_rows": 40320,
-      "n_trades_total": 20128925,
+      "n_rows": 230400,
+      "n_trades_total": 69649721,
       "gap_buckets_filled": 0,
       "first_ts": "2025-04-04 00:00:00+00:00",
       "last_ts": "2025-05-13 23:59:45+00:00",
       "grid_step_seconds": [
-        15.0,
-        2851215.0
+        15.0
       ],
-      "n_gap_boundaries": 1,
-      "contiguous": false,
-      "gaps": [
-        {
-          "after_bucket": "2025-04-04 23:59:45+00:00",
-          "missing_seconds": 2851200.0,
-          "missing_buckets": 190080
-        }
-      ],
+      "n_gap_boundaries": 0,
+      "contiguous": true,
+      "gaps": [],
       "bars_path": "quant_research/data/processed/ETHUSDT_15s.parquet",
-      "bars_sha256": "29cf74b3d7d6cb13105946e47ad405d1ae3e1d85bfb7c97a87bd37c85116a79d",
+      "bars_sha256": "33f47ee181bd7619dee93401976360d43327cac7cdf01f142bbfd398ff4d9f2b",
       "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
         "checked": true,
         "reference": "quant_research/data/processed/ETHUSDT_1m.parquet",
-        "n_minutes_compared": 10080,
+        "n_minutes_compared": 57600,
         "volume_attribution": {
-          "minutes_with_any_difference": 2659,
-          "adjacent_minute_pairs_that_exactly_offset": 956,
+          "minutes_with_any_difference": 10693,
+          "adjacent_minute_pairs_that_exactly_offset": 4094,
           "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
         },
         "open": {
-          "n_exact": 9012,
-          "n_within_1e-9_rel": 9012,
+          "n_exact": 53586,
+          "n_within_1e-9_rel": 53586,
           "max_abs_diff": 1.3399999999996908,
           "max_rel_diff": 0.0005334692220106578,
-          "mean_abs_diff": 0.0017529761904766488
+          "mean_abs_diff": 0.0010456597222223093
         },
         "high": {
-          "n_exact": 10053,
-          "n_within_1e-9_rel": 10053,
-          "max_abs_diff": 0.07000000000016371,
-          "max_rel_diff": 2.7878894084163876e-05,
-          "mean_abs_diff": 6.349206349205086e-05
+          "n_exact": 57463,
+          "n_within_1e-9_rel": 57463,
+          "max_abs_diff": 0.08999999999991815,
+          "max_rel_diff": 5.9584102961275726e-05,
+          "mean_abs_diff": 4.218749999998926e-05
         },
         "low": {
-          "n_exact": 10045,
-          "n_within_1e-9_rel": 10045,
-          "max_abs_diff": 0.07999999999992724,
-          "max_rel_diff": 3.3276209174220606e-05,
-          "mean_abs_diff": 5.1587301587299783e-05
+          "n_exact": 57454,
+          "n_within_1e-9_rel": 57454,
+          "max_abs_diff": 0.10000000000013642,
+          "max_rel_diff": 6.441846233139203e-05,
+          "mean_abs_diff": 3.975694444444776e-05
         },
         "close": {
-          "n_exact": 10080,
-          "n_within_1e-9_rel": 10080,
+          "n_exact": 57600,
+          "n_within_1e-9_rel": 57600,
           "max_abs_diff": 0.0,
           "max_rel_diff": 0.0,
           "mean_abs_diff": 0.0
         },
         "volume": {
-          "n_exact": 5956,
-          "n_within_1e-9_rel": 7421,
-          "max_abs_diff": 754.1790000000001,
-          "max_rel_diff": 0.14618952489097398,
-          "mean_abs_diff": 1.4398866071429797
+          "n_exact": 37445,
+          "n_within_1e-9_rel": 46907,
+          "max_abs_diff": 783.281,
+          "max_rel_diff": 0.4564026170898328,
+          "mean_abs_diff": 1.1559935069445417
         }
       },
       "per_day": [
@@ -438,6 +621,369 @@
           "last_ts": "2025-04-04 23:59:45+00:00",
           "bytes": 24930362,
           "sha256": "d5ac558c9f2ffa5ed56926dabb3078166ca499ccb937989f894cbffbb9021d30"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-05.zip",
+          "date_utc": "2025-04-05",
+          "n_trades": 632135,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-05 00:00:00+00:00",
+          "last_ts": "2025-04-05 23:59:45+00:00",
+          "bytes": 8778940,
+          "sha256": "4202df5fffc55f5d16da80cffd13d7ca6684edce2128bd433823a047acace9ca"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-06.zip",
+          "date_utc": "2025-04-06",
+          "n_trades": 2248788,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-06 00:00:00+00:00",
+          "last_ts": "2025-04-06 23:59:45+00:00",
+          "bytes": 30756762,
+          "sha256": "869e505f1d4b1c4e1ea1849a7a433d337ffe8f6711274c86257f2bcbe9f0fec2"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-07.zip",
+          "date_utc": "2025-04-07",
+          "n_trades": 4566421,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-07 00:00:00+00:00",
+          "last_ts": "2025-04-07 23:59:45+00:00",
+          "bytes": 62046818,
+          "sha256": "3b83f995753bea232cfc177deca8cbafad7d96f091800fd573f65cfa1fc338b0"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-08.zip",
+          "date_utc": "2025-04-08",
+          "n_trades": 2364945,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-08 00:00:00+00:00",
+          "last_ts": "2025-04-08 23:59:45+00:00",
+          "bytes": 32147346,
+          "sha256": "70c4435ac94d9e16262485f03b27ed8606b925f2fdcd92522b26129ac820a7ec"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-09.zip",
+          "date_utc": "2025-04-09",
+          "n_trades": 3769969,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-09 00:00:00+00:00",
+          "last_ts": "2025-04-09 23:59:45+00:00",
+          "bytes": 51347055,
+          "sha256": "4b99158006782f9d9ac1a9aa589880b2f1fe7bacc4480490c0c5294e390e019e"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-10.zip",
+          "date_utc": "2025-04-10",
+          "n_trades": 2438395,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-10 00:00:00+00:00",
+          "last_ts": "2025-04-10 23:59:45+00:00",
+          "bytes": 33233921,
+          "sha256": "eb5fe4980424e3eaac3b33c6f37bd0c306ad583478a7e96244f499897d1de6c0"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-11.zip",
+          "date_utc": "2025-04-11",
+          "n_trades": 1771847,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-11 00:00:00+00:00",
+          "last_ts": "2025-04-11 23:59:45+00:00",
+          "bytes": 24018397,
+          "sha256": "0f3a732236c6df0ebcb0d2eef67556c8354936ce6ef83f2d0a95f3798204209f"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-12.zip",
+          "date_utc": "2025-04-12",
+          "n_trades": 1358846,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-12 00:00:00+00:00",
+          "last_ts": "2025-04-12 23:59:45+00:00",
+          "bytes": 18761443,
+          "sha256": "69da0b422104885e67c06668183e905bc4780731ed5445610de37f1ad83f2147"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-13.zip",
+          "date_utc": "2025-04-13",
+          "n_trades": 1730850,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-13 00:00:00+00:00",
+          "last_ts": "2025-04-13 23:59:45+00:00",
+          "bytes": 23647570,
+          "sha256": "498b89b0d5e31f3cb0bf8d78f0e596389864d769b3371ad992481af5474a5be2"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-14.zip",
+          "date_utc": "2025-04-14",
+          "n_trades": 1890388,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-14 00:00:00+00:00",
+          "last_ts": "2025-04-14 23:59:45+00:00",
+          "bytes": 25873841,
+          "sha256": "5b3a7dea82e14650e77113e59d748b20b685af91bdf1d9a1f34ef2648c2f0e4a"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-15.zip",
+          "date_utc": "2025-04-15",
+          "n_trades": 1398467,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-15 00:00:00+00:00",
+          "last_ts": "2025-04-15 23:59:45+00:00",
+          "bytes": 19249313,
+          "sha256": "11593a08b7f67a97bda606c03edcd84ff5c6a60f2382772eadbc5be5c0f782d2"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-16.zip",
+          "date_utc": "2025-04-16",
+          "n_trades": 1690083,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-16 00:00:00+00:00",
+          "last_ts": "2025-04-16 23:59:45+00:00",
+          "bytes": 23233801,
+          "sha256": "8e03e9e3f9d0b7febb579b3c3101862088fdce7f462328d5bb4faebe65b1714f"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-17.zip",
+          "date_utc": "2025-04-17",
+          "n_trades": 1130131,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-17 00:00:00+00:00",
+          "last_ts": "2025-04-17 23:59:45+00:00",
+          "bytes": 15691892,
+          "sha256": "239405163851c7ff002fa94b4988eabd721121895a46e27b4062575b9aecd75c"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-18.zip",
+          "date_utc": "2025-04-18",
+          "n_trades": 576792,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-18 00:00:00+00:00",
+          "last_ts": "2025-04-18 23:59:45+00:00",
+          "bytes": 8131367,
+          "sha256": "51b1e4acdf8b059845f30d27438926ef986138d04b8cbbba9ff2f57881de1b06"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-19.zip",
+          "date_utc": "2025-04-19",
+          "n_trades": 578220,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-19 00:00:00+00:00",
+          "last_ts": "2025-04-19 23:59:45+00:00",
+          "bytes": 8202523,
+          "sha256": "46056485097222ad93391ba36867cb6037702da37642b6f9f878885040755503"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-20.zip",
+          "date_utc": "2025-04-20",
+          "n_trades": 678372,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-20 00:00:00+00:00",
+          "last_ts": "2025-04-20 23:59:45+00:00",
+          "bytes": 9570728,
+          "sha256": "75e52920aa717189998fbc46c6a26644675025bdf203bd1c24e2882c2aab9ad4"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-21.zip",
+          "date_utc": "2025-04-21",
+          "n_trades": 1434314,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-21 00:00:00+00:00",
+          "last_ts": "2025-04-21 23:59:45+00:00",
+          "bytes": 20006094,
+          "sha256": "888c75a396229f641aff8ad37504e7a0c945dfba3d637f1a6485ce8d71494368"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-22.zip",
+          "date_utc": "2025-04-22",
+          "n_trades": 2176787,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-22 00:00:00+00:00",
+          "last_ts": "2025-04-22 23:59:45+00:00",
+          "bytes": 29922794,
+          "sha256": "ae957e12fcf494dbb1a50ca8ccd1755a0c3c84f31f35a0ef5f7568fb3d0ef3ff"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-23.zip",
+          "date_utc": "2025-04-23",
+          "n_trades": 2109399,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-23 00:00:00+00:00",
+          "last_ts": "2025-04-23 23:59:45+00:00",
+          "bytes": 28841216,
+          "sha256": "26ab1cadbaaf40ce439a5fa8824046fd383bf3e421cbe024a373289eafc8366f"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-24.zip",
+          "date_utc": "2025-04-24",
+          "n_trades": 1287644,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-24 00:00:00+00:00",
+          "last_ts": "2025-04-24 23:59:45+00:00",
+          "bytes": 17892735,
+          "sha256": "0a6861889c50e5ad925d8762c9778fd544eeebf232a3c76c51420c47748c09cd"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-25.zip",
+          "date_utc": "2025-04-25",
+          "n_trades": 1426506,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-25 00:00:00+00:00",
+          "last_ts": "2025-04-25 23:59:45+00:00",
+          "bytes": 19734749,
+          "sha256": "9d783ac8cc1b9aee127e57f6db2b2afa504a7d8eb3636413ec47afe49a5a2cf1"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-26.zip",
+          "date_utc": "2025-04-26",
+          "n_trades": 951626,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-26 00:00:00+00:00",
+          "last_ts": "2025-04-26 23:59:45+00:00",
+          "bytes": 13277513,
+          "sha256": "0c840350fb30313e951f49832230efbf178aa6472e6e09cbf4cf29eac9e1d7e4"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-27.zip",
+          "date_utc": "2025-04-27",
+          "n_trades": 935751,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-27 00:00:00+00:00",
+          "last_ts": "2025-04-27 23:59:45+00:00",
+          "bytes": 12992711,
+          "sha256": "ed5398154b5dfbf923b17ab525618f93b06b4ba8397f1352414e3cd4a4153ea4"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-28.zip",
+          "date_utc": "2025-04-28",
+          "n_trades": 1414409,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-28 00:00:00+00:00",
+          "last_ts": "2025-04-28 23:59:45+00:00",
+          "bytes": 19609311,
+          "sha256": "10d3688054a95581fd282cf95b611c060915cadf4d0d7328b9713613394a9ff3"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-29.zip",
+          "date_utc": "2025-04-29",
+          "n_trades": 1184373,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-29 00:00:00+00:00",
+          "last_ts": "2025-04-29 23:59:45+00:00",
+          "bytes": 16577164,
+          "sha256": "500504e9ef2c087462edb1006758d708f7b5fe55ea43b3ba3a7b1398727f5040"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-30.zip",
+          "date_utc": "2025-04-30",
+          "n_trades": 1228584,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-30 00:00:00+00:00",
+          "last_ts": "2025-04-30 23:59:45+00:00",
+          "bytes": 17113660,
+          "sha256": "3b9eb72711d07371cd6b1972dd0082b4d51d861d8a57579e2a4055afcdbcdde6"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-01.zip",
+          "date_utc": "2025-05-01",
+          "n_trades": 1146313,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-01 00:00:00+00:00",
+          "last_ts": "2025-05-01 23:59:45+00:00",
+          "bytes": 15944877,
+          "sha256": "c3007b5dd276eaa8d053fd61d92c8e28782bc04ed8782bc9d088060c6df6ad25"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-02.zip",
+          "date_utc": "2025-05-02",
+          "n_trades": 948562,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-02 00:00:00+00:00",
+          "last_ts": "2025-05-02 23:59:45+00:00",
+          "bytes": 13252948,
+          "sha256": "1dc135ba48b0568ce96a454ee91c839e4a9aac711daf35552f356af8ee9cc326"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-03.zip",
+          "date_utc": "2025-05-03",
+          "n_trades": 606641,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-03 00:00:00+00:00",
+          "last_ts": "2025-05-03 23:59:45+00:00",
+          "bytes": 8564289,
+          "sha256": "9540a58420f308652773be1213e02ebc2b9bd67e11b069bd8768b013a728ebdf"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-04.zip",
+          "date_utc": "2025-05-04",
+          "n_trades": 703361,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-04 00:00:00+00:00",
+          "last_ts": "2025-05-04 23:59:45+00:00",
+          "bytes": 9878820,
+          "sha256": "42aea341b2aa014eb042a307fc988fcf9a799724b02329c6aaa1c1210e86726a"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-05.zip",
+          "date_utc": "2025-05-05",
+          "n_trades": 944831,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-05 00:00:00+00:00",
+          "last_ts": "2025-05-05 23:59:45+00:00",
+          "bytes": 13249308,
+          "sha256": "4b73881706ebdff52b0f3472802339b8f840fec604ad947fb8fdc0d3383d3ce6"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-06.zip",
+          "date_utc": "2025-05-06",
+          "n_trades": 1083966,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-06 00:00:00+00:00",
+          "last_ts": "2025-05-06 23:59:45+00:00",
+          "bytes": 15171948,
+          "sha256": "6d322a05890db9e28e81bb438cb26c8a83da0df49c88b07f14e1146d94b0eb68"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-07.zip",
+          "date_utc": "2025-05-07",
+          "n_trades": 1113080,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-07 00:00:00+00:00",
+          "last_ts": "2025-05-07 23:59:45+00:00",
+          "bytes": 15578452,
+          "sha256": "2fb3a0c7c1bfdaaebabbccfe090d8d10ef2794bb31d9308cf296bef1cb8940b1"
         },
         {
           "file": "ETHUSDT-aggTrades-2025-05-08.zip",
@@ -1093,30 +1639,30 @@
               "metric": "bb_pctb",
               "unit": "",
               "n": 255,
-              "real_mean": 0.5432979768693924,
-              "real_median": 0.5723366415191277,
-              "real_mean_se_boot": 0.02506949564274151,
+              "real_mean": 0.5432979768960243,
+              "real_median": 0.57233664195266,
+              "real_mean_se_boot": 0.02506949564038872,
               "real_mean_ci95": [
-                0.49416176540961904,
-                0.5924341883291657
+                0.49416176544086243,
+                0.5924341883511862
               ],
-              "null_mean_of_set_means": 0.506810821614595,
-              "null_sd_of_set_means": 0.020361595494591288,
+              "null_mean_of_set_means": 0.5070006275472136,
+              "null_sd_of_set_means": 0.02080209440392493,
               "null_set_mean_ci95": [
-                0.4669020944451961,
-                0.546719548783994
+                0.46622852251552077,
+                0.5477727325789065
               ],
-              "diff_real_minus_null": 0.0364871552547974,
-              "diff_se": 0.03229665900471434,
+              "diff_real_minus_null": 0.03629734934881068,
+              "diff_se": 0.0325761683328975,
               "diff_ci95": [
-                -0.026814296394442702,
-                0.0997886069040375
+                -0.027551940583668416,
+                0.10014663928128978
               ],
-              "z_vs_null_set_means": 1.791959537968898,
-              "p_two_sided_parametric": 0.07313944767223135,
-              "p_two_sided_empirical": 0.07692307692307693,
-              "null_sets_ge_real_abs": 76,
-              "p_holm": 0.6923076923076923,
+              "z_vs_null_set_means": 1.7448891752919897,
+              "p_two_sided_parametric": 0.08100416196837257,
+              "p_two_sided_empirical": 0.08191808191808192,
+              "null_sets_ge_real_abs": 81,
+              "p_holm": 0.7372627372627373,
               "significant_holm_05": false
             },
             {
@@ -1130,52 +1676,52 @@
                 49.80910151724145,
                 55.43276299490427
               ],
-              "null_mean_of_set_means": 50.37924300006922,
-              "null_sd_of_set_means": 1.1372627265892743,
+              "null_mean_of_set_means": 50.38143526496561,
+              "null_sd_of_set_means": 1.1546237125256666,
               "null_set_mean_ci95": [
-                48.150208055954245,
-                52.6082779441842
+                48.1183727884153,
+                52.64449774151592
               ],
-              "diff_real_minus_null": 2.2416892560036388,
-              "diff_se": 1.8307007524962264,
+              "diff_real_minus_null": 2.239496991107252,
+              "diff_se": 1.8415359495343915,
               "diff_ci95": [
-                -1.346484218888965,
-                5.8298627308962425
+                -1.3699134699801552,
+                5.848907452194659
               ],
-              "z_vs_null_set_means": 1.9711269907935982,
-              "p_two_sided_parametric": 0.048709352177159326,
-              "p_two_sided_empirical": 0.052947052947052944,
-              "null_sets_ge_real_abs": 52,
-              "p_holm": 0.5294705294705294,
+              "z_vs_null_set_means": 1.9395903330345552,
+              "p_two_sided_parametric": 0.05242949663368757,
+              "p_two_sided_empirical": 0.04895104895104895,
+              "null_sets_ge_real_abs": 48,
+              "p_holm": 0.48951048951048953,
               "significant_holm_05": false
             },
             {
               "metric": "stoch_k",
               "unit": "",
               "n": 255,
-              "real_mean": 52.436927720031065,
+              "real_mean": 52.43692772003094,
               "real_median": 54.24739354311169,
-              "real_mean_se_boot": 2.202063430398648,
+              "real_mean_se_boot": 2.2020634303986455,
               "real_mean_ci95": [
-                48.12088339644971,
-                56.75297204361242
+                48.12088339644959,
+                56.75297204361228
               ],
-              "null_mean_of_set_means": 50.11562938941707,
-              "null_sd_of_set_means": 1.97114577216274,
+              "null_mean_of_set_means": 50.149682695363964,
+              "null_sd_of_set_means": 2.002075619396641,
               "null_set_mean_ci95": [
-                46.2521836759781,
-                53.979075102856044
+                46.22561448134655,
+                54.07375090938138
               ],
-              "diff_real_minus_null": 2.321298330613992,
-              "diff_se": 2.9554185839934934,
+              "diff_real_minus_null": 2.287245024666973,
+              "diff_se": 2.97613678067415,
               "diff_ci95": [
-                -3.4713220940132556,
-                8.11391875524124
+                -3.5459830654543616,
+                8.120473114788307
               ],
-              "z_vs_null_set_means": 1.1776390987395442,
-              "p_two_sided_parametric": 0.2389405155824451,
-              "p_two_sided_empirical": 0.25574425574425574,
-              "null_sets_ge_real_abs": 255,
+              "z_vs_null_set_means": 1.142436880259434,
+              "p_two_sided_parametric": 0.25327246873407394,
+              "p_two_sided_empirical": 0.2627372627372627,
+              "null_sets_ge_real_abs": 262,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1183,29 +1729,29 @@
               "metric": "stoch_d",
               "unit": "",
               "n": 255,
-              "real_mean": 52.09710765179611,
+              "real_mean": 52.09710765179596,
               "real_median": 52.060877987823204,
-              "real_mean_se_boot": 2.0676509641716687,
+              "real_mean_se_boot": 2.067650964171668,
               "real_mean_ci95": [
-                48.04451176201964,
-                56.14970354157258
+                48.04451176201949,
+                56.14970354157243
               ],
-              "null_mean_of_set_means": 50.10443094043177,
-              "null_sd_of_set_means": 1.8753596096752256,
+              "null_mean_of_set_means": 50.14380938986674,
+              "null_sd_of_set_means": 1.884334248645473,
               "null_set_mean_ci95": [
-                46.42872610546833,
-                53.78013577539521
+                46.45051426252161,
+                53.83710451721187
               ],
-              "diff_real_minus_null": 1.9926767113643393,
-              "diff_se": 2.791443027403792,
+              "diff_real_minus_null": 1.9532982619292198,
+              "diff_se": 2.7974803073941965,
               "diff_ci95": [
-                -3.4785516223470925,
-                7.463905045075771
+                -3.5297631405634053,
+                7.436359664421845
               ],
-              "z_vs_null_set_means": 1.0625571229559703,
-              "p_two_sided_parametric": 0.28798284017152076,
-              "p_two_sided_empirical": 0.2987012987012987,
-              "null_sets_ge_real_abs": 298,
+              "z_vs_null_set_means": 1.036598609473516,
+              "p_two_sided_parametric": 0.29992296162030474,
+              "p_two_sided_empirical": 0.3066933066933067,
+              "null_sets_ge_real_abs": 306,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1220,22 +1766,22 @@
                 -0.18618956650576424,
                 0.4868926078447908
               ],
-              "null_mean_of_set_means": 0.005363002260535505,
-              "null_sd_of_set_means": 0.13345657238133285,
+              "null_mean_of_set_means": 0.005920444915840326,
+              "null_sd_of_set_means": 0.1346095375857595,
               "null_set_mean_ci95": [
-                -0.2562118796068769,
-                0.2669378841279479
+                -0.2579142487522483,
+                0.2697551385839289
               ],
-              "diff_real_minus_null": 0.14498851840897778,
-              "diff_se": 0.21746985732158025,
+              "diff_real_minus_null": 0.14443107575367298,
+              "diff_se": 0.218179306398995,
               "diff_ci95": [
-                -0.2812524019413195,
-                0.571229438759275
+                -0.2832003647883572,
+                0.5720625162957031
               ],
-              "z_vs_null_set_means": 1.086409727313347,
-              "p_two_sided_parametric": 0.2772977598800255,
-              "p_two_sided_empirical": 0.2837162837162837,
-              "null_sets_ge_real_abs": 283,
+              "z_vs_null_set_means": 1.0729631669795774,
+              "p_two_sided_parametric": 0.28328764252327376,
+              "p_two_sided_empirical": 0.26973026973026976,
+              "null_sets_ge_real_abs": 269,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1250,22 +1796,22 @@
                 -0.839264521844417,
                 3.592548655611512
               ],
-              "null_mean_of_set_means": 0.25584473269264607,
-              "null_sd_of_set_means": 0.8082079066305659,
+              "null_mean_of_set_means": 0.2674434710754281,
+              "null_sd_of_set_means": 0.8235657310528142,
               "null_set_mean_ci95": [
-                -1.328242764303263,
-                1.8399322296885552
+                -1.3467453617880876,
+                1.8816323039389438
               ],
-              "diff_real_minus_null": 1.1207973341909014,
-              "diff_se": 1.3897396531909434,
+              "diff_real_minus_null": 1.1091985958081194,
+              "diff_se": 1.398726848486036,
               "diff_ci95": [
-                -1.6030923860633475,
-                3.84468705444515
+                -1.632306027224511,
+                3.8507032188407497
               ],
-              "z_vs_null_set_means": 1.3867685839198565,
-              "p_two_sided_parametric": 0.16551233966546963,
-              "p_two_sided_empirical": 0.15984015984015984,
-              "null_sets_ge_real_abs": 159,
+              "z_vs_null_set_means": 1.346824611546383,
+              "p_two_sided_parametric": 0.17803672617785882,
+              "p_two_sided_empirical": 0.18181818181818182,
+              "null_sets_ge_real_abs": 181,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1280,22 +1826,22 @@
                 -1.4163008521591716,
                 5.226630334428556
               ],
-              "null_mean_of_set_means": 0.6003085053275181,
-              "null_sd_of_set_means": 1.3151668087091413,
+              "null_mean_of_set_means": 0.6306628277673817,
+              "null_sd_of_set_means": 1.3301864899510834,
               "null_set_mean_ci95": [
-                -1.9774184397423986,
-                3.178035450397435
+                -1.9765026925367417,
+                3.2378283480715053
               ],
-              "diff_real_minus_null": 1.304856235807174,
-              "diff_se": 2.1450917582435665,
+              "diff_real_minus_null": 1.2745019133673106,
+              "diff_se": 2.1543330788442794,
               "diff_ci95": [
-                -2.899523610350216,
-                5.509236081964564
+                -2.9479909211674773,
+                5.496994747902098
               ],
-              "z_vs_null_set_means": 0.9921602546280139,
-              "p_two_sided_parametric": 0.3211193573554407,
-              "p_two_sided_empirical": 0.32667332667332666,
-              "null_sets_ge_real_abs": 326,
+              "z_vs_null_set_means": 0.9581377671443494,
+              "p_two_sided_parametric": 0.33799329338358675,
+              "p_two_sided_empirical": 0.34465534465534464,
+              "null_sets_ge_real_abs": 344,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1310,22 +1856,22 @@
                 -1.8585471625847942,
                 6.233391021510275
               ],
-              "null_mean_of_set_means": 0.9291516847525834,
-              "null_sd_of_set_means": 1.6761293998890425,
+              "null_mean_of_set_means": 0.981679574696953,
+              "null_sd_of_set_means": 1.686841608977648,
               "null_set_mean_ci95": [
-                -2.3560619390299395,
-                4.214365308535107
+                -2.324529978899237,
+                4.287889128293143
               ],
-              "diff_real_minus_null": 1.2582702447101568,
-              "diff_se": 2.6590637770992918,
+              "diff_real_minus_null": 1.2057423547657873,
+              "diff_se": 2.665829142928603,
               "diff_ci95": [
-                -3.953494758404455,
-                6.470035247824768
+                -4.019282765374275,
+                6.430767474905849
               ],
-              "z_vs_null_set_means": 0.7506999428525343,
-              "p_two_sided_parametric": 0.4528332574321876,
-              "p_two_sided_empirical": 0.44455544455544455,
-              "null_sets_ge_real_abs": 444,
+              "z_vs_null_set_means": 0.7147928699106239,
+              "p_two_sided_parametric": 0.47473704161227137,
+              "p_two_sided_empirical": 0.47952047952047955,
+              "null_sets_ge_real_abs": 479,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1340,22 +1886,22 @@
                 -3.0717506701847963,
                 9.794830816088941
               ],
-              "null_mean_of_set_means": 2.2031572688149748,
-              "null_sd_of_set_means": 2.682743896692086,
+              "null_mean_of_set_means": 2.3324639140647956,
+              "null_sd_of_set_means": 2.6838078753328993,
               "null_set_mean_ci95": [
-                -3.055020768701513,
-                7.4613353063314625
+                -2.9277995215876866,
+                7.592727349717277
               ],
-              "diff_real_minus_null": 1.1583828041370978,
-              "diff_se": 4.239168586781021,
+              "diff_real_minus_null": 1.029076158887277,
+              "diff_se": 4.23984200219905,
               "diff_ci95": [
-                -7.150387625953703,
-                9.467153234227899
+                -7.281014165422862,
+                9.339166483197415
               ],
-              "z_vs_null_set_means": 0.43179030453313977,
-              "p_two_sided_parametric": 0.6658938268242363,
-              "p_two_sided_empirical": 0.6753246753246753,
-              "null_sets_ge_real_abs": 675,
+              "z_vs_null_set_means": 0.38343883269201245,
+              "p_two_sided_parametric": 0.7013944151237845,
+              "p_two_sided_empirical": 0.7022977022977023,
+              "null_sets_ge_real_abs": 702,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -1370,20 +1916,20 @@
                 27.72842891144961,
                 30.39905474708905
               ],
-              "null_mean_of_set_means": 25.829667174923866,
-              "null_sd_of_set_means": 0.6566184431221431,
+              "null_mean_of_set_means": 25.86421253060043,
+              "null_sd_of_set_means": 0.665073214365073,
               "null_set_mean_ci95": [
-                24.542695026404466,
-                27.116639323443266
+                24.560669030444885,
+                27.167756030755974
               ],
-              "diff_real_minus_null": 3.234074654345463,
-              "diff_se": 0.9461992818078027,
+              "diff_real_minus_null": 3.1995292986688995,
+              "diff_se": 0.952085963299189,
               "diff_ci95": [
-                1.3795240620021696,
-                5.088625246688756
+                1.3334408106024889,
+                5.06561778673531
               ],
-              "z_vs_null_set_means": 4.925348485442809,
-              "p_two_sided_parametric": 8.421014037196528e-07,
+              "z_vs_null_set_means": 4.8107926008167405,
+              "p_two_sided_parametric": 1.503329488672378e-06,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -1400,20 +1946,20 @@
                 0.27440596182933247,
                 0.5020646264059616
               ],
-              "null_mean_of_set_means": 0.5794588235294117,
-              "null_sd_of_set_means": 0.048901639204385484,
+              "null_mean_of_set_means": 0.620486274509804,
+              "null_sd_of_set_means": 0.04741824053343735,
               "null_set_mean_ci95": [
-                0.48361161068881614,
-                0.6753060363700072
+                0.5275465230642667,
+                0.7134260259553412
               ],
-              "diff_real_minus_null": -0.19122352941176463,
-              "diff_se": 0.07592242195276278,
+              "diff_real_minus_null": -0.2322509803921569,
+              "diff_se": 0.07497555183914544,
               "diff_ci95": [
-                -0.34003147643917964,
-                -0.04241558238434959
+                -0.379203061996882,
+                -0.08529889878743185
               ],
-              "z_vs_null_set_means": -3.9103705422335975,
-              "p_two_sided_parametric": 9.215464130418738e-05,
+              "z_vs_null_set_means": -4.897924886698048,
+              "p_two_sided_parametric": 9.685404220860505e-07,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -1430,20 +1976,20 @@
                 276.90921733703146,
                 528.0768380676512
               ],
-              "null_mean_of_set_means": 555.147205923076,
-              "null_sd_of_set_means": 46.19577213203856,
+              "null_mean_of_set_means": 570.399537326779,
+              "null_sd_of_set_means": 45.94357808819653,
               "null_set_mean_ci95": [
-                464.60349254428036,
-                645.6909193018715
+                480.35012427391376,
+                660.4489503796442
               ],
-              "diff_real_minus_null": -152.6541782207346,
-              "diff_se": 78.99016675349667,
+              "diff_real_minus_null": -167.9065096244376,
+              "diff_se": 78.8429416524789,
               "diff_ci95": [
-                -307.47490505758805,
-                2.1665486161188596
+                -322.4386752632962,
+                -13.374343985578975
               ],
-              "z_vs_null_set_means": -3.304505394658465,
-              "p_two_sided_parametric": 0.0009514414479998567,
+              "z_vs_null_set_means": -3.6546241414221687,
+              "p_two_sided_parametric": 0.00025755901794499714,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -1460,23 +2006,23 @@
                 0.05742581041562177,
                 0.2955153660549665
               ],
-              "null_mean_of_set_means": 0.07148235294117647,
-              "null_sd_of_set_means": 0.06196347446104477,
+              "null_mean_of_set_means": 0.07861960784313726,
+              "null_sd_of_set_means": 0.06304830857803372,
               "null_set_mean_ci95": [
-                -0.04996605700247128,
-                0.19293076288482422
+                -0.04495507696980881,
+                0.20219429265608335
               ],
-              "diff_real_minus_null": 0.10498823529411766,
-              "diff_se": 0.08676676388497306,
+              "diff_real_minus_null": 0.09785098039215687,
+              "diff_se": 0.08754477918378159,
               "diff_ci95": [
-                -0.06507462192042954,
-                0.2750510925086649
+                -0.07373678680805504,
+                0.26943874759236874
               ],
-              "z_vs_null_set_means": 1.694356815967796,
-              "p_two_sided_parametric": 0.09019750023891149,
-              "p_two_sided_empirical": 0.11488511488511488,
-              "null_sets_ge_real_abs": 114,
-              "p_holm": 0.919080919080919,
+              "z_vs_null_set_means": 1.5520000869023876,
+              "p_two_sided_parametric": 0.1206622028146187,
+              "p_two_sided_empirical": 0.12887112887112886,
+              "null_sets_ge_real_abs": 128,
+              "p_holm": 1.0,
               "significant_holm_05": false
             }
           ],
@@ -1522,20 +2068,20 @@
                     2.242973373249391,
                     5.753926483744884
                   ],
-                  "null_mean_of_set_means": 0.1693234715558939,
-                  "null_sd_of_set_means": 0.7885171180085793,
+                  "null_mean_of_set_means": 0.16746559292087335,
+                  "null_sd_of_set_means": 0.782190526407918,
                   "null_set_mean_ci95": [
-                    -1.3761700797409215,
-                    1.714817022852709
+                    -1.365627838838646,
+                    1.7005590246803926
                   ],
-                  "diff_real_minus_null": 3.829126456941244,
-                  "diff_se": 1.1932939718309894,
+                  "diff_real_minus_null": 3.8309843355762645,
+                  "diff_se": 1.1891229025705956,
                   "diff_ci95": [
-                    1.4902702721525047,
-                    6.167982641729983
+                    1.500303446537897,
+                    6.161665224614632
                   ],
-                  "z_vs_null_set_means": 4.856110754591865,
-                  "p_two_sided_parametric": 1.1971375979413779e-06,
+                  "z_vs_null_set_means": 4.897763660178081,
+                  "p_two_sided_parametric": 9.6933522208964e-07,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -1552,24 +2098,24 @@
                     0.8891703422895278,
                     8.582240697409446
                   ],
-                  "null_mean_of_set_means": 0.5426719634190638,
-                  "null_sd_of_set_means": 1.738088784068869,
+                  "null_mean_of_set_means": 0.5708787576829877,
+                  "null_sd_of_set_means": 1.7047549839966496,
                   "null_set_mean_ci95": [
-                    -2.8639820533559197,
-                    3.949325980194047
+                    -2.770441010950446,
+                    3.9121985263164207
                   ],
-                  "diff_real_minus_null": 4.193033556430423,
-                  "diff_se": 2.62153186448052,
+                  "diff_real_minus_null": 4.164826762166499,
+                  "diff_se": 2.599551163305337,
                   "diff_ci95": [
-                    -0.9451688979513957,
-                    9.331236010812242
+                    -0.9302935179119611,
+                    9.25994704224496
                   ],
-                  "z_vs_null_set_means": 2.4124392233948626,
-                  "p_two_sided_parametric": 0.01584617910590036,
-                  "p_two_sided_empirical": 0.012987012987012988,
-                  "null_sets_ge_real_abs": 12,
-                  "p_holm": 0.03896103896103896,
-                  "significant_holm_05": true
+                  "z_vs_null_set_means": 2.443064722651478,
+                  "p_two_sided_parametric": 0.014563125281353173,
+                  "p_two_sided_empirical": 0.01898101898101898,
+                  "null_sets_ge_real_abs": 18,
+                  "p_holm": 0.056943056943056944,
+                  "significant_holm_05": false
                 },
                 {
                   "metric": "forward_15m",
@@ -1582,23 +2128,23 @@
                     1.7100824265270624,
                     13.677774978086795
                   ],
-                  "null_mean_of_set_means": 1.413743784164594,
-                  "null_sd_of_set_means": 3.018956914301662,
+                  "null_mean_of_set_means": 1.4626324979061618,
+                  "null_sd_of_set_means": 2.9513302993832786,
                   "null_set_mean_ci95": [
-                    -4.503411767866663,
-                    7.330899336195851
+                    -4.321974888885064,
+                    7.247239884697388
                   ],
-                  "diff_real_minus_null": 6.280184918142335,
-                  "diff_se": 4.293577155407413,
+                  "diff_real_minus_null": 6.231296204400767,
+                  "diff_se": 4.246298914947509,
                   "diff_ci95": [
-                    -2.135226306456194,
-                    14.695596142740865
+                    -2.0914496688963506,
+                    14.554042077697884
                   ],
-                  "z_vs_null_set_means": 2.080249932813318,
-                  "p_two_sided_parametric": 0.037502614452189054,
-                  "p_two_sided_empirical": 0.03596403596403597,
-                  "null_sets_ge_real_abs": 35,
-                  "p_holm": 0.07192807192807193,
+                  "z_vs_null_set_means": 2.111351686289699,
+                  "p_two_sided_parametric": 0.0347420945050525,
+                  "p_two_sided_empirical": 0.03496503496503497,
+                  "null_sets_ge_real_abs": 34,
+                  "p_holm": 0.06993006993006994,
                   "significant_holm_05": false
                 },
                 {
@@ -1612,23 +2158,23 @@
                     1.0705811492396826,
                     20.940338235423567
                   ],
-                  "null_mean_of_set_means": 6.5508096906880215,
-                  "null_sd_of_set_means": 6.042084611644015,
+                  "null_mean_of_set_means": 6.4345371238333,
+                  "null_sd_of_set_means": 5.960832133902912,
                   "null_set_mean_ci95": [
-                    -5.291676148134247,
-                    18.39329552951029
+                    -5.248693858616408,
+                    18.11776810628301
                   ],
-                  "diff_real_minus_null": 4.4546500016436035,
-                  "diff_se": 7.886677238917522,
+                  "diff_real_minus_null": 4.570922568498325,
+                  "diff_se": 7.824602938498787,
                   "diff_ci95": [
-                    -11.003237386634739,
-                    19.912537389921944
+                    -10.765299190959297,
+                    19.907144327955947
                   ],
-                  "z_vs_null_set_means": 0.7372703773559901,
-                  "p_two_sided_parametric": 0.46095794268798973,
-                  "p_two_sided_empirical": 0.45554445554445555,
-                  "null_sets_ge_real_abs": 455,
-                  "p_holm": 0.45554445554445555,
+                  "z_vs_null_set_means": 0.7668262527476126,
+                  "p_two_sided_parametric": 0.44318482534768,
+                  "p_two_sided_empirical": 0.4275724275724276,
+                  "null_sets_ge_real_abs": 427,
+                  "p_holm": 0.4275724275724276,
                   "significant_holm_05": false
                 }
               ],
@@ -1647,23 +2193,23 @@
                     -0.7182294865426189,
                     2.516939803469545
                   ],
-                  "null_mean_of_set_means": 0.06241581867107945,
-                  "null_sd_of_set_means": 0.8220213245876763,
+                  "null_mean_of_set_means": 0.07036141409912317,
+                  "null_sd_of_set_means": 0.8048506985984332,
                   "null_set_mean_ci95": [
-                    -1.548745977520766,
-                    1.673577614862925
+                    -1.5071459551538058,
+                    1.647868783352052
                   ],
-                  "diff_real_minus_null": 0.8369393397923834,
-                  "diff_se": 1.1648331737616524,
+                  "diff_real_minus_null": 0.8289937443643398,
+                  "diff_se": 1.1527800794831389,
                   "diff_ci95": [
-                    -1.4461336807804555,
-                    3.120012360365222
+                    -1.4304552114226123,
+                    3.088442700151292
                   ],
-                  "z_vs_null_set_means": 1.0181479661883346,
-                  "p_two_sided_parametric": 0.3086076431881426,
-                  "p_two_sided_empirical": 0.3146853146853147,
-                  "null_sets_ge_real_abs": 314,
-                  "p_holm": 0.991008991008991,
+                  "z_vs_null_set_means": 1.0299969246568952,
+                  "p_two_sided_parametric": 0.3030114492296847,
+                  "p_two_sided_empirical": 0.2997002997002997,
+                  "null_sets_ge_real_abs": 299,
+                  "p_holm": 0.9310689310689311,
                   "significant_holm_05": false
                 },
                 {
@@ -1677,23 +2223,23 @@
                     -0.7115260268835559,
                     5.774400292898921
                   ],
-                  "null_mean_of_set_means": 0.4644725920536038,
-                  "null_sd_of_set_means": 1.779112395304621,
+                  "null_mean_of_set_means": 0.4836196805360573,
+                  "null_sd_of_set_means": 1.759958207402024,
                   "null_set_mean_ci95": [
-                    -3.0225877027434533,
-                    3.9515328868506607
+                    -2.9658984059719096,
+                    3.933137767044024
                   ],
-                  "diff_real_minus_null": 2.066964540954079,
-                  "diff_se": 2.4295787417449772,
+                  "diff_real_minus_null": 2.0478174524716253,
+                  "diff_se": 2.415587886832997,
                   "diff_ci95": [
-                    -2.695009792866076,
-                    6.828938874774234
+                    -2.686734805721049,
+                    6.7823697106643
                   ],
-                  "z_vs_null_set_means": 1.1617953685271085,
-                  "p_two_sided_parametric": 0.2453185958100097,
-                  "p_two_sided_empirical": 0.24775224775224775,
-                  "null_sets_ge_real_abs": 247,
-                  "p_holm": 0.991008991008991,
+                  "z_vs_null_set_means": 1.1635602731126935,
+                  "p_two_sided_parametric": 0.2446022587973804,
+                  "p_two_sided_empirical": 0.23276723276723277,
+                  "null_sets_ge_real_abs": 232,
+                  "p_holm": 0.9310689310689311,
                   "significant_holm_05": false
                 },
                 {
@@ -1707,23 +2253,23 @@
                     -1.9038041681556868,
                     9.129596022992292
                   ],
-                  "null_mean_of_set_means": 1.3842963979916771,
-                  "null_sd_of_set_means": 3.0494730660049476,
+                  "null_mean_of_set_means": 1.42630893091718,
+                  "null_sd_of_set_means": 3.0056492987697543,
                   "null_set_mean_ci95": [
-                    -4.59267081137802,
-                    7.361263607361374
+                    -4.464763694671538,
+                    7.317381556505898
                   ],
-                  "diff_real_minus_null": 2.228599529426626,
-                  "diff_se": 4.149879596813805,
+                  "diff_real_minus_null": 2.186586996501123,
+                  "diff_se": 4.117783675104485,
                   "diff_ci95": [
-                    -5.905164480328432,
-                    10.362363539181684
+                    -5.8842690067036685,
+                    10.257442999705916
                   ],
-                  "z_vs_null_set_means": 0.7308146296718301,
-                  "p_two_sided_parametric": 0.4648923863733021,
-                  "p_two_sided_empirical": 0.4645354645354645,
-                  "null_sets_ge_real_abs": 464,
-                  "p_holm": 0.991008991008991,
+                  "z_vs_null_set_means": 0.7274923915428582,
+                  "p_two_sided_parametric": 0.46692437453140245,
+                  "p_two_sided_empirical": 0.48151848151848153,
+                  "null_sets_ge_real_abs": 481,
+                  "p_holm": 0.9630369630369631,
                   "significant_holm_05": false
                 },
                 {
@@ -1737,23 +2283,23 @@
                     -2.559856822512061,
                     17.02271620482057
                   ],
-                  "null_mean_of_set_means": 6.448068338614862,
-                  "null_sd_of_set_means": 6.056605608406552,
+                  "null_mean_of_set_means": 6.336316905236207,
+                  "null_sd_of_set_means": 5.9894505184596385,
                   "null_set_mean_ci95": [
-                    -5.42287865386198,
-                    18.319015331091705
+                    -5.403006110944685,
+                    18.0756399214171
                   ],
-                  "diff_real_minus_null": 0.7833613525393917,
-                  "diff_se": 7.8509894087761065,
+                  "diff_real_minus_null": 0.8951127859180463,
+                  "diff_se": 7.7993000143608615,
                   "diff_ci95": [
-                    -14.604577888661776,
-                    16.17130059374056
+                    -14.391515242229241,
+                    16.181740814065336
                   ],
-                  "z_vs_null_set_means": 0.12933999721759795,
-                  "p_two_sided_parametric": 0.897088624011867,
-                  "p_two_sided_empirical": 0.8981018981018981,
-                  "null_sets_ge_real_abs": 898,
-                  "p_holm": 0.991008991008991,
+                  "z_vs_null_set_means": 0.14944823121241022,
+                  "p_two_sided_parametric": 0.8811999560170238,
+                  "p_two_sided_empirical": 0.8801198801198801,
+                  "null_sets_ge_real_abs": 880,
+                  "p_holm": 0.9630369630369631,
                   "significant_holm_05": false
                 }
               ],
@@ -1772,23 +2318,23 @@
                     -0.7001146524221351,
                     2.537717513996175
                   ],
-                  "null_mean_of_set_means": 0.0916837694793153,
-                  "null_sd_of_set_means": 0.8218121764302153,
+                  "null_mean_of_set_means": 0.0996069702699636,
+                  "null_sd_of_set_means": 0.8047645535527727,
                   "null_set_mean_ci95": [
-                    -1.5190680963239067,
-                    1.7024356352825374
+                    -1.4777315546934708,
+                    1.676945495233398
                   ],
-                  "diff_real_minus_null": 0.8271176613077047,
-                  "diff_se": 1.165167043067287,
+                  "diff_real_minus_null": 0.8191944605170565,
+                  "diff_se": 1.1532063872421932,
                   "diff_ci95": [
-                    -1.4566097431041778,
-                    3.1108450657195874
+                    -1.4410900584776423,
+                    3.079478979511755
                   ],
-                  "z_vs_null_set_means": 1.0064558362964824,
-                  "p_two_sided_parametric": 0.31419634583373424,
-                  "p_two_sided_empirical": 0.31368631368631367,
-                  "null_sets_ge_real_abs": 313,
-                  "p_holm": 1.0,
+                  "z_vs_null_set_means": 1.0179305946075539,
+                  "p_two_sided_parametric": 0.30871094086660955,
+                  "p_two_sided_empirical": 0.3046953046953047,
+                  "null_sets_ge_real_abs": 304,
+                  "p_holm": 0.939060939060939,
                   "significant_holm_05": false
                 },
                 {
@@ -1802,23 +2348,23 @@
                     -0.6931599383500493,
                     5.795303162490276
                   ],
-                  "null_mean_of_set_means": 0.4937596360440618,
-                  "null_sd_of_set_means": 1.7784417487530975,
+                  "null_mean_of_set_means": 0.5128842599007603,
+                  "null_sd_of_set_means": 1.7593308227786124,
                   "null_set_mean_ci95": [
-                    -2.991986191512009,
-                    3.9795054636001326
+                    -2.93540415274532,
+                    3.9611726725468404
                   ],
-                  "diff_real_minus_null": 2.057311976026052,
-                  "diff_se": 2.4295285332688854,
+                  "diff_real_minus_null": 2.0381873521693534,
+                  "diff_se": 2.4155742141856367,
                   "diff_ci95": [
-                    -2.704563949180964,
-                    6.819187901233068
+                    -2.6963381076344946,
+                    6.772712811973202
                   ],
-                  "z_vs_null_set_means": 1.1568059383831246,
-                  "p_two_sided_parametric": 0.24735165511469237,
-                  "p_two_sided_empirical": 0.25374625374625376,
-                  "null_sets_ge_real_abs": 253,
-                  "p_holm": 1.0,
+                  "z_vs_null_set_means": 1.1585014744130537,
+                  "p_two_sided_parametric": 0.2466594503270063,
+                  "p_two_sided_empirical": 0.23476523476523475,
+                  "null_sets_ge_real_abs": 234,
+                  "p_holm": 0.939060939060939,
                   "significant_holm_05": false
                 },
                 {
@@ -1832,23 +2378,23 @@
                     -1.8769137508519447,
                     9.142116066390074
                   ],
-                  "null_mean_of_set_means": 1.4135984089166351,
-                  "null_sd_of_set_means": 3.049206411997988,
+                  "null_mean_of_set_means": 1.4555882866619658,
+                  "null_sd_of_set_means": 3.0052139683270096,
                   "null_set_mean_ci95": [
-                    -4.562846158599421,
-                    7.390042976432691
+                    -4.434631091258973,
+                    7.345807664582905
                   ],
-                  "diff_real_minus_null": 2.219002748852429,
-                  "diff_se": 4.147198018525253,
+                  "diff_real_minus_null": 2.1770128711070984,
+                  "diff_se": 4.114960833023556,
                   "diff_ci95": [
-                    -5.909505367457067,
-                    10.347510865161924
+                    -5.888310361619071,
+                    10.242336103833269
                   ],
-                  "z_vs_null_set_means": 0.727731235288342,
-                  "p_two_sided_parametric": 0.4667781258128174,
-                  "p_two_sided_empirical": 0.46553446553446554,
-                  "null_sets_ge_real_abs": 465,
-                  "p_holm": 1.0,
+                  "z_vs_null_set_means": 0.7244119367377467,
+                  "p_two_sided_parametric": 0.46881287372868163,
+                  "p_two_sided_empirical": 0.4835164835164835,
+                  "null_sets_ge_real_abs": 483,
+                  "p_holm": 0.967032967032967,
                   "significant_holm_05": false
                 },
                 {
@@ -1862,23 +2408,23 @@
                     -2.5449154064831916,
                     17.047643655000943
                   ],
-                  "null_mean_of_set_means": 6.47743126101401,
-                  "null_sd_of_set_means": 6.05731082872635,
+                  "null_mean_of_set_means": 6.365656910394921,
+                  "null_sd_of_set_means": 5.990040832797588,
                   "null_set_mean_ci95": [
-                    -5.394897963289637,
-                    18.349760485317656
+                    -5.374823121888352,
+                    18.106136942678194
                   ],
-                  "diff_real_minus_null": 0.7739328632448661,
-                  "diff_se": 7.853154531330297,
+                  "diff_real_minus_null": 0.885707213863955,
+                  "diff_se": 7.801385184422731,
                   "diff_ci95": [
-                    -14.618250018162517,
-                    16.16611574465225
+                    -14.405007747604596,
+                    16.176422175332508
                   ],
-                  "z_vs_null_set_means": 0.1277683918042552,
-                  "p_two_sided_parametric": 0.8983322646902543,
-                  "p_two_sided_empirical": 0.8981018981018981,
-                  "null_sets_ge_real_abs": 898,
-                  "p_holm": 1.0,
+                  "z_vs_null_set_means": 0.1478633015345063,
+                  "p_two_sided_parametric": 0.8824506509155323,
+                  "p_two_sided_empirical": 0.8811188811188811,
+                  "null_sets_ge_real_abs": 881,
+                  "p_holm": 0.967032967032967,
                   "significant_holm_05": false
                 }
               ],
@@ -1975,7 +2521,7 @@
               "intra_minute_adverse_print_bps": 5.346100795195061
             }
           },
-          "control_pool_bars": 369780,
+          "control_pool_bars": 480849,
           "control_pool_strata": 72
         },
         "add": {
@@ -1987,27 +2533,27 @@
               "metric": "bb_pctb",
               "unit": "",
               "n": 737,
-              "real_mean": 0.5850153347649323,
+              "real_mean": 0.5850153347318344,
               "real_median": 0.6189298057412141,
-              "real_mean_se_boot": 0.014970351611723144,
+              "real_mean_se_boot": 0.01497035160899593,
               "real_mean_ci95": [
-                0.5556734456059549,
-                0.6143572239239097
+                0.5556734455782024,
+                0.6143572238854664
               ],
-              "null_mean_of_set_means": 0.5049949113854111,
-              "null_sd_of_set_means": 0.01192820142199035,
+              "null_mean_of_set_means": 0.505174941048151,
+              "null_sd_of_set_means": 0.011872757146809916,
               "null_set_mean_ci95": [
-                0.48161563659830997,
-                0.5283741861725122
+                0.48190433704040353,
+                0.5284455450558984
               ],
-              "diff_real_minus_null": 0.0800204233795212,
-              "diff_se": 0.01914140581415572,
+              "diff_real_minus_null": 0.07984039368368345,
+              "diff_se": 0.01910690423810443,
               "diff_ci95": [
-                0.04250326798377599,
-                0.11753757877526641
+                0.042390861376998774,
+                0.11728992599036814
               ],
-              "z_vs_null_set_means": 6.7085070538797895,
-              "p_two_sided_parametric": 1.9662493855321372e-11,
+              "z_vs_null_set_means": 6.724671674526395,
+              "p_two_sided_parametric": 1.759881129714813e-11,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2024,20 +2570,20 @@
                 53.364082046053426,
                 56.42332618889286
               ],
-              "null_mean_of_set_means": 50.27674583271073,
-              "null_sd_of_set_means": 0.6578644959717432,
+              "null_mean_of_set_means": 50.28940390031546,
+              "null_sd_of_set_means": 0.6556001097970419,
               "null_set_mean_ci95": [
-                48.98733142060611,
-                51.56616024481535
+                49.004427685113264,
+                51.57438011551766
               ],
-              "diff_real_minus_null": 4.616958284762411,
-              "diff_se": 1.0207057228795338,
+              "diff_real_minus_null": 4.604300217157679,
+              "diff_se": 1.019247752818111,
               "diff_ci95": [
-                2.616375067918525,
-                6.617541501606297
+                2.6065746216341816,
+                6.602025812681176
               ],
-              "z_vs_null_set_means": 7.0180991876490015,
-              "p_two_sided_parametric": 2.249089803285642e-12,
+              "z_vs_null_set_means": 7.02303149183892,
+              "p_two_sided_parametric": 2.171152146956956e-12,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2047,27 +2593,27 @@
               "metric": "stoch_k",
               "unit": "",
               "n": 737,
-              "real_mean": 54.98482934056138,
+              "real_mean": 54.98482934056133,
               "real_median": 57.12833841180848,
-              "real_mean_se_boot": 1.2482405147113713,
+              "real_mean_se_boot": 1.2482405147113718,
               "real_mean_ci95": [
-                52.538277931727094,
-                57.43138074939567
+                52.538277931727045,
+                57.43138074939562
               ],
-              "null_mean_of_set_means": 50.18083899241235,
-              "null_sd_of_set_means": 1.2055578665656255,
+              "null_mean_of_set_means": 50.18536017676447,
+              "null_sd_of_set_means": 1.2053300290360363,
               "null_set_mean_ci95": [
-                47.817945573943724,
-                52.54373241088097
+                47.82291331985384,
+                52.5478070336751
               ],
-              "diff_real_minus_null": 4.803990348149036,
-              "diff_se": 1.7353599488881757,
+              "diff_real_minus_null": 4.799469163796864,
+              "diff_se": 1.7352016774608428,
               "diff_ci95": [
-                1.4026848483282115,
-                8.20529584796986
+                1.3984738759736124,
+                8.200464451620116
               ],
-              "z_vs_null_set_means": 3.9848691476209006,
-              "p_two_sided_parametric": 6.751732094789631e-05,
+              "z_vs_null_set_means": 3.9818713947044397,
+              "p_two_sided_parametric": 6.837477568577555e-05,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2077,27 +2623,27 @@
               "metric": "stoch_d",
               "unit": "",
               "n": 737,
-              "real_mean": 55.19506663359753,
-              "real_median": 56.86170319352467,
-              "real_mean_se_boot": 1.1980280863664872,
+              "real_mean": 55.19506663359746,
+              "real_median": 56.8617031935243,
+              "real_mean_se_boot": 1.1980280863664876,
               "real_mean_ci95": [
-                52.846931584319215,
-                57.54320168287584
+                52.84693158431915,
+                57.543201682875775
               ],
-              "null_mean_of_set_means": 50.1719380775821,
-              "null_sd_of_set_means": 1.1456506069835959,
+              "null_mean_of_set_means": 50.178900807364,
+              "null_sd_of_set_means": 1.1392208415191594,
               "null_set_mean_ci95": [
-                47.92646288789425,
-                52.41741326726994
+                47.94602795798645,
+                52.41177365674155
               ],
-              "diff_real_minus_null": 5.023128556015429,
-              "diff_se": 1.6576448983436798,
+              "diff_real_minus_null": 5.016165826233461,
+              "diff_se": 1.6532076159619427,
               "diff_ci95": [
-                1.7741445552618167,
-                8.272112556769041
+                1.7758788989480538,
+                8.256452753518868
               ],
-              "z_vs_null_set_means": 4.384520485910547,
-              "p_two_sided_parametric": 1.1624154402145592e-05,
+              "z_vs_null_set_means": 4.403154896239756,
+              "p_two_sided_parametric": 1.066879357036754e-05,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2114,23 +2660,23 @@
                 0.02582237154478101,
                 0.4097237315707759
               ],
-              "null_mean_of_set_means": 0.0003275800190419026,
-              "null_sd_of_set_means": 0.08134787118164645,
+              "null_mean_of_set_means": 0.00048549564498469614,
+              "null_sd_of_set_means": 0.08054313441706956,
               "null_set_mean_ci95": [
-                -0.15911424749698513,
-                0.15976940753506894
+                -0.15737904781247164,
+                0.15835003910244105
               ],
-              "diff_real_minus_null": 0.21744547153873656,
-              "diff_se": 0.12731279786569438,
+              "diff_real_minus_null": 0.21728755591279375,
+              "diff_se": 0.12680011378674524,
               "diff_ci95": [
-                -0.032087612278024424,
-                0.46697855535549754
+                -0.031240667109226933,
+                0.4658157789348144
               ],
-              "z_vs_null_set_means": 2.6730321074191328,
-              "p_two_sided_parametric": 0.007516905556079756,
-              "p_two_sided_empirical": 0.006993006993006993,
-              "null_sets_ge_real_abs": 6,
-              "p_holm": 0.02097902097902098,
+              "z_vs_null_set_means": 2.6977787428489233,
+              "p_two_sided_parametric": 0.006980381822881299,
+              "p_two_sided_empirical": 0.007992007992007992,
+              "null_sets_ge_real_abs": 7,
+              "p_holm": 0.023976023976023976,
               "significant_holm_05": true
             },
             {
@@ -2144,20 +2690,20 @@
                 1.3906535564511695,
                 3.980291115943339
               ],
-              "null_mean_of_set_means": 0.12762776580876226,
-              "null_sd_of_set_means": 0.49338620705569364,
+              "null_mean_of_set_means": 0.13658605277174207,
+              "null_sd_of_set_means": 0.48960137098666656,
               "null_set_mean_ci95": [
-                -0.8394092000203973,
-                1.0946647316379219
+                -0.8230326343621244,
+                1.0962047399056085
               ],
-              "diff_real_minus_null": 2.5578445703884922,
-              "diff_se": 0.8245308646923297,
+              "diff_real_minus_null": 2.5488862834255124,
+              "diff_se": 0.8222716704286368,
               "diff_ci95": [
-                0.941764075591526,
-                4.1739250651854585
+                0.9372338093853843,
+                4.16053875746564
               ],
-              "z_vs_null_set_means": 5.184264443978997,
-              "p_two_sided_parametric": 2.1686904450035627e-07,
+              "z_vs_null_set_means": 5.206044007370492,
+              "p_two_sided_parametric": 1.9290891506429375e-07,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2174,20 +2720,20 @@
                 2.3377108876772232,
                 6.426267762813698
               ],
-              "null_mean_of_set_means": 0.34168728567876927,
-              "null_sd_of_set_means": 0.7925167532302468,
+              "null_mean_of_set_means": 0.36491013201620154,
+              "null_sd_of_set_means": 0.7895934141776365,
               "null_set_mean_ci95": [
-                -1.2116455506525146,
-                1.8950201220100529
+                -1.182692959771966,
+                1.9125132238043692
               ],
-              "diff_real_minus_null": 4.040302039566692,
-              "diff_se": 1.3099351668221764,
+              "diff_real_minus_null": 4.017079193229259,
+              "diff_se": 1.308168604133094,
               "diff_ci95": [
-                1.472829112595226,
-                6.607774966538157
+                1.453068729128395,
+                6.581089657330123
               ],
-              "z_vs_null_set_means": 5.0980651489052855,
-              "p_two_sided_parametric": 3.4314273156255126e-07,
+              "z_vs_null_set_means": 5.087528747200934,
+              "p_two_sided_parametric": 3.627594122868061e-07,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2204,20 +2750,20 @@
                 2.3439470759383174,
                 7.536784062469252
               ],
-              "null_mean_of_set_means": 0.6011701655025126,
-              "null_sd_of_set_means": 0.9913978117103688,
+              "null_mean_of_set_means": 0.6347792107021446,
+              "null_sd_of_set_means": 0.9912732397097981,
               "null_set_mean_ci95": [
-                -1.3419695454498102,
-                2.544309876454835
+                -1.3081163391290596,
+                2.5776747605333488
               ],
-              "diff_real_minus_null": 4.339195403701272,
-              "diff_se": 1.6546022145057377,
+              "diff_real_minus_null": 4.30558635850164,
+              "diff_se": 1.654527576968103,
               "diff_ci95": [
-                1.0961750632700258,
-                7.582215744132517
+                1.062712307644158,
+                7.548460409359121
               ],
-              "z_vs_null_set_means": 4.376845855868141,
-              "p_two_sided_parametric": 1.2040906441246335e-05,
+              "z_vs_null_set_means": 4.3434909629580325,
+              "p_two_sided_parametric": 1.4023624896664089e-05,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2234,23 +2780,23 @@
                 1.5691421430104304,
                 10.217196850195805
               ],
-              "null_mean_of_set_means": 1.8128314860286252,
-              "null_sd_of_set_means": 1.5451483648007747,
+              "null_mean_of_set_means": 1.8458339007917826,
+              "null_sd_of_set_means": 1.5563710546159537,
               "null_set_mean_ci95": [
-                -1.2156593089808931,
-                4.841322281038144
+                -1.2046533662554866,
+                4.8963211678390515
               ],
-              "diff_real_minus_null": 4.080338010574493,
-              "diff_se": 2.693421858203081,
+              "diff_real_minus_null": 4.047335595811336,
+              "diff_se": 2.699875681702031,
               "diff_ci95": [
-                -1.1987688315035454,
-                9.35944485265253
+                -1.244420740324645,
+                9.339091931947316
               ],
-              "z_vs_null_set_means": 2.6407418883044254,
-              "p_two_sided_parametric": 0.00827247163248268,
-              "p_two_sided_empirical": 0.012987012987012988,
-              "null_sets_ge_real_abs": 12,
-              "p_holm": 0.025974025974025976,
+              "z_vs_null_set_means": 2.600495289222689,
+              "p_two_sided_parametric": 0.009308929711071556,
+              "p_two_sided_empirical": 0.011988011988011988,
+              "null_sets_ge_real_abs": 11,
+              "p_holm": 0.023976023976023976,
               "significant_holm_05": true
             },
             {
@@ -2264,19 +2810,19 @@
                 28.737589077774977,
                 30.34403812138944
               ],
-              "null_mean_of_set_means": 25.664458983779717,
-              "null_sd_of_set_means": 0.37721630794654604,
+              "null_mean_of_set_means": 25.71480426952835,
+              "null_sd_of_set_means": 0.38450889221073364,
               "null_set_mean_ci95": [
-                24.925115020204487,
-                26.403802947354947
+                24.96116684079531,
+                26.46844169826139
               ],
-              "diff_real_minus_null": 3.876354615802491,
-              "diff_se": 0.5569875149989812,
+              "diff_real_minus_null": 3.826009330053857,
+              "diff_se": 0.56195198822768,
               "diff_ci95": [
-                2.7846590864044876,
-                4.968050145200494
+                2.7245834331276044,
+                4.92743522698011
               ],
-              "z_vs_null_set_means": 10.276211643404864,
+              "z_vs_null_set_means": 9.95037932167503,
               "p_two_sided_parametric": 0.0,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
@@ -2294,20 +2840,20 @@
                 0.2780524772658585,
                 0.41394209532572895
               ],
-              "null_mean_of_set_means": 0.5866675712347355,
-              "null_sd_of_set_means": 0.03006360064453975,
+              "null_mean_of_set_means": 0.6019158751696065,
+              "null_sd_of_set_means": 0.029509410564826654,
               "null_set_mean_ci95": [
-                0.5277429139714376,
-                0.6455922284980333
+                0.5440774304625463,
+                0.6597543198766668
               ],
-              "diff_real_minus_null": -0.24067028493894171,
-              "diff_se": 0.04588607795476392,
+              "diff_real_minus_null": -0.2559185888738128,
+              "diff_se": 0.04552490942593739,
               "diff_ci95": [
-                -0.330606997730279,
-                -0.15073357214760444
+                -0.34514741134865007,
+                -0.16668976639897554
               ],
-              "z_vs_null_set_means": -8.00537127220831,
-              "p_two_sided_parametric": 1.3322676295501878e-15,
+              "z_vs_null_set_means": -8.672439875124159,
+              "p_two_sided_parametric": 0.0,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -2324,19 +2870,19 @@
                 100.96915421297525,
                 230.8083890930792
               ],
-              "null_mean_of_set_means": 470.08615857779307,
-              "null_sd_of_set_means": 29.47913064815531,
+              "null_mean_of_set_means": 475.851899820174,
+              "null_sd_of_set_means": 29.30127765296871,
               "null_set_mean_ci95": [
-                412.30706250740866,
-                527.8652546481775
+                418.4213956203554,
+                533.2824040199927
               ],
-              "diff_real_minus_null": -304.19738692476585,
-              "diff_se": 44.34075822867708,
+              "diff_real_minus_null": -309.9631281671468,
+              "diff_se": 44.22271552742265,
               "diff_ci95": [
-                -391.10527305297296,
-                -217.28950079655877
+                -396.6396506008952,
+                -223.2866057333984
               ],
-              "z_vs_null_set_means": -10.319075910191447,
+              "z_vs_null_set_means": -10.578485069429808,
               "p_two_sided_parametric": 0.0,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
@@ -2354,23 +2900,23 @@
                 0.02046712046226054,
                 0.16677846976840432
               ],
-              "null_mean_of_set_means": 0.04965535956580733,
-              "null_sd_of_set_means": 0.03637323946699454,
+              "null_mean_of_set_means": 0.05157123473541384,
+              "null_sd_of_set_means": 0.036391757066855136,
               "null_set_mean_ci95": [
-                -0.021636189789501978,
-                0.12094690892111663
+                -0.01975660911562222,
+                0.12289907858644991
               ],
-              "diff_real_minus_null": 0.043967435549525105,
-              "diff_se": 0.05211638606660811,
+              "diff_real_minus_null": 0.04205156037991859,
+              "diff_se": 0.052129311617682195,
               "diff_ci95": [
-                -0.058180681141026785,
-                0.146115552240077
+                -0.060121890390738515,
+                0.1442250111505757
               ],
-              "z_vs_null_set_means": 1.2087852551440081,
-              "p_two_sided_parametric": 0.22674535777598592,
-              "p_two_sided_empirical": 0.22877122877122877,
-              "null_sets_ge_real_abs": 228,
-              "p_holm": 0.22877122877122877,
+              "z_vs_null_set_means": 1.1555243211440946,
+              "p_two_sided_parametric": 0.24787577885085565,
+              "p_two_sided_empirical": 0.26173826173826176,
+              "null_sets_ge_real_abs": 261,
+              "p_holm": 0.26173826173826176,
               "significant_holm_05": false
             }
           ],
@@ -2416,19 +2962,19 @@
                     5.304302711684558,
                     7.327965346410492
                   ],
-                  "null_mean_of_set_means": 0.12140414221457894,
-                  "null_sd_of_set_means": 0.4745105805570666,
+                  "null_mean_of_set_means": 0.12436038485281507,
+                  "null_sd_of_set_means": 0.47355856219693926,
                   "null_set_mean_ci95": [
-                    -0.8086365956772715,
-                    1.0514448801064293
+                    -0.8038143970531858,
+                    1.0525351667588159
                   ],
-                  "diff_real_minus_null": 6.194729886832946,
-                  "diff_se": 0.7011879290925996,
+                  "diff_real_minus_null": 6.19177364419471,
+                  "diff_se": 0.7005440262214764,
                   "diff_ci95": [
-                    4.8204015458114515,
-                    7.569058227854441
+                    4.818707352800617,
+                    7.564839935588804
                   ],
-                  "z_vs_null_set_means": 13.054987898395119,
+                  "z_vs_null_set_means": 13.074990378106039,
                   "p_two_sided_parametric": 0.0,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
@@ -2446,20 +2992,20 @@
                     5.3231855773667345,
                     9.9802210433532
                   ],
-                  "null_mean_of_set_means": 0.35901239354939046,
-                  "null_sd_of_set_means": 1.1123234253673675,
+                  "null_mean_of_set_means": 0.37796896282175246,
+                  "null_sd_of_set_means": 1.1098326294285257,
                   "null_set_mean_ci95": [
-                    -1.8211415201706498,
-                    2.5391663072694306
+                    -1.7973029908581577,
+                    2.5532409165016627
                   ],
-                  "diff_real_minus_null": 7.292690916810577,
-                  "diff_se": 1.6274683236917844,
+                  "diff_real_minus_null": 7.273734347538215,
+                  "diff_se": 1.6257669597280504,
                   "diff_ci95": [
-                    4.10285300237468,
-                    10.482528831246475
+                    4.087231106471236,
+                    10.460237588605194
                   ],
-                  "z_vs_null_set_means": 6.556268393252634,
-                  "p_two_sided_parametric": 5.517097889651268e-11,
+                  "z_vs_null_set_means": 6.5539020521351965,
+                  "p_two_sided_parametric": 5.605271802266998e-11,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -2476,20 +3022,20 @@
                     10.448160738387836,
                     17.7825240693289
                   ],
-                  "null_mean_of_set_means": 1.0202605113116634,
-                  "null_sd_of_set_means": 1.7523817007801596,
+                  "null_mean_of_set_means": 1.0743447802083996,
+                  "null_sd_of_set_means": 1.747492773003845,
                   "null_set_mean_ci95": [
-                    -2.4144076222174498,
-                    4.454928644840776
+                    -2.3507410548791365,
+                    4.499430615295935
                   ],
-                  "diff_real_minus_null": 13.095081892546704,
-                  "diff_se": 2.5634983886700553,
+                  "diff_real_minus_null": 13.040997623649968,
+                  "diff_se": 2.5601588535060618,
                   "diff_ci95": [
-                    8.070625050753396,
-                    18.11953873434001
+                    8.023086270778087,
+                    18.05890897652185
                   ],
-                  "z_vs_null_set_means": 7.472733758128596,
-                  "p_two_sided_parametric": 7.860379014346108e-14,
+                  "z_vs_null_set_means": 7.462690447201795,
+                  "p_two_sided_parametric": 8.482103908136196e-14,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -2506,20 +3052,20 @@
                     15.903061360185728,
                     27.291304847760987
                   ],
-                  "null_mean_of_set_means": 6.1196727153888935,
-                  "null_sd_of_set_means": 3.5632287946057053,
+                  "null_mean_of_set_means": 6.236359380072449,
+                  "null_sd_of_set_means": 3.545095786354821,
                   "null_set_mean_ci95": [
-                    -0.8642557220382887,
-                    13.103601152816076
+                    -0.7120283611830001,
+                    13.184747121327899
                   ],
-                  "diff_real_minus_null": 15.477510388584463,
-                  "diff_se": 4.597453448395908,
+                  "diff_real_minus_null": 15.360823723900907,
+                  "diff_se": 4.583413891619532,
                   "diff_ci95": [
-                    6.466501629728484,
-                    24.488519147440442
+                    6.377332496326623,
+                    24.34431495147519
                   ],
-                  "z_vs_null_set_means": 4.34367571681491,
-                  "p_two_sided_parametric": 1.401183043259202e-05,
+                  "z_vs_null_set_means": 4.332978472126246,
+                  "p_two_sided_parametric": 1.471054994151011e-05,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -2541,23 +3087,23 @@
                     -0.351707435369224,
                     1.7919372749028009
                   ],
-                  "null_mean_of_set_means": 0.06293850601605112,
-                  "null_sd_of_set_means": 0.4975576246448527,
+                  "null_mean_of_set_means": 0.06473799380871875,
+                  "null_sd_of_set_means": 0.4957026361314903,
                   "null_set_mean_ci95": [
-                    -0.9122744382878601,
-                    1.0381514503199625
+                    -0.9068391730090022,
+                    1.0363151606264398
                   ],
-                  "diff_real_minus_null": 0.6571764137507373,
-                  "diff_se": 0.7393283969078889,
+                  "diff_real_minus_null": 0.6553769259580697,
+                  "diff_se": 0.7380812909834996,
                   "diff_ci95": [
-                    -0.7919072441887248,
-                    2.1062600716901994
+                    -0.7912624043695895,
+                    2.102016256285729
                   ],
-                  "z_vs_null_set_means": 1.320804628850412,
-                  "p_two_sided_parametric": 0.18656651591057072,
-                  "p_two_sided_empirical": 0.17582417582417584,
-                  "null_sets_ge_real_abs": 175,
-                  "p_holm": 0.17582417582417584,
+                  "z_vs_null_set_means": 1.322117088326769,
+                  "p_two_sided_parametric": 0.18612916432320903,
+                  "p_two_sided_empirical": 0.1838161838161838,
+                  "null_sets_ge_real_abs": 183,
+                  "p_holm": 0.1838161838161838,
                   "significant_holm_05": false
                 },
                 {
@@ -2571,23 +3117,23 @@
                     0.9026787714515345,
                     4.925851322838847
                   ],
-                  "null_mean_of_set_means": 0.3125408315520856,
-                  "null_sd_of_set_means": 1.0999348696977858,
+                  "null_mean_of_set_means": 0.33341807754230884,
+                  "null_sd_of_set_means": 1.0966327213555462,
                   "null_set_mean_ci95": [
-                    -1.8433315130555745,
-                    2.468413176159746
+                    -1.8159820563145617,
+                    2.4828182113991795
                   ],
-                  "diff_real_minus_null": 2.601724215593105,
-                  "diff_se": 1.5043897407199178,
+                  "diff_real_minus_null": 2.5808469696028817,
+                  "diff_se": 1.5019770637243193,
                   "diff_ci95": [
-                    -0.3468796762179336,
-                    5.550328107404144
+                    -0.3630280752967838,
+                    5.524722014502547
                   ],
-                  "z_vs_null_set_means": 2.365343882868215,
-                  "p_two_sided_parametric": 0.01801333612710443,
-                  "p_two_sided_empirical": 0.024975024975024976,
-                  "null_sets_ge_real_abs": 24,
-                  "p_holm": 0.04995004995004995,
+                  "z_vs_null_set_means": 2.35342874541688,
+                  "p_two_sided_parametric": 0.01860117253823268,
+                  "p_two_sided_empirical": 0.023976023976023976,
+                  "null_sets_ge_real_abs": 23,
+                  "p_holm": 0.04795204795204795,
                   "significant_holm_05": true
                 },
                 {
@@ -2601,20 +3147,20 @@
                     4.5226627767583905,
                     11.472469715709888
                   ],
-                  "null_mean_of_set_means": 0.958121964890182,
-                  "null_sd_of_set_means": 1.7664654659668784,
+                  "null_mean_of_set_means": 1.0152940792263236,
+                  "null_sd_of_set_means": 1.7521458080433576,
                   "null_set_mean_ci95": [
-                    -2.5041503484048997,
-                    4.420394278185263
+                    -2.4189117045386572,
+                    4.4494998629913045
                   ],
-                  "diff_real_minus_null": 7.039444281343957,
-                  "diff_se": 2.5027204946663995,
+                  "diff_real_minus_null": 6.982272167007816,
+                  "diff_se": 2.492634061512752,
                   "diff_ci95": [
-                    2.1341121117978137,
-                    11.9447764508901
+                    2.0967094064428213,
+                    11.86783492757281
                   ],
-                  "z_vs_null_set_means": 3.9850449482129573,
-                  "p_two_sided_parametric": 6.746735343954313e-05,
+                  "z_vs_null_set_means": 3.984983518469278,
+                  "p_two_sided_parametric": 6.7484809534335e-05,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -2631,23 +3177,23 @@
                     10.591336142105053,
                     22.091854332445788
                   ],
-                  "null_mean_of_set_means": 6.1062468099878435,
-                  "null_sd_of_set_means": 3.582429549752523,
+                  "null_mean_of_set_means": 6.216523327393876,
+                  "null_sd_of_set_means": 3.5619835929228616,
                   "null_set_mean_ci95": [
-                    -0.9153151075271015,
-                    13.127808727502789
+                    -0.7649645147349329,
+                    13.198011169522685
                   ],
-                  "diff_real_minus_null": 10.235348427287576,
-                  "diff_se": 4.630444593588101,
+                  "diff_real_minus_null": 10.125071909881544,
+                  "diff_se": 4.614644381921631,
                   "diff_ci95": [
-                    1.1596770238548988,
-                    19.311019830720255
+                    1.0803689213151468,
+                    19.16977489844794
                   ],
-                  "z_vs_null_set_means": 2.85709691848501,
-                  "p_two_sided_parametric": 0.004275352711761382,
-                  "p_two_sided_empirical": 0.004995004995004995,
-                  "null_sets_ge_real_abs": 4,
-                  "p_holm": 0.014985014985014984,
+                  "z_vs_null_set_means": 2.842537492311468,
+                  "p_two_sided_parametric": 0.004475596667703474,
+                  "p_two_sided_empirical": 0.003996003996003996,
+                  "null_sets_ge_real_abs": 3,
+                  "p_holm": 0.011988011988011988,
                   "significant_holm_05": true
                 }
               ],
@@ -2666,23 +3212,23 @@
                     -0.3353421405200845,
                     1.7923523200476763
                   ],
-                  "null_mean_of_set_means": 0.09833647511706317,
-                  "null_sd_of_set_means": 0.495833131881734,
+                  "null_mean_of_set_means": 0.10014713903409884,
+                  "null_sd_of_set_means": 0.49416573746765213,
                   "null_set_mean_ci95": [
-                    -0.8734964633711355,
-                    1.0701694136052617
+                    -0.8684177064024993,
+                    1.068711984470697
                   ],
-                  "diff_real_minus_null": 0.6301686146467327,
-                  "diff_se": 0.7351596790315729,
+                  "diff_real_minus_null": 0.628357950729697,
+                  "diff_se": 0.7340361265558424,
                   "diff_ci95": [
-                    -0.8107443562551502,
-                    2.0710815855486153
+                    -0.810352857319754,
+                    2.067068758779148
                   ],
-                  "z_vs_null_set_means": 1.2709288148115128,
-                  "p_two_sided_parametric": 0.20375397428806874,
-                  "p_two_sided_empirical": 0.19880119880119881,
-                  "null_sets_ge_real_abs": 198,
-                  "p_holm": 0.19880119880119881,
+                  "z_vs_null_set_means": 1.2715530500955239,
+                  "p_two_sided_parametric": 0.20353196721141242,
+                  "p_two_sided_empirical": 0.20279720279720279,
+                  "null_sets_ge_real_abs": 202,
+                  "p_holm": 0.20279720279720279,
                   "significant_holm_05": false
                 },
                 {
@@ -2696,20 +3242,20 @@
                     0.9174363094572504,
                     4.9280004155919865
                   ],
-                  "null_mean_of_set_means": 0.34794877972442384,
-                  "null_sd_of_set_means": 1.0987863366012784,
+                  "null_mean_of_set_means": 0.3688372023705332,
+                  "null_sd_of_set_means": 1.0956826441480088,
                   "null_set_mean_ci95": [
-                    -1.805672440014082,
-                    2.5015699994629297
+                    -1.7787007801595638,
+                    2.5163751849006304
                   ],
-                  "diff_real_minus_null": 2.5747695828001946,
-                  "diff_se": 1.5013565008984362,
+                  "diff_real_minus_null": 2.553881160154085,
+                  "diff_se": 1.4990865171748795,
                   "diff_ci95": [
-                    -0.36788915896074004,
-                    5.517428324561129
+                    -0.3843284135086784,
+                    5.492090733816848
                   ],
-                  "z_vs_null_set_means": 2.343285038258091,
-                  "p_two_sided_parametric": 0.019114773572140642,
+                  "z_vs_null_set_means": 2.330858459604383,
+                  "p_two_sided_parametric": 0.01976082433000781,
                   "p_two_sided_empirical": 0.025974025974025976,
                   "null_sets_ge_real_abs": 25,
                   "p_holm": 0.05194805194805195,
@@ -2726,20 +3272,20 @@
                     4.538051956829877,
                     11.474480493398064
                   ],
-                  "null_mean_of_set_means": 0.9935480398757293,
-                  "null_sd_of_set_means": 1.765656188608748,
+                  "null_mean_of_set_means": 1.0507312283798473,
+                  "null_sd_of_set_means": 1.7514802306207422,
                   "null_set_mean_ci95": [
-                    -2.467138089797417,
-                    4.454234169548875
+                    -2.3821700236368075,
+                    4.483632480396502
                   ],
-                  "diff_real_minus_null": 7.012718185238241,
-                  "diff_se": 2.4997323210945,
+                  "diff_real_minus_null": 6.955534996734123,
+                  "diff_se": 2.489739524329285,
                   "diff_ci95": [
-                    2.113242835893021,
-                    11.912193534583462
+                    2.0756455290487246,
+                    11.835424464419521
                   ],
-                  "z_vs_null_set_means": 3.971734831776012,
-                  "p_two_sided_parametric": 7.13511170913339e-05,
+                  "z_vs_null_set_means": 3.9712323754114034,
+                  "p_two_sided_parametric": 7.150179309700633e-05,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -2756,23 +3302,23 @@
                     10.600614468736643,
                     22.099536448105006
                   ],
-                  "null_mean_of_set_means": 6.141693543269381,
-                  "null_sd_of_set_means": 3.582581912348201,
+                  "null_mean_of_set_means": 6.251981340375718,
+                  "null_sd_of_set_means": 3.562026702692696,
                   "null_set_mean_ci95": [
-                    -0.8801670049330923,
-                    13.163554091471854
+                    -0.7295909969019663,
+                    13.2335536776534
                   ],
-                  "diff_real_minus_null": 10.208381915151445,
-                  "diff_se": 4.630304494092473,
+                  "diff_real_minus_null": 10.098094118045108,
+                  "diff_se": 4.614418791139818,
                   "diff_ci95": [
-                    1.1329851067301977,
-                    19.283778723572695
+                    1.0538332874110647,
+                    19.14235494867915
                   ],
-                  "z_vs_null_set_means": 2.849448293133476,
-                  "p_two_sided_parametric": 0.0043795123797352176,
-                  "p_two_sided_empirical": 0.004995004995004995,
-                  "null_sets_ge_real_abs": 4,
-                  "p_holm": 0.014985014985014984,
+                  "z_vs_null_set_means": 2.834929370521424,
+                  "p_two_sided_parametric": 0.00458358179805729,
+                  "p_two_sided_empirical": 0.003996003996003996,
+                  "null_sets_ge_real_abs": 3,
+                  "p_holm": 0.011988011988011988,
                   "significant_holm_05": true
                 }
               ],
@@ -2869,7 +3415,7 @@
               "intra_minute_adverse_print_bps": 6.015766569263672
             }
           },
-          "control_pool_bars": 365859,
+          "control_pool_bars": 476928,
           "control_pool_strata": 72
         }
       }
@@ -2886,29 +3432,29 @@
               "metric": "bb_pctb",
               "unit": "",
               "n": 255,
-              "real_mean": 0.49123130003530224,
-              "real_median": 0.45564582643333423,
-              "real_mean_se_boot": 0.020888914606043713,
+              "real_mean": 0.49123130003635995,
+              "real_median": 0.45564582654524555,
+              "real_mean_se_boot": 0.020888914608787286,
               "real_mean_ci95": [
-                0.4502890274074566,
-                0.5321735726631479
+                0.45028902740313687,
+                0.532173572669583
               ],
-              "null_mean_of_set_means": 0.5056296409225683,
-              "null_sd_of_set_means": 0.021245645979390885,
+              "null_mean_of_set_means": 0.5063132508600805,
+              "null_sd_of_set_means": 0.021131797544037496,
               "null_set_mean_ci95": [
-                0.4639881748029622,
-                0.5472711070421745
+                0.464894927673767,
+                0.5477315740463939
               ],
-              "diff_real_minus_null": -0.014398340887266103,
-              "diff_se": 0.029794701315841284,
+              "diff_real_minus_null": -0.015081950823720547,
+              "diff_se": 0.02971362685663593,
               "diff_ci95": [
-                -0.07279595546631501,
-                0.04399927369178281
+                -0.07332065946272696,
+                0.04315675781528587
               ],
-              "z_vs_null_set_means": -0.6777078419377346,
-              "p_two_sided_parametric": 0.49795695328973144,
-              "p_two_sided_empirical": 0.4985014985014985,
-              "null_sets_ge_real_abs": 498,
+              "z_vs_null_set_means": -0.7137088452740755,
+              "p_two_sided_parametric": 0.4754072357235626,
+              "p_two_sided_empirical": 0.46053946053946054,
+              "null_sets_ge_real_abs": 460,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -2923,22 +3469,22 @@
                 47.48901874540415,
                 51.96077463755893
               ],
-              "null_mean_of_set_means": 50.35079793262352,
-              "null_sd_of_set_means": 1.1651057159101055,
+              "null_mean_of_set_means": 50.398505676581046,
+              "null_sd_of_set_means": 1.185040049968263,
               "null_set_mean_ci95": [
-                48.067190729439716,
-                52.63440513580733
+                48.07582717864325,
+                52.72118417451884
               ],
-              "diff_real_minus_null": -0.6259012411419818,
-              "diff_se": 1.6305800014841842,
+              "diff_real_minus_null": -0.6736089850995057,
+              "diff_se": 1.6448828931028938,
               "diff_ci95": [
-                -3.821838044050983,
-                2.5700355617670194
+                -3.8975794555811776,
+                2.550361485382166
               ],
-              "z_vs_null_set_means": -0.5372055364547482,
-              "p_two_sided_parametric": 0.5911256473757287,
-              "p_two_sided_empirical": 0.5744255744255744,
-              "null_sets_ge_real_abs": 574,
+              "z_vs_null_set_means": -0.5684271895431263,
+              "p_two_sided_parametric": 0.5697449325021042,
+              "p_two_sided_empirical": 0.5414585414585414,
+              "null_sets_ge_real_abs": 541,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -2946,29 +3492,29 @@
               "metric": "stoch_k",
               "unit": "",
               "n": 255,
-              "real_mean": 49.254256463315016,
+              "real_mean": 49.254256463314896,
               "real_median": 48.51322522964949,
-              "real_mean_se_boot": 2.123481720396825,
+              "real_mean_se_boot": 2.123481720396827,
               "real_mean_ci95": [
-                45.09223229133724,
-                53.41628063529279
+                45.09223229133711,
+                53.41628063529268
               ],
-              "null_mean_of_set_means": 50.08680759926449,
-              "null_sd_of_set_means": 2.0341323510799847,
+              "null_mean_of_set_means": 50.1731166425913,
+              "null_sd_of_set_means": 2.024781771279543,
               "null_set_mean_ci95": [
-                46.09990819114772,
-                54.07370700738126
+                46.2045443708834,
+                54.14168891429921
               ],
-              "diff_real_minus_null": -0.8325511359494726,
-              "diff_se": 2.940555906383969,
+              "diff_real_minus_null": -0.9188601792764075,
+              "diff_se": 2.9340954037258897,
               "diff_ci95": [
-                -6.5960407124620515,
-                4.930938440563106
+                -6.669687170579151,
+                4.831966812026336
               ],
-              "z_vs_null_set_means": -0.40929054370894064,
-              "p_two_sided_parametric": 0.6823264543147813,
-              "p_two_sided_empirical": 0.6543456543456544,
-              "null_sets_ge_real_abs": 654,
+              "z_vs_null_set_means": -0.4538070187661468,
+              "p_two_sided_parametric": 0.6499677313987797,
+              "p_two_sided_empirical": 0.6573426573426573,
+              "null_sets_ge_real_abs": 657,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -2976,29 +3522,29 @@
               "metric": "stoch_d",
               "unit": "",
               "n": 255,
-              "real_mean": 49.498043094368214,
+              "real_mean": 49.49804309436807,
               "real_median": 48.40795194426562,
-              "real_mean_se_boot": 2.0322624270918763,
+              "real_mean_se_boot": 2.032262427091879,
               "real_mean_ci95": [
-                45.51480873726813,
-                53.481277451468294
+                45.51480873726799,
+                53.48127745146815
               ],
-              "null_mean_of_set_means": 50.09696731482093,
-              "null_sd_of_set_means": 1.9504618738964579,
+              "null_mean_of_set_means": 50.17620129274829,
+              "null_sd_of_set_means": 1.9388536734479038,
               "null_set_mean_ci95": [
-                46.274062041983875,
-                53.919872587657984
+                46.3760480927904,
+                53.97635449270618
               ],
-              "diff_real_minus_null": -0.5989242204527159,
-              "diff_se": 2.816805299287305,
+              "diff_real_minus_null": -0.678158198380217,
+              "diff_se": 2.808779831103144,
               "diff_ci95": [
-                -6.1198626070558335,
-                4.922014166150402
+                -6.183366667342379,
+                4.827050270581945
               ],
-              "z_vs_null_set_means": -0.3070678942604701,
-              "p_two_sided_parametric": 0.7587916945787627,
-              "p_two_sided_empirical": 0.7342657342657343,
-              "null_sets_ge_real_abs": 734,
+              "z_vs_null_set_means": -0.34977275885613074,
+              "p_two_sided_parametric": 0.7265092445206944,
+              "p_two_sided_empirical": 0.7052947052947053,
+              "null_sets_ge_real_abs": 705,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3013,22 +3559,22 @@
                 -0.2383618882573645,
                 0.25549689274106174
               ],
-              "null_mean_of_set_means": -0.006362258358157322,
-              "null_sd_of_set_means": 0.13320338562192674,
+              "null_mean_of_set_means": -0.004105868809181572,
+              "null_sd_of_set_means": 0.1325573033806708,
               "null_set_mean_ci95": [
-                -0.26744089417713374,
-                0.25471637746081904
+                -0.2639181834352963,
+                0.2557064458169332
               ],
-              "diff_real_minus_null": 0.014929760600005936,
-              "diff_se": 0.1833445027204068,
+              "diff_real_minus_null": 0.012673371051030186,
+              "diff_se": 0.18287565014567886,
               "diff_ci95": [
-                -0.34442546473199137,
-                0.37428498593200327
+                -0.3457629032345004,
+                0.3711096453365607
               ],
-              "z_vs_null_set_means": 0.11208244092519773,
-              "p_two_sided_parametric": 0.9107580398025921,
-              "p_two_sided_empirical": 0.906093906093906,
-              "null_sets_ge_real_abs": 906,
+              "z_vs_null_set_means": 0.09560673556126512,
+              "p_two_sided_parametric": 0.9238329155053047,
+              "p_two_sided_empirical": 0.919080919080919,
+              "null_sets_ge_real_abs": 919,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3043,22 +3589,22 @@
                 -1.5178627482950395,
                 1.3530312690002064
               ],
-              "null_mean_of_set_means": 0.19882739237859007,
-              "null_sd_of_set_means": 0.818170757364959,
+              "null_mean_of_set_means": 0.22053281492895535,
+              "null_sd_of_set_means": 0.8106733498905705,
               "null_set_mean_ci95": [
-                -1.4047872920567295,
-                1.8024420768139098
+                -1.3683869508565627,
+                1.8094525807144735
               ],
-              "diff_real_minus_null": -0.2812431320260066,
-              "diff_se": 1.0980758428905992,
+              "diff_real_minus_null": -0.30294855457637193,
+              "diff_se": 1.092501006294982,
               "diff_ci95": [
-                -2.433471784091581,
-                1.870985520039568
+                -2.4442505269145363,
+                1.8383534177617926
               ],
-              "z_vs_null_set_means": -0.343746252838212,
-              "p_two_sided_parametric": 0.7310371236577948,
-              "p_two_sided_empirical": 0.7282717282717283,
-              "null_sets_ge_real_abs": 728,
+              "z_vs_null_set_means": -0.37369990590817587,
+              "p_two_sided_parametric": 0.7086275953387706,
+              "p_two_sided_empirical": 0.7222777222777222,
+              "null_sets_ge_real_abs": 722,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3073,22 +3619,22 @@
                 -2.447965286519902,
                 2.058392139624874
               ],
-              "null_mean_of_set_means": 0.5595765729317073,
-              "null_sd_of_set_means": 1.2868219958117024,
+              "null_mean_of_set_means": 0.5935326717506838,
+              "null_sd_of_set_means": 1.267707111937761,
               "null_set_mean_ci95": [
-                -1.9625945388592294,
-                3.081747684722644
+                -1.8911732676473276,
+                3.078238611148695
               ],
-              "diff_real_minus_null": -0.7543631463792212,
-              "diff_se": 1.7255281131925269,
+              "diff_real_minus_null": -0.7883192451981977,
+              "diff_se": 1.7113204674082896,
               "diff_ci95": [
-                -4.136398248236573,
-                2.627671955478131
+                -4.1425073613184455,
+                2.5658688709220496
               ],
-              "z_vs_null_set_means": -0.586221830862771,
-              "p_two_sided_parametric": 0.5577264530616814,
-              "p_two_sided_empirical": 0.5734265734265734,
-              "null_sets_ge_real_abs": 573,
+              "z_vs_null_set_means": -0.621846511528367,
+              "p_two_sided_parametric": 0.5340427992857695,
+              "p_two_sided_empirical": 0.5304695304695305,
+              "null_sets_ge_real_abs": 530,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3103,22 +3649,22 @@
                 -3.1975211052669916,
                 2.538850087714885
               ],
-              "null_mean_of_set_means": 0.910845973913898,
-              "null_sd_of_set_means": 1.615671239326368,
+              "null_mean_of_set_means": 0.9551087221007153,
+              "null_sd_of_set_means": 1.5974258569263167,
               "null_set_mean_ci95": [
-                -2.255869655165783,
-                4.077561602993579
+                -2.1758459574748654,
+                4.086063401676296
               ],
-              "diff_real_minus_null": -1.240181482689951,
-              "diff_se": 2.179866059634533,
+              "diff_real_minus_null": -1.2844442308767685,
+              "diff_se": 2.166377587757259,
               "diff_ci95": [
-                -5.512718959573635,
-                3.0323559941937335
+                -5.530544302880996,
+                2.961655841127459
               ],
-              "z_vs_null_set_means": -0.7675951966608181,
-              "p_two_sided_parametric": 0.4427277169662336,
-              "p_two_sided_empirical": 0.44755244755244755,
-              "null_sets_ge_real_abs": 447,
+              "z_vs_null_set_means": -0.8040712658478115,
+              "p_two_sided_parametric": 0.42135581820747614,
+              "p_two_sided_empirical": 0.41858141858141856,
+              "null_sets_ge_real_abs": 418,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3133,22 +3679,22 @@
                 -4.686328958652436,
                 4.3062305961115355
               ],
-              "null_mean_of_set_means": 2.3188736848208302,
-              "null_sd_of_set_means": 2.5710321136505097,
+              "null_mean_of_set_means": 2.392511406280799,
+              "null_sd_of_set_means": 2.57442251220701,
               "null_set_mean_ci95": [
-                -2.720349257934169,
-                7.358096627575829
+                -2.6533567176449404,
+                7.4383795302065385
               ],
-              "diff_real_minus_null": -2.50892286609128,
-              "diff_se": 3.4456835666351107,
+              "diff_real_minus_null": -2.582560587551249,
+              "diff_se": 3.4482140860618418,
               "diff_ci95": [
-                -9.262462656696098,
-                4.244616924513537
+                -9.341060196232458,
+                4.175939021129961
               ],
-              "z_vs_null_set_means": -0.9758426791989607,
-              "p_two_sided_parametric": 0.3291424312398128,
-              "p_two_sided_empirical": 0.3256743256743257,
-              "null_sets_ge_real_abs": 325,
+              "z_vs_null_set_means": -1.0031611265461093,
+              "p_two_sided_parametric": 0.3157831256435224,
+              "p_two_sided_empirical": 0.3066933066933067,
+              "null_sets_ge_real_abs": 306,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3163,22 +3709,22 @@
                 24.61741326874657,
                 27.145895140061743
               ],
-              "null_mean_of_set_means": 26.067000155257627,
-              "null_sd_of_set_means": 0.6400635168337706,
+              "null_mean_of_set_means": 26.121569499633036,
+              "null_sd_of_set_means": 0.6482475103412648,
               "null_set_mean_ci95": [
-                24.812475662263438,
-                27.321524648251817
+                24.851004379364156,
+                27.392134619901917
               ],
-              "diff_real_minus_null": -0.1853459508534705,
-              "diff_se": 0.9086986565214478,
+              "diff_real_minus_null": -0.23991529522887944,
+              "diff_se": 0.9144816988031624,
               "diff_ci95": [
-                -1.966395317635508,
-                1.595703415928567
+                -2.0322994248830777,
+                1.5524688344253188
               ],
-              "z_vs_null_set_means": -0.2895743093909323,
-              "p_two_sided_parametric": 0.7721419234161231,
-              "p_two_sided_empirical": 0.7832167832167832,
-              "null_sets_ge_real_abs": 783,
+              "z_vs_null_set_means": -0.37009829023882856,
+              "p_two_sided_parametric": 0.7113092560041365,
+              "p_two_sided_empirical": 0.7042957042957043,
+              "null_sets_ge_real_abs": 704,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3193,20 +3739,20 @@
                 0.2733675949490754,
                 0.5031029932862187
               ],
-              "null_mean_of_set_means": 0.5795607843137255,
-              "null_sd_of_set_means": 0.05295968208643629,
+              "null_mean_of_set_means": 0.6195607843137254,
+              "null_sd_of_set_means": 0.05115415485359168,
               "null_set_mean_ci95": [
-                0.47575980742431034,
-                0.6833617612031406
+                0.5192986408006858,
+                0.719822927826765
               ],
-              "diff_real_minus_null": -0.19132549019607842,
-              "diff_se": 0.07898979380181849,
+              "diff_real_minus_null": -0.23132549019607834,
+              "diff_se": 0.07779079095203131,
               "diff_ci95": [
-                -0.3461454860476426,
-                -0.036505494344514194
+                -0.3837954404620597,
+                -0.07885553993009697
               ],
-              "z_vs_null_set_means": -3.612663117648879,
-              "p_two_sided_parametric": 0.00030306833777027364,
+              "z_vs_null_set_means": -4.522125150110584,
+              "p_two_sided_parametric": 6.122184236900807e-06,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -3223,23 +3769,23 @@
                 276.1541583517094,
                 528.8318970529733
               ],
-              "null_mean_of_set_means": 555.1169430806045,
-              "null_sd_of_set_means": 50.00882707881326,
+              "null_mean_of_set_means": 569.9489302884175,
+              "null_sd_of_set_means": 49.17208590906049,
               "null_set_mean_ci95": [
-                457.0996420061305,
-                653.1342441550785
+                473.57164190665895,
+                666.3262186701761
               ],
-              "diff_real_minus_null": -152.62391537826318,
-              "diff_se": 81.5830544775338,
+              "diff_real_minus_null": -167.45590258607615,
+              "diff_se": 81.07284394132,
               "diff_ci95": [
-                -312.52670215422944,
-                7.278871397703085
+                -326.35867671106337,
+                -8.55312846108896
               ],
-              "z_vs_null_set_means": -3.05193951335291,
-              "p_two_sided_parametric": 0.0022736791265307588,
-              "p_two_sided_empirical": 0.003996003996003996,
-              "null_sets_ge_real_abs": 3,
-              "p_holm": 0.04795204795204795,
+              "z_vs_null_set_means": -3.4055074030369856,
+              "p_two_sided_parametric": 0.0006604122295001957,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
               "significant_holm_05": true
             },
             {
@@ -3253,23 +3799,23 @@
                 0.05596983859349153,
                 0.29697133787709673
               ],
-              "null_mean_of_set_means": 0.06964705882352942,
-              "null_sd_of_set_means": 0.06209778167509702,
+              "null_mean_of_set_means": 0.07450980392156863,
+              "null_sd_of_set_means": 0.06318419830728156,
               "null_set_mean_ci95": [
-                -0.05206459325966073,
-                0.19135871090671958
+                -0.04933122476070323,
+                0.19835083260384048
               ],
-              "diff_real_minus_null": 0.1068235294117647,
-              "diff_se": 0.08738376124751428,
+              "diff_real_minus_null": 0.1019607843137255,
+              "diff_se": 0.08815911839695564,
               "diff_ci95": [
-                -0.06444864263336328,
-                0.27809570145689266
+                -0.07083108774430756,
+                0.27475265637175855
               ],
-              "z_vs_null_set_means": 1.7202471091588767,
-              "p_two_sided_parametric": 0.08538753311758818,
-              "p_two_sided_empirical": 0.0899100899100899,
-              "null_sets_ge_real_abs": 89,
-              "p_holm": 0.9890109890109889,
+              "z_vs_null_set_means": 1.6137070192433731,
+              "p_two_sided_parametric": 0.10659099071502176,
+              "p_two_sided_empirical": 0.1048951048951049,
+              "null_sets_ge_real_abs": 104,
+              "p_holm": 1.0,
               "significant_holm_05": false
             }
           ],
@@ -3315,22 +3861,22 @@
                     -0.763575903493337,
                     1.655805161891439
                   ],
-                  "null_mean_of_set_means": 0.12139017966746463,
-                  "null_sd_of_set_means": 0.746145418371241,
+                  "null_mean_of_set_means": 0.131451270109446,
+                  "null_sd_of_set_means": 0.7589481332275624,
                   "null_set_mean_ci95": [
-                    -1.3410548403401679,
-                    1.583835199675097
+                    -1.3560870710165764,
+                    1.6189896112354683
                   ],
-                  "diff_real_minus_null": 0.32472444953158625,
-                  "diff_se": 0.9683260326220935,
+                  "diff_real_minus_null": 0.31466335908960485,
+                  "diff_se": 0.9782252240802479,
                   "diff_ci95": [
-                    -1.573194574407717,
-                    2.2226434734708893
+                    -1.602658080107681,
+                    2.2319847982868906
                   ],
-                  "z_vs_null_set_means": 0.4352026314661644,
-                  "p_two_sided_parametric": 0.6634153526881734,
-                  "p_two_sided_empirical": 0.6733266733266733,
-                  "null_sets_ge_real_abs": 673,
+                  "z_vs_null_set_means": 0.4146045629645899,
+                  "p_two_sided_parametric": 0.6784314073071462,
+                  "p_two_sided_empirical": 0.6963036963036963,
+                  "null_sets_ge_real_abs": 696,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3345,22 +3891,22 @@
                     -2.0746351250065533,
                     4.5728614118446735
                   ],
-                  "null_mean_of_set_means": 0.5187026487801993,
-                  "null_sd_of_set_means": 1.6888896237073803,
+                  "null_mean_of_set_means": 0.543914205440986,
+                  "null_sd_of_set_means": 1.6732563598249788,
                   "null_set_mean_ci95": [
-                    -2.791521013686266,
-                    3.828926311246665
+                    -2.7356682598159723,
+                    3.8234966706979443
                   ],
-                  "diff_real_minus_null": 0.7304104946388605,
-                  "diff_se": 2.3933348402366126,
+                  "diff_real_minus_null": 0.7051989379780739,
+                  "diff_se": 2.382328764490471,
                   "diff_ci95": [
-                    -3.9605257922249004,
-                    5.4213467815026215
+                    -3.9641654404232494,
+                    5.3745633163793975
                   ],
-                  "z_vs_null_set_means": 0.43247970997387847,
-                  "p_two_sided_parametric": 0.6653927958895567,
-                  "p_two_sided_empirical": 0.6713286713286714,
-                  "null_sets_ge_real_abs": 671,
+                  "z_vs_null_set_means": 0.4214530151565281,
+                  "p_two_sided_parametric": 0.673424313493098,
+                  "p_two_sided_empirical": 0.6673326673326674,
+                  "null_sets_ge_real_abs": 667,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3375,22 +3921,22 @@
                     -3.133970879413388,
                     7.6960311026654455
                   ],
-                  "null_mean_of_set_means": 1.4743591343657205,
-                  "null_sd_of_set_means": 2.9251394011074097,
+                  "null_mean_of_set_means": 1.5135748834264295,
+                  "null_sd_of_set_means": 2.902980020128352,
                   "null_set_mean_ci95": [
-                    -4.258914091804803,
-                    7.207632360536243
+                    -4.176265956025141,
+                    7.203415722877999
                   ],
-                  "diff_real_minus_null": 0.8066709772603082,
-                  "diff_se": 4.023587834711773,
+                  "diff_real_minus_null": 0.7674552281995992,
+                  "diff_se": 4.007506898932797,
                   "diff_ci95": [
-                    -7.079561178774766,
-                    8.692903133295383
+                    -7.0872582937086825,
+                    8.62216875010788
                   ],
-                  "z_vs_null_set_means": 0.27577180662053774,
-                  "p_two_sided_parametric": 0.7827233393726813,
-                  "p_two_sided_empirical": 0.7762237762237763,
-                  "null_sets_ge_real_abs": 776,
+                  "z_vs_null_set_means": 0.2643680710436536,
+                  "p_two_sided_parametric": 0.791496312166452,
+                  "p_two_sided_empirical": 0.7942057942057942,
+                  "null_sets_ge_real_abs": 794,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3405,22 +3951,22 @@
                     -3.968290687872546,
                     20.109913507718577
                   ],
-                  "null_mean_of_set_means": 6.189803996695088,
-                  "null_sd_of_set_means": 5.6990541368271055,
+                  "null_mean_of_set_means": 6.239779548429258,
+                  "null_sd_of_set_means": 5.680013655077043,
                   "null_set_mean_ci95": [
-                    -4.980342111486039,
-                    17.359950104876216
+                    -4.8930472155217455,
+                    17.372606312380263
                   ],
-                  "diff_real_minus_null": 1.8810074132279277,
-                  "diff_se": 8.379038363197504,
+                  "diff_real_minus_null": 1.8310318614937575,
+                  "diff_se": 8.366099506897527,
                   "diff_ci95": [
-                    -14.541907778639178,
-                    18.303922605095032
+                    -14.566523172025393,
+                    18.22858689501291
                   ],
-                  "z_vs_null_set_means": 0.3300560703701546,
-                  "p_two_sided_parametric": 0.7413575956631189,
-                  "p_two_sided_empirical": 0.7122877122877123,
-                  "null_sets_ge_real_abs": 712,
+                  "z_vs_null_set_means": 0.3223639893641984,
+                  "p_two_sided_parametric": 0.7471769616068762,
+                  "p_two_sided_empirical": 0.7452547452547452,
+                  "null_sets_ge_real_abs": 745,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 }
@@ -3440,23 +3986,23 @@
                     -0.060449446000024665,
                     2.4583768540115303
                   ],
-                  "null_mean_of_set_means": 0.11586306278747362,
-                  "null_sd_of_set_means": 0.8015535072253721,
+                  "null_mean_of_set_means": 0.12980447768044417,
+                  "null_sd_of_set_means": 0.8061192278743189,
                   "null_set_mean_ci95": [
-                    -1.4551818113742556,
-                    1.686907936949203
+                    -1.450189208953221,
+                    1.7097981643141091
                   ],
-                  "diff_real_minus_null": 1.083100641218279,
-                  "diff_se": 1.027311277465257,
+                  "diff_real_minus_null": 1.0691592263253087,
+                  "diff_se": 1.0308776093264866,
                   "diff_ci95": [
-                    -0.9304294626136247,
-                    3.0966307450501827
+                    -0.9513608879546052,
+                    3.0896793406052225
                   ],
-                  "z_vs_null_set_means": 1.3512518271768283,
-                  "p_two_sided_parametric": 0.17661477767108225,
-                  "p_two_sided_empirical": 0.1798201798201798,
-                  "null_sets_ge_real_abs": 179,
-                  "p_holm": 0.7192807192807192,
+                  "z_vs_null_set_means": 1.3263040867349216,
+                  "p_two_sided_parametric": 0.18473899373552882,
+                  "p_two_sided_empirical": 0.17782217782217782,
+                  "null_sets_ge_real_abs": 177,
+                  "p_holm": 0.7112887112887113,
                   "significant_holm_05": false
                 },
                 {
@@ -3470,22 +4016,22 @@
                     -3.1136587056963463,
                     3.678492407767051
                   ],
-                  "null_mean_of_set_means": 0.4571586679899885,
-                  "null_sd_of_set_means": 1.6950486426053941,
+                  "null_mean_of_set_means": 0.4737675944301127,
+                  "null_sd_of_set_means": 1.7089182861914132,
                   "null_set_mean_ci95": [
-                    -2.8651366715165842,
-                    3.779454007496561
+                    -2.875712246505057,
+                    3.8232474353652823
                   ],
-                  "diff_real_minus_null": -0.1747418169546361,
-                  "diff_se": 2.4239245281492745,
+                  "diff_real_minus_null": -0.19135074339476027,
+                  "diff_se": 2.4336437549988066,
                   "diff_ci95": [
-                    -4.925633892127214,
-                    4.576150258217941
+                    -4.96129250319242,
+                    4.578591016402901
                   ],
-                  "z_vs_null_set_means": -0.10308955894389388,
-                  "p_two_sided_parametric": 0.917891891627542,
-                  "p_two_sided_empirical": 0.9120879120879121,
-                  "null_sets_ge_real_abs": 912,
+                  "z_vs_null_set_means": -0.111971850814011,
+                  "p_two_sided_parametric": 0.9108457259805172,
+                  "p_two_sided_empirical": 0.9080919080919081,
+                  "null_sets_ge_real_abs": 908,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3500,22 +4046,22 @@
                     -3.3794922523317954,
                     6.423469190787751
                   ],
-                  "null_mean_of_set_means": 1.4812104149900152,
-                  "null_sd_of_set_means": 2.9733993341240708,
+                  "null_mean_of_set_means": 1.5098150077917283,
+                  "null_sd_of_set_means": 2.9310728845066976,
                   "null_set_mean_ci95": [
-                    -4.3466522798931635,
-                    7.309073109873193
+                    -4.235087845841399,
+                    7.254717861424856
                   ],
-                  "diff_real_minus_null": 0.04077805423796277,
-                  "diff_se": 3.8852131887223966,
+                  "diff_real_minus_null": 0.012173461436249644,
+                  "diff_se": 3.8529165804547856,
                   "diff_ci95": [
-                    -7.574239795657935,
-                    7.655795904133861
+                    -7.53954303625513,
+                    7.563889959127629
                   ],
-                  "z_vs_null_set_means": 0.013714287808561548,
-                  "p_two_sided_parametric": 0.9890579244968927,
-                  "p_two_sided_empirical": 0.988011988011988,
-                  "null_sets_ge_real_abs": 988,
+                  "z_vs_null_set_means": 0.004153244192799542,
+                  "p_two_sided_parametric": 0.9966862001081878,
+                  "p_two_sided_empirical": 0.994005994005994,
+                  "null_sets_ge_real_abs": 994,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3530,22 +4076,22 @@
                     -4.919360109372496,
                     20.06701357047713
                   ],
-                  "null_mean_of_set_means": 6.210514674836252,
-                  "null_sd_of_set_means": 5.701504420517454,
+                  "null_mean_of_set_means": 6.257867685153893,
+                  "null_sd_of_set_means": 5.696035823077821,
                   "null_set_mean_ci95": [
-                    -4.964433989377958,
-                    17.38546333905046
+                    -4.906362528078637,
+                    17.422097898386422
                   ],
-                  "diff_real_minus_null": 1.3633120557160643,
-                  "diff_se": 8.551957888206111,
+                  "diff_real_minus_null": 1.3159590453984231,
+                  "diff_se": 8.548313000952673,
                   "diff_ci95": [
-                    -15.398525405167913,
-                    18.125149516600043
+                    -15.438734436468817,
+                    18.07065252726566
                   ],
-                  "z_vs_null_set_means": 0.23911444334061108,
-                  "p_two_sided_parametric": 0.8110168424229953,
-                  "p_two_sided_empirical": 0.7992007992007992,
-                  "null_sets_ge_real_abs": 799,
+                  "z_vs_null_set_means": 0.23103068278937755,
+                  "p_two_sided_parametric": 0.8172909653275573,
+                  "p_two_sided_empirical": 0.8201798201798202,
+                  "null_sets_ge_real_abs": 820,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 }
@@ -3565,23 +4111,23 @@
                     -0.05437824158863469,
                     2.4670462691030495
                   ],
-                  "null_mean_of_set_means": 0.14409430622633335,
-                  "null_sd_of_set_means": 0.8018004275425743,
+                  "null_mean_of_set_means": 0.1580295467961655,
+                  "null_sd_of_set_means": 0.8058124427686888,
                   "null_set_mean_ci95": [
-                    -1.4274345317571122,
-                    1.715623144209779
+                    -1.4213628410304646,
+                    1.7374219346227955
                   ],
-                  "diff_real_minus_null": 1.062239707530874,
-                  "diff_se": 1.027918570063192,
+                  "diff_real_minus_null": 1.048304466961042,
+                  "diff_se": 1.031051091844698,
                   "diff_ci95": [
-                    -0.9524806897929825,
-                    3.076960104854731
+                    -0.9725556730545659,
+                    3.06916460697665
                   ],
-                  "z_vs_null_set_means": 1.3248180857005976,
-                  "p_two_sided_parametric": 0.1852314947604614,
-                  "p_two_sided_empirical": 0.1888111888111888,
-                  "null_sets_ge_real_abs": 188,
-                  "p_holm": 0.7552447552447552,
+                  "z_vs_null_set_means": 1.300928617283664,
+                  "p_two_sided_parametric": 0.19328288957590933,
+                  "p_two_sided_empirical": 0.18081918081918083,
+                  "null_sets_ge_real_abs": 180,
+                  "p_holm": 0.7232767232767233,
                   "significant_holm_05": false
                 },
                 {
@@ -3595,22 +4141,22 @@
                     -3.103955313871606,
                     3.6834418712506674
                   ],
-                  "null_mean_of_set_means": 0.48539984103916767,
-                  "null_sd_of_set_means": 1.696267218138548,
+                  "null_mean_of_set_means": 0.502002485216706,
+                  "null_sd_of_set_means": 1.710079436900785,
                   "null_set_mean_ci95": [
-                    -2.8392839065123865,
-                    3.810083588590722
+                    -2.8497532111088324,
+                    3.8537581815422444
                   ],
-                  "diff_real_minus_null": -0.1956565623496372,
-                  "diff_se": 2.4239103872861585,
+                  "diff_real_minus_null": -0.2122592065271755,
+                  "diff_se": 2.43359626289431,
                   "diff_ci95": [
-                    -4.946520921430508,
-                    4.555207796731233
+                    -4.982107881800022,
+                    4.557589468745672
                   ],
-                  "z_vs_null_set_means": -0.11534536555174782,
-                  "p_two_sided_parametric": 0.908171381785803,
-                  "p_two_sided_empirical": 0.903096903096903,
-                  "null_sets_ge_real_abs": 903,
+                  "z_vs_null_set_means": -0.12412242492773178,
+                  "p_two_sided_parametric": 0.901218342931644,
+                  "p_two_sided_empirical": 0.9020979020979021,
+                  "null_sets_ge_real_abs": 902,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3625,22 +4171,22 @@
                     -3.3791498796902735,
                     6.437833131989996
                   ],
-                  "null_mean_of_set_means": 1.5094663307121547,
-                  "null_sd_of_set_means": 2.9740903658055537,
+                  "null_mean_of_set_means": 1.538064449560557,
+                  "null_sd_of_set_means": 2.9318315394656254,
                   "null_set_mean_ci95": [
-                    -4.319750786266731,
-                    7.338683447691039
+                    -4.208325367792068,
+                    7.284454266913182
                   ],
-                  "diff_real_minus_null": 0.019875295437706608,
-                  "diff_se": 3.888045045825669,
+                  "diff_real_minus_null": -0.008722823410695746,
+                  "diff_se": 3.855815990189041,
                   "diff_ci95": [
-                    -7.600692994380605,
-                    7.640443585256017
+                    -7.566122164181216,
+                    7.548676517359825
                   ],
-                  "z_vs_null_set_means": 0.006682814909130456,
-                  "p_two_sided_parametric": 0.9946679248497572,
-                  "p_two_sided_empirical": 0.998001998001998,
-                  "null_sets_ge_real_abs": 998,
+                  "z_vs_null_set_means": -0.002975213034336081,
+                  "p_two_sided_parametric": 0.9976261269570159,
+                  "p_two_sided_empirical": 0.997002997002997,
+                  "null_sets_ge_real_abs": 997,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -3655,22 +4201,22 @@
                     -4.915144605775702,
                     20.07834245989851
                   ],
-                  "null_mean_of_set_means": 6.238789515057595,
-                  "null_sd_of_set_means": 5.702461564042576,
+                  "null_mean_of_set_means": 6.286136051788135,
+                  "null_sd_of_set_means": 5.697115015054512,
                   "null_set_mean_ci95": [
-                    -4.938035150465852,
-                    17.415614180581045
+                    -4.880209377718708,
+                    17.452481481294978
                   ],
-                  "diff_real_minus_null": 1.3428094120038088,
-                  "diff_se": 8.55394853501659,
+                  "diff_real_minus_null": 1.2954628752732695,
+                  "diff_se": 8.550385204485767,
                   "diff_ci95": [
-                    -15.422929716628705,
-                    18.108548540636324
+                    -15.463292125518834,
+                    18.054217876065373
                   ],
-                  "z_vs_null_set_means": 0.23547890624480902,
-                  "p_two_sided_parametric": 0.8138370489774924,
-                  "p_two_sided_empirical": 0.8111888111888111,
-                  "null_sets_ge_real_abs": 811,
+                  "z_vs_null_set_means": 0.2273892789332908,
+                  "p_two_sided_parametric": 0.8201210561341352,
+                  "p_two_sided_empirical": 0.8211788211788211,
+                  "null_sets_ge_real_abs": 821,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 }
@@ -3768,7 +4314,7 @@
               "intra_minute_adverse_print_bps": -4.369938262219878
             }
           },
-          "control_pool_bars": 369780,
+          "control_pool_bars": 480849,
           "control_pool_strata": 72
         },
         "add": {
@@ -3780,29 +4326,29 @@
               "metric": "bb_pctb",
               "unit": "",
               "n": 737,
-              "real_mean": 0.5184976638950927,
+              "real_mean": 0.5184976641753756,
               "real_median": 0.5375052090792449,
-              "real_mean_se_boot": 0.012301769969766433,
+              "real_mean_se_boot": 0.012301769979471147,
               "real_mean_ci95": [
-                0.49438619475435047,
-                0.5426091330358349
+                0.4943861950156121,
+                0.542609133335139
               ],
-              "null_mean_of_set_means": 0.5075103384526487,
-              "null_sd_of_set_means": 0.012157866817431213,
+              "null_mean_of_set_means": 0.5079280013229225,
+              "null_sd_of_set_means": 0.012146558966581426,
               "null_set_mean_ci95": [
-                0.48368091949048353,
-                0.5313397574148139
+                0.4841207457484229,
+                0.5317352568974221
               ],
-              "diff_real_minus_null": 0.010987325442443963,
-              "diff_se": 0.01729587436180785,
+              "diff_real_minus_null": 0.010569662852453088,
+              "diff_se": 0.017287927561059978,
               "diff_ci95": [
-                -0.02291258830669942,
-                0.044887239191587346
+                -0.02331467516722447,
+                0.044454000872130646
               ],
-              "z_vs_null_set_means": 0.903721483993475,
-              "p_two_sided_parametric": 0.36614310417618623,
-              "p_two_sided_empirical": 0.3776223776223776,
-              "null_sets_ge_real_abs": 377,
+              "z_vs_null_set_means": 0.8701775442356292,
+              "p_two_sided_parametric": 0.384203385753761,
+              "p_two_sided_empirical": 0.3876123876123876,
+              "null_sets_ge_real_abs": 387,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3817,22 +4363,22 @@
                 48.80375822710629,
                 51.48590329796742
               ],
-              "null_mean_of_set_means": 50.42466185013654,
-              "null_sd_of_set_means": 0.6867530874866495,
+              "null_mean_of_set_means": 50.461329869384436,
+              "null_sd_of_set_means": 0.683973003214386,
               "null_set_mean_ci95": [
-                49.078625798662706,
-                51.77069790161037
+                49.12074278308424,
+                51.80191695568463
               ],
-              "diff_real_minus_null": -0.2798310875996819,
-              "diff_se": 0.9694265026028157,
+              "diff_real_minus_null": -0.31649910684758,
+              "diff_se": 0.9674590481784683,
               "diff_ci95": [
-                -2.179907032701201,
-                1.6202448575018369
+                -2.2127188412773777,
+                1.5797206275822178
               ],
-              "z_vs_null_set_means": -0.40746971902783297,
-              "p_two_sided_parametric": 0.6836630300025919,
-              "p_two_sided_empirical": 0.6753246753246753,
-              "null_sets_ge_real_abs": 675,
+              "z_vs_null_set_means": -0.46273625619749176,
+              "p_two_sided_parametric": 0.6435534269061618,
+              "p_two_sided_empirical": 0.6483516483516484,
+              "null_sets_ge_real_abs": 648,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3840,27 +4386,27 @@
               "metric": "stoch_k",
               "unit": "",
               "n": 737,
-              "real_mean": 46.1596245530753,
+              "real_mean": 46.15962455307524,
               "real_median": 44.02761460085103,
               "real_mean_se_boot": 1.2574215331518659,
               "real_mean_ci95": [
-                43.69507834809764,
-                48.624170758052955
+                43.69507834809758,
+                48.6241707580529
               ],
-              "null_mean_of_set_means": 50.13156062794636,
-              "null_sd_of_set_means": 1.1819022961638677,
+              "null_mean_of_set_means": 50.13635231667338,
+              "null_sd_of_set_means": 1.1764172339934769,
               "null_set_mean_ci95": [
-                47.81503212746517,
-                52.44808912842754
+                47.830574538046164,
+                52.4421300953006
               ],
-              "diff_real_minus_null": -3.97193607487106,
-              "diff_se": 1.7256888333970906,
+              "diff_real_minus_null": -3.9767277635981415,
+              "diff_se": 1.721936822438864,
               "diff_ci95": [
-                -7.3542861883293575,
-                -0.5895859614127623
+                -7.351723935578315,
+                -0.601731591617968
               ],
-              "z_vs_null_set_means": -3.3606297980491964,
-              "p_two_sided_parametric": 0.0007776498148075461,
+              "z_vs_null_set_means": -3.380371902661358,
+              "p_two_sided_parametric": 0.0007238780873053408,
               "p_two_sided_empirical": 0.001998001998001998,
               "null_sets_ge_real_abs": 1,
               "p_holm": 0.01998001998001998,
@@ -3870,27 +4416,27 @@
               "metric": "stoch_d",
               "unit": "",
               "n": 737,
-              "real_mean": 47.86049420212818,
+              "real_mean": 47.8604942021281,
               "real_median": 45.660586375611494,
-              "real_mean_se_boot": 1.218743849065666,
+              "real_mean_se_boot": 1.2187438490656664,
               "real_mean_ci95": [
-                45.47175625795948,
-                50.24923214629688
+                45.4717562579594,
+                50.249232146296805
               ],
-              "null_mean_of_set_means": 50.141129510790925,
-              "null_sd_of_set_means": 1.128100442836974,
+              "null_mean_of_set_means": 50.15020327875303,
+              "null_sd_of_set_means": 1.1134264840494843,
               "null_set_mean_ci95": [
-                47.930052642830454,
-                52.3522063787514
+                47.967887370016044,
+                52.33251918749002
               ],
-              "diff_real_minus_null": -2.2806353086627453,
-              "diff_se": 1.660706831070545,
+              "diff_real_minus_null": -2.2897090766249306,
+              "diff_se": 1.6507740926662837,
               "diff_ci95": [
-                -5.535620697561013,
-                0.9743500802355229
+                -5.525226298250846,
+                0.9458081450009854
               ],
-              "z_vs_null_set_means": -2.021659793809981,
-              "p_two_sided_parametric": 0.04321151022191261,
+              "z_vs_null_set_means": -2.056452859193143,
+              "p_two_sided_parametric": 0.0397388857059886,
               "p_two_sided_empirical": 0.03696303696303696,
               "null_sets_ge_real_abs": 36,
               "p_holm": 0.3326673326673326,
@@ -3907,22 +4453,22 @@
                 -0.1827213453555576,
                 0.14819037913596902
               ],
-              "null_mean_of_set_means": 0.0002869984165091171,
-              "null_sd_of_set_means": 0.07747744861326641,
+              "null_mean_of_set_means": 0.0001760846503732354,
+              "null_sd_of_set_means": 0.07692224097833741,
               "null_set_mean_ci95": [
-                -0.15156880086549304,
-                0.15214279769851127
+                -0.15059150766716808,
+                0.15094367696791458
               ],
-              "diff_real_minus_null": -0.017552481526303402,
-              "diff_se": 0.11458123477481842,
+              "diff_real_minus_null": -0.01744156776016752,
+              "diff_se": 0.11420654743065362,
               "diff_ci95": [
-                -0.2421317016849475,
-                0.2070267386323407
+                -0.24128640072424862,
+                0.20640326520391356
               ],
-              "z_vs_null_set_means": -0.22654955526372228,
-              "p_two_sided_parametric": 0.8207740213987109,
-              "p_two_sided_empirical": 0.8451548451548452,
-              "null_sets_ge_real_abs": 845,
+              "z_vs_null_set_means": -0.22674284496052782,
+              "p_two_sided_parametric": 0.8206237091965121,
+              "p_two_sided_empirical": 0.8321678321678322,
+              "null_sets_ge_real_abs": 832,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3937,22 +4483,22 @@
                 -0.10124056251903846,
                 1.8446369916251362
               ],
-              "null_mean_of_set_means": 0.3010349571619861,
-              "null_sd_of_set_means": 0.4916687999196367,
+              "null_mean_of_set_means": 0.3097447588937565,
+              "null_sd_of_set_means": 0.48757890586365676,
               "null_set_mean_ci95": [
-                -0.6626358906805019,
-                1.264705805004474
+                -0.6459098965990108,
+                1.2653994143865237
               ],
-              "diff_real_minus_null": 0.5706632573910628,
-              "diff_se": 0.6986762649816032,
+              "diff_real_minus_null": 0.5619534556592923,
+              "diff_se": 0.6958042137537169,
               "diff_ci95": [
-                -0.7987422219728795,
-                1.9400687367550051
+                -0.8018228032979927,
+                1.9257297146165775
               ],
-              "z_vs_null_set_means": 1.1606659960614498,
-              "p_two_sided_parametric": 0.24577775535142354,
-              "p_two_sided_empirical": 0.24475524475524477,
-              "null_sets_ge_real_abs": 244,
+              "z_vs_null_set_means": 1.1525384894654018,
+              "p_two_sided_parametric": 0.2490998629078578,
+              "p_two_sided_empirical": 0.25374625374625376,
+              "null_sets_ge_real_abs": 253,
               "p_holm": 1.0,
               "significant_holm_05": false
             },
@@ -3967,23 +4513,23 @@
                 0.7352043839011608,
                 3.71423356711247
               ],
-              "null_mean_of_set_means": 0.7559822516627389,
-              "null_sd_of_set_means": 0.787528083887151,
+              "null_mean_of_set_means": 0.7765761117495912,
+              "null_sd_of_set_means": 0.7821113343218384,
               "null_set_mean_ci95": [
-                -0.7875727927560771,
-                2.2995372960815548
+                -0.7563621035212121,
+                2.3095143270203944
               ],
-              "diff_real_minus_null": 1.4687367238440765,
-              "diff_se": 1.0944104576110742,
+              "diff_real_minus_null": 1.4481428637572242,
+              "diff_se": 1.0905190993706622,
               "diff_ci95": [
-                -0.6763077730736291,
-                3.613781220761782
+                -0.6892745710092734,
+                3.585560298523722
               ],
-              "z_vs_null_set_means": 1.8649959968342404,
-              "p_two_sided_parametric": 0.062181965331979505,
-              "p_two_sided_empirical": 0.06893106893106893,
-              "null_sets_ge_real_abs": 68,
-              "p_holm": 0.5514485514485514,
+              "z_vs_null_set_means": 1.8515814823383114,
+              "p_two_sided_parametric": 0.06408594415401159,
+              "p_two_sided_empirical": 0.06593406593406594,
+              "null_sets_ge_real_abs": 65,
+              "p_holm": 0.5274725274725275,
               "significant_holm_05": false
             },
             {
@@ -3997,23 +4543,23 @@
                 1.0481364387539864,
                 4.7017849591181635
               ],
-              "null_mean_of_set_means": 1.1784460027738937,
-              "null_sd_of_set_means": 0.9962182273555793,
+              "null_mean_of_set_means": 1.2044169305403876,
+              "null_sd_of_set_means": 0.9912694006946079,
               "null_set_mean_ci95": [
-                -0.7741417228430418,
-                3.131033728390829
+                -0.7384710948210438,
+                3.147304955901819
               ],
-              "diff_real_minus_null": 1.6965146961621813,
-              "diff_se": 1.3642484791657332,
+              "diff_real_minus_null": 1.6705437683956874,
+              "diff_se": 1.3606388871203008,
               "diff_ci95": [
-                -0.9774123230026559,
-                4.3704417153270185
+                -0.9963084503601021,
+                4.337395987151477
               ],
-              "z_vs_null_set_means": 1.702954884358531,
-              "p_two_sided_parametric": 0.08857651168979874,
-              "p_two_sided_empirical": 0.08791208791208792,
-              "null_sets_ge_real_abs": 87,
-              "p_holm": 0.6153846153846154,
+              "z_vs_null_set_means": 1.6852570726233398,
+              "p_two_sided_parametric": 0.09193898403070655,
+              "p_two_sided_empirical": 0.08591408591408592,
+              "null_sets_ge_real_abs": 85,
+              "p_holm": 0.6013986013986015,
               "significant_holm_05": false
             },
             {
@@ -4027,23 +4573,23 @@
                 2.4067478746571944,
                 7.951622776150453
               ],
-              "null_mean_of_set_means": 2.7557531539855438,
-              "null_sd_of_set_means": 1.5638207118986924,
+              "null_mean_of_set_means": 2.775779434995673,
+              "null_sd_of_set_means": 1.5629838860843386,
               "null_set_mean_ci95": [
-                -0.3093354413358935,
-                5.820841749306981
+                -0.28766898172963096,
+                5.839227851720977
               ],
-              "diff_real_minus_null": 2.4234321714182796,
-              "diff_se": 2.1086418986827677,
+              "diff_real_minus_null": 2.4034058904081506,
+              "diff_se": 2.108021362813109,
               "diff_ci95": [
-                -1.7095059499999454,
-                6.556370292836505
+                -1.7283159807055424,
+                6.535127761521844
               ],
-              "z_vs_null_set_means": 1.5496867083157513,
-              "p_two_sided_parametric": 0.12121672990733168,
-              "p_two_sided_empirical": 0.11488511488511488,
-              "null_sets_ge_real_abs": 114,
-              "p_holm": 0.6893106893106893,
+              "z_vs_null_set_means": 1.5377035629134201,
+              "p_two_sided_parametric": 0.12412111210407883,
+              "p_two_sided_empirical": 0.11288711288711288,
+              "null_sets_ge_real_abs": 112,
+              "p_holm": 0.6773226773226773,
               "significant_holm_05": false
             },
             {
@@ -4057,20 +4603,20 @@
                 26.89553552520239,
                 28.635149912446494
               ],
-              "null_mean_of_set_means": 25.965996082927926,
-              "null_sd_of_set_means": 0.3973078661604006,
+              "null_mean_of_set_means": 25.981733268499998,
+              "null_sd_of_set_means": 0.39153920318392543,
               "null_set_mean_ci95": [
-                25.18727266525354,
-                26.74471950060231
+                25.214316430259505,
+                26.74915010674049
               ],
-              "diff_real_minus_null": 1.7993466358965158,
-              "diff_se": 0.595645449480358,
+              "diff_real_minus_null": 1.7836094503244446,
+              "diff_se": 0.5918132379421993,
               "diff_ci95": [
-                0.6318815549150141,
-                2.9668117168780173
+                0.6236555039577341,
+                2.943563396691155
               ],
-              "z_vs_null_set_means": 4.528847247061768,
-              "p_two_sided_parametric": 5.930635291306885e-06,
+              "z_vs_null_set_means": 4.555378965427875,
+              "p_two_sided_parametric": 5.229121821326288e-06,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -4087,20 +4633,20 @@
                 0.2770246345943638,
                 0.41496993799722365
               ],
-              "null_mean_of_set_means": 0.5875820895522388,
-              "null_sd_of_set_means": 0.029366057202055932,
+              "null_mean_of_set_means": 0.6025345997286295,
+              "null_sd_of_set_means": 0.02929963916688425,
               "null_set_mean_ci95": [
-                0.5300246174362091,
-                0.6451395616682685
+                0.5451073069615364,
+                0.6599618924957227
               ],
-              "diff_real_minus_null": -0.24158480325644505,
-              "diff_se": 0.045833507979937044,
+              "diff_real_minus_null": -0.2565373134328358,
+              "diff_se": 0.045790981573473055,
               "diff_ci95": [
-                -0.33141847889712167,
-                -0.15175112761576842
+                -0.346287637316843,
+                -0.16678698954882865
               ],
-              "z_vs_null_set_means": -8.226668006337997,
-              "p_two_sided_parametric": 2.220446049250313e-16,
+              "z_vs_null_set_means": -8.755647534485192,
+              "p_two_sided_parametric": 0.0,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
               "p_holm": 0.012987012987012988,
@@ -4117,19 +4663,19 @@
                 100.79973741504932,
                 232.48725854719765
               ],
-              "null_mean_of_set_means": 472.1254337609197,
-              "null_sd_of_set_means": 28.309349934824628,
+              "null_mean_of_set_means": 477.66015167693666,
+              "null_sd_of_set_means": 28.358799720058187,
               "null_set_mean_ci95": [
-                416.63910788866343,
-                527.611759633176
+                422.0769042256226,
+                533.2433991282508
               ],
-              "diff_real_minus_null": -305.48193577979623,
-              "diff_se": 43.93130654775588,
+              "diff_real_minus_null": -311.01665369581315,
+              "diff_se": 43.963188269538826,
               "diff_ci95": [
-                -391.58729661339777,
-                -219.3765749461947
+                -397.18450270410926,
+                -224.84880468751703
               ],
-              "z_vs_null_set_means": -10.790849542045079,
+              "z_vs_null_set_means": -10.96720089587681,
               "p_two_sided_parametric": 0.0,
               "p_two_sided_empirical": 0.000999000999000999,
               "null_sets_ge_real_abs": 0,
@@ -4147,22 +4693,22 @@
                 0.023395492918262456,
                 0.1638500973124024
               ],
-              "null_mean_of_set_means": 0.050040705563093625,
-              "null_sd_of_set_means": 0.03522016367617093,
+              "null_mean_of_set_means": 0.05137313432835821,
+              "null_sd_of_set_means": 0.03565769067438004,
               "null_set_mean_ci95": [
-                -0.0189908152422014,
-                0.11907222636838866
+                -0.018515939393426654,
+                0.12126220805014307
               ],
-              "diff_real_minus_null": 0.04358208955223881,
-              "diff_se": 0.050242085848238166,
+              "diff_real_minus_null": 0.04224966078697422,
+              "diff_se": 0.0505497592994787,
               "diff_ci95": [
-                -0.054892398710307995,
-                0.14205657781478562
+                -0.05682786744000403,
+                0.14132718901395247
               ],
-              "z_vs_null_set_means": 1.2374187114219841,
-              "p_two_sided_parametric": 0.2159316756855676,
-              "p_two_sided_empirical": 0.22677322677322678,
-              "null_sets_ge_real_abs": 226,
+              "z_vs_null_set_means": 1.1848681164686445,
+              "p_two_sided_parametric": 0.2360695953065406,
+              "p_two_sided_empirical": 0.23476523476523475,
+              "null_sets_ge_real_abs": 234,
               "p_holm": 1.0,
               "significant_holm_05": false
             }
@@ -4209,22 +4755,22 @@
                     -0.6011271299390057,
                     0.8759250445235953
                   ],
-                  "null_mean_of_set_means": 0.15754598200594608,
-                  "null_sd_of_set_means": 0.47946353758677496,
+                  "null_mean_of_set_means": 0.16082024012747376,
+                  "null_sd_of_set_means": 0.47987904785805685,
                   "null_set_mean_ci95": [
-                    -0.7822025516641329,
-                    1.097294515676025
+                    -0.7797426936743177,
+                    1.1013831739292652
                   ],
-                  "diff_real_minus_null": -0.020147024713651346,
-                  "diff_se": 0.6098055332941233,
+                  "diff_real_minus_null": -0.023421282835179025,
+                  "diff_se": 0.6101322849465194,
                   "diff_ci95": [
-                    -1.215365869970133,
-                    1.1750718205428305
+                    -1.219280561330357,
+                    1.172437995659999
                   ],
-                  "z_vs_null_set_means": -0.04201993088995859,
-                  "p_two_sided_parametric": 0.966482809595606,
-                  "p_two_sided_empirical": 0.9660339660339661,
-                  "null_sets_ge_real_abs": 966,
+                  "z_vs_null_set_means": -0.04880663771364903,
+                  "p_two_sided_parametric": 0.9610733923501753,
+                  "p_two_sided_empirical": 0.971028971028971,
+                  "null_sets_ge_real_abs": 971,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -4239,22 +4785,22 @@
                     -2.064620930099325,
                     1.6359749945043984
                   ],
-                  "null_mean_of_set_means": 0.6124044609917387,
-                  "null_sd_of_set_means": 1.0369520908161554,
+                  "null_mean_of_set_means": 0.6373048934528213,
+                  "null_sd_of_set_means": 1.0402224115341747,
                   "null_set_mean_ci95": [
-                    -1.4200216370079257,
-                    2.644830558991403
+                    -1.401531033154161,
+                    2.676140820059804
                   ],
-                  "diff_real_minus_null": -0.8267274287892018,
-                  "diff_se": 1.402305770007733,
+                  "diff_real_minus_null": -0.8516278612502843,
+                  "diff_se": 1.4047257737391163,
                   "diff_ci95": [
-                    -3.5752467380043584,
-                    1.9217918804259546
+                    -3.6048903777789523,
+                    1.9016346552783838
                   ],
-                  "z_vs_null_set_means": -0.7972667552446983,
-                  "p_two_sided_parametric": 0.42529612363090674,
-                  "p_two_sided_empirical": 0.4385614385614386,
-                  "null_sets_ge_real_abs": 438,
+                  "z_vs_null_set_means": -0.818697859041759,
+                  "p_two_sided_parametric": 0.41295881844223836,
+                  "p_two_sided_empirical": 0.4175824175824176,
+                  "null_sets_ge_real_abs": 417,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 },
@@ -4269,20 +4815,20 @@
                     -5.6682447414609545,
                     1.1240628874232201
                   ],
-                  "null_mean_of_set_means": 1.6719712848753914,
-                  "null_sd_of_set_means": 1.6689499266858374,
+                  "null_mean_of_set_means": 1.7152115449006788,
+                  "null_sd_of_set_means": 1.6794684386582728,
                   "null_set_mean_ci95": [
-                    -1.59917057142885,
-                    4.943113141179633
+                    -1.5765465948695359,
+                    5.006969684670894
                   ],
-                  "diff_real_minus_null": -3.9440622118942583,
-                  "diff_se": 2.405774810845245,
+                  "diff_real_minus_null": -3.987302471919546,
+                  "diff_se": 2.4130836742976958,
                   "diff_ci95": [
-                    -8.659380841150938,
-                    0.7712564173624212
+                    -8.716946473543029,
+                    0.7423415297039382
                   ],
-                  "z_vs_null_set_means": -2.3631998472993656,
-                  "p_two_sided_parametric": 0.01811789642438355,
+                  "z_vs_null_set_means": -2.3741455213680593,
+                  "p_two_sided_parametric": 0.01758961659910785,
                   "p_two_sided_empirical": 0.017982017982017984,
                   "null_sets_ge_real_abs": 17,
                   "p_holm": 0.07192807192807193,
@@ -4299,22 +4845,22 @@
                     -4.2068687758280845,
                     11.546920231107473
                   ],
-                  "null_mean_of_set_means": 4.934647959374641,
-                  "null_sd_of_set_means": 3.2443659981533535,
+                  "null_mean_of_set_means": 5.162998033317499,
+                  "null_sd_of_set_means": 3.2405942997756947,
                   "null_set_mean_ci95": [
-                    -1.4243093970059313,
-                    11.293605315755213
+                    -1.1885667942428624,
+                    11.51456286087786
                   ],
-                  "diff_real_minus_null": -1.2646222317349474,
-                  "diff_se": 5.164964169548173,
+                  "diff_real_minus_null": -1.4929723056778053,
+                  "diff_se": 5.162595815912918,
                   "diff_ci95": [
-                    -11.387952004049366,
-                    8.858707540579472
+                    -11.611660104867124,
+                    8.625715493511514
                   ],
-                  "z_vs_null_set_means": -0.389790249452359,
-                  "p_two_sided_parametric": 0.69669165443936,
-                  "p_two_sided_empirical": 0.6753246753246753,
-                  "null_sets_ge_real_abs": 675,
+                  "z_vs_null_set_means": -0.46070941548627203,
+                  "p_two_sided_parametric": 0.6450070989583601,
+                  "p_two_sided_empirical": 0.6403596403596403,
+                  "null_sets_ge_real_abs": 640,
                   "p_holm": 1.0,
                   "significant_holm_05": false
                 }
@@ -4334,23 +4880,23 @@
                     -1.486458986470747,
                     0.04491872248767459
                   ],
-                  "null_mean_of_set_means": 0.10346483008675152,
-                  "null_sd_of_set_means": 0.4753818664148212,
+                  "null_mean_of_set_means": 0.11063415116584908,
+                  "null_sd_of_set_means": 0.477573995060483,
                   "null_set_mean_ci95": [
-                    -0.828283628086298,
-                    1.035213288259801
+                    -0.8254108791526975,
+                    1.0466791814843956
                   ],
-                  "diff_real_minus_null": -0.8242349620782877,
-                  "diff_se": 0.6153058286757559,
+                  "diff_real_minus_null": -0.8314042831573852,
+                  "diff_se": 0.6170010248324956,
                   "diff_ci95": [
-                    -2.0302343862827694,
-                    0.38176446212619386
+                    -2.0407262918290767,
+                    0.37791772551430614
                   ],
-                  "z_vs_null_set_means": -1.7338376162608085,
-                  "p_two_sided_parametric": 0.08294689925299203,
-                  "p_two_sided_empirical": 0.07792207792207792,
-                  "null_sets_ge_real_abs": 77,
-                  "p_holm": 0.15584415584415584,
+                  "z_vs_null_set_means": -1.740891027896297,
+                  "p_two_sided_parametric": 0.08170268170439376,
+                  "p_two_sided_empirical": 0.07692307692307693,
+                  "null_sets_ge_real_abs": 76,
+                  "p_holm": 0.15384615384615385,
                   "significant_holm_05": false
                 },
                 {
@@ -4364,20 +4910,20 @@
                     -4.577462444333413,
                     -0.7324189507532375
                   ],
-                  "null_mean_of_set_means": 0.5644996080441619,
-                  "null_sd_of_set_means": 1.0073513688046218,
+                  "null_mean_of_set_means": 0.5895942727834108,
+                  "null_sd_of_set_means": 1.0123044525177836,
                   "null_set_mean_ci95": [
-                    -1.409909074812897,
-                    2.5389082909012206
+                    -1.3945224541514447,
+                    2.5737109997182666
                   ],
-                  "diff_real_minus_null": -3.219440305587487,
-                  "diff_se": 1.406015397740509,
+                  "diff_real_minus_null": -3.244534970326736,
+                  "diff_se": 1.4095683108803865,
                   "diff_ci95": [
-                    -5.975230485158884,
-                    -0.46365012601608946
+                    -6.007288859652293,
+                    -0.48178108100117845
                   ],
-                  "z_vs_null_set_means": -3.195945729847819,
-                  "p_two_sided_parametric": 0.0013937332417255366,
+                  "z_vs_null_set_means": -3.2050979942417452,
+                  "p_two_sided_parametric": 0.001350165046560825,
                   "p_two_sided_empirical": 0.001998001998001998,
                   "null_sets_ge_real_abs": 1,
                   "p_holm": 0.005994005994005994,
@@ -4394,20 +4940,20 @@
                     -7.470132347581654,
                     -0.9584590948384579
                   ],
-                  "null_mean_of_set_means": 1.5908835479143233,
-                  "null_sd_of_set_means": 1.6782792054899027,
+                  "null_mean_of_set_means": 1.6379057051678798,
+                  "null_sd_of_set_means": 1.6888265799951399,
                   "null_set_mean_ci95": [
-                    -1.6985436948458859,
-                    4.880310790674533
+                    -1.6721943916225943,
+                    4.948005801958354
                   ],
-                  "diff_real_minus_null": -5.8051792691243795,
-                  "diff_se": 2.3613578646558087,
+                  "diff_real_minus_null": -5.852201426377936,
+                  "diff_se": 2.3688657814849075,
                   "diff_ci95": [
-                    -10.433440683849764,
-                    -1.1769178543989947
+                    -10.495178358088353,
+                    -1.2092244946675175
                   ],
-                  "z_vs_null_set_means": -3.4590068506686897,
-                  "p_two_sided_parametric": 0.0005421711144577568,
+                  "z_vs_null_set_means": -3.4652471104491838,
+                  "p_two_sided_parametric": 0.0005297444819765129,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -4424,23 +4970,23 @@
                     -4.823939914275145,
                     11.265515870868892
                   ],
-                  "null_mean_of_set_means": 4.847868682980986,
-                  "null_sd_of_set_means": 3.266078587400791,
+                  "null_mean_of_set_means": 5.074741289337006,
+                  "null_sd_of_set_means": 3.2670058666912816,
                   "null_set_mean_ci95": [
-                    -1.5536453483245642,
-                    11.249382714286536
+                    -1.3285902093779054,
+                    11.478072788051918
                   ],
-                  "diff_real_minus_null": -1.6270807046841123,
-                  "diff_se": 5.245360218416014,
+                  "diff_real_minus_null": -1.853953311040133,
+                  "diff_se": 5.245937648777252,
                   "diff_ci95": [
-                    -11.907986732779499,
-                    8.653825323411276
+                    -12.135991102643546,
+                    8.42808448056328
                   ],
-                  "z_vs_null_set_means": -0.4981756137040704,
-                  "p_two_sided_parametric": 0.6183602691364496,
-                  "p_two_sided_empirical": 0.6083916083916084,
-                  "null_sets_ge_real_abs": 608,
-                  "p_holm": 0.6083916083916084,
+                  "z_vs_null_set_means": -0.567477802823096,
+                  "p_two_sided_parametric": 0.570389603316491,
+                  "p_two_sided_empirical": 0.5734265734265734,
+                  "null_sets_ge_real_abs": 573,
+                  "p_holm": 0.5734265734265734,
                   "significant_holm_05": false
                 }
               ],
@@ -4459,23 +5005,23 @@
                     -1.4838869245663733,
                     0.04407977306690081
                   ],
-                  "null_mean_of_set_means": 0.13554683979569868,
-                  "null_sd_of_set_means": 0.4750295872998257,
+                  "null_mean_of_set_means": 0.14270431394136907,
+                  "null_sd_of_set_means": 0.4771196376446806,
                   "null_set_mean_ci95": [
-                    -0.7955111513119596,
-                    1.066604830903357
+                    -0.7924501758422049,
+                    1.077858803724943
                   ],
-                  "diff_real_minus_null": -0.8554504155454349,
-                  "diff_se": 0.6144813616656514,
+                  "diff_real_minus_null": -0.8626078896911052,
+                  "diff_se": 0.6160985178122259,
                   "diff_ci95": [
-                    -2.0598338844101116,
-                    0.34893305331924174
+                    -2.070160984603068,
+                    0.3449452052208576
                   ],
-                  "z_vs_null_set_means": -1.800836070881408,
-                  "p_two_sided_parametric": 0.07172872167167776,
-                  "p_two_sided_empirical": 0.06593406593406594,
-                  "null_sets_ge_real_abs": 65,
-                  "p_holm": 0.13186813186813187,
+                  "z_vs_null_set_means": -1.8079488279908205,
+                  "p_two_sided_parametric": 0.07061446525170778,
+                  "p_two_sided_empirical": 0.06293706293706294,
+                  "null_sets_ge_real_abs": 62,
+                  "p_holm": 0.1258741258741259,
                   "significant_holm_05": false
                 },
                 {
@@ -4489,20 +5035,20 @@
                     -4.573072256011526,
                     -0.7353109609001871
                   ],
-                  "null_mean_of_set_means": 0.5965919158661381,
-                  "null_sd_of_set_means": 1.0075431969848,
+                  "null_mean_of_set_means": 0.6216746904007592,
+                  "null_sd_of_set_means": 1.0126604626606572,
                   "null_set_mean_ci95": [
-                    -1.37819275022407,
-                    2.571376581956346
+                    -1.363139816414129,
+                    2.606489197215647
                   ],
-                  "diff_real_minus_null": -3.2507835243219945,
-                  "diff_se": 1.4048576085493543,
+                  "diff_real_minus_null": -3.2758662988566156,
+                  "diff_se": 1.4085321505541701,
                   "diff_ci95": [
-                    -6.004304437078728,
-                    -0.4972626115652603
+                    -6.036589313942789,
+                    -0.5151432837704424
                   ],
-                  "z_vs_null_set_means": -3.226445808031232,
-                  "p_two_sided_parametric": 0.0012533796453759738,
+                  "z_vs_null_set_means": -3.234910831069307,
+                  "p_two_sided_parametric": 0.001216807253412,
                   "p_two_sided_empirical": 0.001998001998001998,
                   "null_sets_ge_real_abs": 1,
                   "p_holm": 0.005994005994005994,
@@ -4519,20 +5065,20 @@
                     -7.472089286966483,
                     -0.9546283030104914
                   ],
-                  "null_mean_of_set_means": 1.6229979359281417,
-                  "null_sd_of_set_means": 1.678706448022315,
+                  "null_mean_of_set_means": 1.670008172913951,
+                  "null_sd_of_set_means": 1.6894105660478314,
                   "null_set_mean_ci95": [
-                    -1.6672667021955958,
-                    4.913262574051879
+                    -1.6412365365397983,
+                    4.9812528823677
                   ],
-                  "diff_real_minus_null": -5.836356730916629,
-                  "diff_se": 2.362700280534527,
+                  "diff_real_minus_null": -5.883366967902438,
+                  "diff_se": 2.3703175605138416,
                   "diff_ci95": [
-                    -10.467249280764301,
-                    -1.2054641810689564
+                    -10.529189386509568,
+                    -1.2375445492953085
                   ],
-                  "z_vs_null_set_means": -3.4766988223536304,
-                  "p_two_sided_parametric": 0.0005076276962450166,
+                  "z_vs_null_set_means": -3.4824968460247367,
+                  "p_two_sided_parametric": 0.0004967610724539995,
                   "p_two_sided_empirical": 0.000999000999000999,
                   "null_sets_ge_real_abs": 0,
                   "p_holm": 0.003996003996003996,
@@ -4549,23 +5095,23 @@
                     -4.823087838593928,
                     11.267858975717253
                   ],
-                  "null_mean_of_set_means": 4.880026593889743,
-                  "null_sd_of_set_means": 3.2663020953935282,
+                  "null_mean_of_set_means": 5.106887282049244,
+                  "null_sd_of_set_means": 3.2673265308220345,
                   "null_set_mean_ci95": [
-                    -1.5219255130815723,
-                    11.281978700861057
+                    -1.2970727183619433,
+                    11.510847282460432
                   ],
-                  "diff_real_minus_null": -1.65764102532808,
-                  "diff_se": 5.24579702066606,
+                  "diff_real_minus_null": -1.8845017134875812,
+                  "diff_se": 5.2464349479118,
                   "diff_ci95": [
-                    -11.939403185833555,
-                    8.624121135177397
+                    -12.16751421139471,
+                    8.398510784419546
                   ],
-                  "z_vs_null_set_means": -0.5074977687048158,
-                  "p_two_sided_parametric": 0.6118056015913784,
-                  "p_two_sided_empirical": 0.6033966033966034,
-                  "null_sets_ge_real_abs": 603,
-                  "p_holm": 0.6033966033966034,
+                  "z_vs_null_set_means": -0.5767717721844762,
+                  "p_two_sided_parametric": 0.5640936406953823,
+                  "p_two_sided_empirical": 0.5674325674325674,
+                  "null_sets_ge_real_abs": 567,
+                  "p_holm": 0.5674325674325674,
                   "significant_holm_05": false
                 }
               ],
@@ -4662,7 +5208,7 @@
               "intra_minute_adverse_print_bps": -21.665753915850892
             }
           },
-          "control_pool_bars": 365859,
+          "control_pool_bars": 476928,
           "control_pool_strata": 72
         }
       }

@@ -213,12 +213,13 @@ def test_15s_block_reproduces_the_1m_block_and_adds_only_what_15s_can_measure():
             b = p1m["results"][label]["units"][unit]["forward_by_reference"]
             assert a["actual_fill_price"]["horizons_bps"] == b["actual_fill_price"]["horizons_bps"]
 
-    # the daily conditions come from the same daily series, so only the null may move
+    # the daily conditions come from the same daily series, so the real means must not move
+    # (the null is re-estimated from 15s bars; for the +/-1 conditions it can even coincide
+    # to the last digit, so nothing is asserted about it beyond it being finite)
     for metric in ("daily_trend_ema20", "daily_dist_ema20_bps", "daily_trend_c2c"):
         x = next(r for r in prim15["open"]["indicators"] if r["metric"] == metric)
         y = next(r for r in prim1m["open"]["indicators"] if r["metric"] == metric)
         assert x["real_mean"] == y["real_mean"], metric
-        assert x["null_mean_of_set_means"] != y["null_mean_of_set_means"], metric
 
     # the same three conditions survive Holm at both bar sizes
     for unit in ("open", "add"):
@@ -268,11 +269,13 @@ def test_15s_candles_are_built_from_aggtrades_and_match_binance_1m_closes():
         assert va["adjacent_minute_pairs_that_exactly_offset"] > 0
         assert c["volume"]["mean_abs_diff"] < 10.0
 
-    # SOLUSDT is the complete window the request asked for; the other two are entry days
+    # the requested window (plus one pad day) is fully covered for every symbol
     assert prov["SOLUSDT"]["n_source_files"] == 40
     assert prov["SOLUSDT"]["date_range_utc"] == ["2025-04-03", "2025-05-12"]
-    assert prov["SOLUSDT"]["n_gap_boundaries"] == 0 and prov["SOLUSDT"]["contiguous"] is True
-    assert prov["BTCUSDT"]["n_gap_boundaries"] > 0 and prov["BTCUSDT"]["contiguous"] is False
+    assert prov["BTCUSDT"]["n_source_files"] == 41
+    assert prov["ETHUSDT"]["n_source_files"] == 40
+    for v in prov.values():
+        assert v["n_gap_boundaries"] == 0 and v["contiguous"] is True, v["symbol"]
     assert sum(v["n_trades_total"] for v in prov.values()) > 70_000_000
 
 

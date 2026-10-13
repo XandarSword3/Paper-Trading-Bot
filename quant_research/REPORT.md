@@ -1234,6 +1234,29 @@ nine pass again with slightly different values
 (36.0456, 152.1342),
 which is why the volume identity - not the indicators - is what pins the bar.
 
+**The last completed candle.** The request also asks for the values on the 3m candle that
+closed immediately before the forming one - the 12:24 to 12:27 UTC bucket. The screenshot
+shows the forming candle, so no published values exist for it and it is recorded rather than
+tolerance-tested (`last_completed_candle` in the artifact, computed by the same code):
+
+| Indicator | Completed candle | Forming candle, sub-step 1 |
+|---|---|---|
+| bb_up | 152.1157 | 152.1307 |
+| bb_mb | 151.7030 | 151.6915 |
+| bb_dn | 151.2903 | 151.2523 |
+| rsi6 | 39.2842 | 37.1955 |
+| stoch_k | 22.6179 | 28.6872 |
+| stoch_d | 15.5417 | 21.9548 |
+| macd_dif | -0.0653 | -0.0806 |
+| macd_dea | -0.0133 | -0.0267 |
+| macd_hist | -0.0520 | -0.0538 |
+
+Both columns carry the **sample** Bollinger bands, i.e. the pre-fix convention this
+whole section was validated with, so they are like for like; the artifact also records the
+completed candle's bands under both conventions
+(ddof0 152.1053 / 151.3007, ddof1 152.1157 / 151.2903) because the difference is a property
+of the convention, not of the bar.
+
 ### 17.3 Which smoothing convention Binance uses
 
 Each family is compared with the same keys in every variant, so the sums are comparable:
@@ -1344,18 +1367,18 @@ clock pinning, indicator set, control construction and Holm correction from
 
 | Symbol | Source files | Bars | Trades aggregated | Gap boundaries in the tape |
 |---|---|---|---|---|
-| BTCUSDT | 22 | 126720 | 36492653 | 3 |
-| ETHUSDT | 7 | 40320 | 20128925 | 1 |
+| BTCUSDT | 41 | 236160 | 57716410 | 0 |
+| ETHUSDT | 40 | 230400 | 69649721 | 0 |
 | SOLUSDT | 40 | 230400 | 19145449 | 0 |
 
-SOLUSDT is complete over the window: 40 consecutive daily archives spanning 2025-04-03 to 2025-05-12 UTC, 2 empty 15s buckets were carried forward at the previous close with volume 0 (counted, not hidden), and the grid step is 15 seconds with no other step anywhere in the file.
+All three symbols are complete over the requested window plus one day of padding on each side: 121 consecutive daily archives, SOLUSDT 2025-04-03 to 2025-05-12 UTC, with 2 empty 15s buckets carried forward at the previous close with volume 0 (counted, not hidden). The grid step is 15 seconds in every file and there is no other step anywhere in any of them.
 
-BTCUSDT and ETHUSDT were downloaded for the days that actually contain entries plus one day of padding on each side, so their files have holes. Two guards follow from that, and both are enforced in code rather than by assumption:
+Coverage is complete, but the tape is rebuilt rather than downloaded as candles, so the script still refuses to blend across any hole it might ever find. Two guards are enforced in code rather than by assumption:
 
 * an indicator may never be read across a hole: `run_len` counts the contiguous bars ending at each index and an entry is dropped unless the full warmup precedes it contiguously, so no EMA, RSI or ADX is ever blended across a gap;
 * a forward window may never cross one either: `run_len_fwd` counts contiguous bars ahead of each index and both real entries and control draws are rejected unless the whole 60-minute endpoint lies inside one run.
 
-Across the three symbols there are 4 gap boundaries in total (3 of them longer than a day), and the NaN audit in the artifact reports 0 non-finite null means.
+With this coverage there are 0 gap boundaries in total across the three symbols (0 of them longer than a day), and the NaN audit in the artifact reports 0 non-finite null means.
 
 ### 18.2 The rebuild is checked against Binance's own 1-minute klines
 
@@ -1363,14 +1386,14 @@ Aggregating the 15s bars back to 1 minute and comparing with the committed Binan
 
 | Field | Minutes compared | Exact matches | Largest absolute difference | Largest relative difference |
 |---|---|---|---|---|
-| BTCUSDT close | 31680 | 31680 | 0.0000 | 0.000000 |
-| BTCUSDT high | 31680 | 31615 | 2.7000 | 0.000035 |
-| BTCUSDT low | 31680 | 31610 | 2.8000 | 0.000036 |
-| BTCUSDT open | 31680 | 29775 | 4.0000 | 0.000054 |
-| ETHUSDT close | 10080 | 10080 | 0.0000 | 0.000000 |
-| ETHUSDT high | 10080 | 10053 | 0.0700 | 0.000028 |
-| ETHUSDT low | 10080 | 10045 | 0.0800 | 0.000033 |
-| ETHUSDT open | 10080 | 9012 | 1.3400 | 0.000533 |
+| BTCUSDT close | 59040 | 59040 | 0.0000 | 0.000000 |
+| BTCUSDT high | 59040 | 58917 | 2.7000 | 0.000035 |
+| BTCUSDT low | 59040 | 58919 | 2.8000 | 0.000036 |
+| BTCUSDT open | 59040 | 55795 | 7.2000 | 0.000076 |
+| ETHUSDT close | 57600 | 57600 | 0.0000 | 0.000000 |
+| ETHUSDT high | 57600 | 57463 | 0.0900 | 0.000060 |
+| ETHUSDT low | 57600 | 57454 | 0.1000 | 0.000064 |
+| ETHUSDT open | 57600 | 53586 | 1.3400 | 0.000533 |
 | SOLUSDT close | 57600 | 57600 | 0.0000 | 0.000000 |
 | SOLUSDT high | 57600 | 57541 | 0.0100 | 0.000095 |
 | SOLUSDT low | 57600 | 57547 | 0.0100 | 0.000098 |
@@ -1380,8 +1403,8 @@ Volume is the one field that does not match exactly, and the reason is visible i
 
 | Symbol | Minutes with a volume difference | Adjacent-minute pairs that exactly offset |
 |---|---|---|
-| BTCUSDT | 5310 | 2069 |
-| ETHUSDT | 2659 | 956 |
+| BTCUSDT | 9428 | 3701 |
+| ETHUSDT | 10693 | 4094 |
 | SOLUSDT | 6791 | 2857 |
 
 A pair means minute i carries +x and minute i+1 carries -x: a block of trades was assigned to the other side of the minute boundary, the day total is unchanged, and prices are untouched. Binance builds its klines from the raw trade stream while this rebuild uses aggTrade rows, each of which carries one timestamp for a block of trades. No indicator in the autopsy uses volume - every condition in the 13-condition family is a function of close, high and low - so this difference cannot move any number below.
@@ -1410,19 +1433,19 @@ Primary block (CSV clock read as UTC+3), unit = open fills, 1000 matched random 
 
 | Condition | Real | Random | Real-random | 95% CI | Holm p | Significant |
 |---|---|---|---|---|---|---|
-| bb_pctb | 0.5433 | 0.5068 | +0.0365 | [-0.0268, +0.0998] | 0.6923 | no |
-| rsi6 | 52.6209 | 50.3792 | +2.2417 | [-1.3465, +5.8299] | 0.5295 | no |
-| stoch_k | 52.4369 | 50.1156 | +2.3213 | [-3.4713, +8.1139] | 1.0000 | no |
-| stoch_d | 52.0971 | 50.1044 | +1.9927 | [-3.4786, +7.4639] | 1.0000 | no |
-| macd_hist_bps | 0.1504 | 0.0054 | +0.1450 | [-0.2813, +0.5712] | 1.0000 | no |
-| ema20_dist_bps | 1.3766 | 0.2558 | +1.1208 | [-1.6031, +3.8447] | 1.0000 | no |
-| ema50_dist_bps | 1.9052 | 0.6003 | +1.3049 | [-2.8995, +5.5092] | 1.0000 | no |
-| ema80_dist_bps | 2.1874 | 0.9292 | +1.2583 | [-3.9535, +6.4700] | 1.0000 | no |
-| ema200_dist_bps | 3.3615 | 2.2032 | +1.1584 | [-7.1504, +9.4672] | 1.0000 | no |
-| adx14 | 29.0637 | 25.8297 | +3.2341 | [+1.3795, +5.0886] | 0.0130 | yes |
-| daily_trend_ema20 | 0.3882 | 0.5795 | -0.1912 | [-0.3400, -0.0424] | 0.0130 | yes |
-| daily_dist_ema20_bps | 402.4930 | 555.1472 | -152.6542 | [-307.4749, +2.1665] | 0.0130 | yes |
-| daily_trend_c2c | 0.1765 | 0.0715 | +0.1050 | [-0.0651, +0.2751] | 0.9191 | no |
+| bb_pctb | 0.5433 | 0.5070 | +0.0363 | [-0.0276, +0.1001] | 0.7373 | no |
+| rsi6 | 52.6209 | 50.3814 | +2.2395 | [-1.3699, +5.8489] | 0.4895 | no |
+| stoch_k | 52.4369 | 50.1497 | +2.2872 | [-3.5460, +8.1205] | 1.0000 | no |
+| stoch_d | 52.0971 | 50.1438 | +1.9533 | [-3.5298, +7.4364] | 1.0000 | no |
+| macd_hist_bps | 0.1504 | 0.0059 | +0.1444 | [-0.2832, +0.5721] | 1.0000 | no |
+| ema20_dist_bps | 1.3766 | 0.2674 | +1.1092 | [-1.6323, +3.8507] | 1.0000 | no |
+| ema50_dist_bps | 1.9052 | 0.6307 | +1.2745 | [-2.9480, +5.4970] | 1.0000 | no |
+| ema80_dist_bps | 2.1874 | 0.9817 | +1.2057 | [-4.0193, +6.4308] | 1.0000 | no |
+| ema200_dist_bps | 3.3615 | 2.3325 | +1.0291 | [-7.2810, +9.3392] | 1.0000 | no |
+| adx14 | 29.0637 | 25.8642 | +3.1995 | [+1.3334, +5.0656] | 0.0130 | yes |
+| daily_trend_ema20 | 0.3882 | 0.6205 | -0.2323 | [-0.3792, -0.0853] | 0.0130 | yes |
+| daily_dist_ema20_bps | 402.4930 | 570.3995 | -167.9065 | [-322.4387, -13.3743] | 0.0130 | yes |
+| daily_trend_c2c | 0.1765 | 0.0786 | +0.0979 | [-0.0737, +0.2694] | 1.0000 | no |
 
 Surviving Holm at 15 seconds: **adx14, daily_dist_ema20_bps, daily_trend_ema20**; at 1 minute (section 15): **adx14, daily_dist_ema20_bps, daily_trend_ema20**.
 
@@ -1440,18 +1463,18 @@ The row `actual_fill_price` reproduces section 15 exactly, to the last decimal (
 | actual_fill_price | 5m | -0.400 | - | - | - | - | - |
 | actual_fill_price | 15m | 2.556 | - | - | - | - | - |
 | actual_fill_price | 60m | 5.870 | - | - | - | - | - |
-| open_of_fill_minute | 1m | 3.998 | 0.169 | +3.829 | [+1.490, +6.168] | 0.0040 | yes |
-| open_of_fill_minute | 5m | 4.736 | 0.543 | +4.193 | [-0.945, +9.331] | 0.0390 | yes |
-| open_of_fill_minute | 15m | 7.694 | 1.414 | +6.280 | [-2.135, +14.696] | 0.0719 | no |
-| open_of_fill_minute | 60m | 11.005 | 6.551 | +4.455 | [-11.003, +19.913] | 0.4555 | no |
-| close_of_fill_minute | 1m | 0.899 | 0.062 | +0.837 | [-1.446, +3.120] | 0.9910 | no |
-| close_of_fill_minute | 5m | 2.531 | 0.464 | +2.067 | [-2.695, +6.829] | 0.9910 | no |
-| close_of_fill_minute | 15m | 3.613 | 1.384 | +2.229 | [-5.905, +10.362] | 0.9910 | no |
-| close_of_fill_minute | 60m | 7.231 | 6.448 | +0.783 | [-14.605, +16.171] | 0.9910 | no |
-| next_minute_open | 1m | 0.919 | 0.092 | +0.827 | [-1.457, +3.111] | 1.0000 | no |
-| next_minute_open | 5m | 2.551 | 0.494 | +2.057 | [-2.705, +6.819] | 1.0000 | no |
-| next_minute_open | 15m | 3.633 | 1.414 | +2.219 | [-5.910, +10.348] | 1.0000 | no |
-| next_minute_open | 60m | 7.251 | 6.477 | +0.774 | [-14.618, +16.166] | 1.0000 | no |
+| open_of_fill_minute | 1m | 3.998 | 0.167 | +3.831 | [+1.500, +6.162] | 0.0040 | yes |
+| open_of_fill_minute | 5m | 4.736 | 0.571 | +4.165 | [-0.930, +9.260] | 0.0569 | no |
+| open_of_fill_minute | 15m | 7.694 | 1.463 | +6.231 | [-2.091, +14.554] | 0.0699 | no |
+| open_of_fill_minute | 60m | 11.005 | 6.435 | +4.571 | [-10.765, +19.907] | 0.4276 | no |
+| close_of_fill_minute | 1m | 0.899 | 0.070 | +0.829 | [-1.430, +3.088] | 0.9311 | no |
+| close_of_fill_minute | 5m | 2.531 | 0.484 | +2.048 | [-2.687, +6.782] | 0.9311 | no |
+| close_of_fill_minute | 15m | 3.613 | 1.426 | +2.187 | [-5.884, +10.257] | 0.9630 | no |
+| close_of_fill_minute | 60m | 7.231 | 6.336 | +0.895 | [-14.392, +16.182] | 0.9630 | no |
+| next_minute_open | 1m | 0.919 | 0.100 | +0.819 | [-1.441, +3.079] | 0.9391 | no |
+| next_minute_open | 5m | 2.551 | 0.513 | +2.038 | [-2.696, +6.773] | 0.9391 | no |
+| next_minute_open | 15m | 3.633 | 1.456 | +2.177 | [-5.888, +10.242] | 0.9670 | no |
+| next_minute_open | 60m | 7.251 | 6.366 | +0.886 | [-14.405, +16.176] | 0.9670 | no |
 
 ### 18.6 What this changes, and what it does not
 
@@ -1461,4 +1484,4 @@ The 15s bars answer the question section 15 left open. In summary:
 * the intraday indicator conditions measured at 15s do not rescue the entries as a timing signal - the family that survives Holm is `adx14`, `daily_dist_ema20_bps`, `daily_trend_ema20`;
 * the forward move measured from the fill price still turns positive only well after the print, which is what scaling into a working position looks like rather than what entry timing looks like.
 
-Limitations of this section: BTCUSDT and ETHUSDT cover only the days containing their entries plus one day of padding (the gap guards above make the missing days inert, but the control pools for those two symbols are correspondingly smaller); BNBUSDT has no candles at any resolution and stays excluded; and the daily context is shared with section 15 by design, so this section neither re-validates nor changes it.
+Limitations of this section: the rebuilt tape starts on the first day of the window, so the earliest entries have hours of 15s history before them where section 15's 1m bars go back to 2024 - enough for the 300-bar warmup, but EMA(200) and ADX(14) on a 15s grid are still warming up for the first entries on 2025-04-04; BNBUSDT has no candles at any resolution and stays excluded; and the daily context is shared with section 15 by design, so this section neither re-validates nor changes it.

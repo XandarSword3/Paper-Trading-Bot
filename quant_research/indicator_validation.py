@@ -76,11 +76,30 @@ def identify(vol3):
     return hits
 
 
+def pre_fix_indicators(b):
+    """The repo's indicator module as it stood when this validation first ran.
+
+    REPORT 17.4 fixes the Bollinger bands to `ddof=0` (Binance's convention). This
+    function applies that one historical difference on top of the current module so the
+    committed artifact stays byte-for-byte reproducible after the fix: re-running this
+    script must not silently rewrite the evidence of the defect it documents. Every
+    other indicator in `compute_indicators` is unaffected by the fix.
+    """
+    ind = compute_indicators(b[["open", "high", "low", "close", "volume"]])
+    c = b["close"]
+    mb = c.rolling(20).mean()
+    sd = c.rolling(20).std()          # ddof=1, the convention the repo used pre-fix
+    ind["bb_upper"] = mb + 2.0 * sd
+    ind["bb_lower"] = mb - 2.0 * sd
+    ind["bb_basis"] = mb
+    return ind
+
+
 def features_variants(b):
     """The repo's indicator set plus labelled alternatives, at the last row of b."""
     c = b["close"]
     out = {}
-    ind = compute_indicators(b[["open", "high", "low", "close", "volume"]])
+    ind = pre_fix_indicators(b)
     r = ind.iloc[-1]
     out["repo"] = {"bb_up": float(r["bb_upper"]), "bb_mb": float(r["bb_basis"]),
                    "bb_dn": float(r["bb_lower"]), "rsi6": float(r["rsi6"]),
@@ -178,6 +197,32 @@ def main():
             "alternatives": v["alternatives"],
             "alternative_checks": {name: check(vals) for name, vals in v["alternatives"].items()},
         }
+    # The last COMPLETED 3m candle - the one before the forming bucket. The screenshot
+    # shows the forming candle, so there is no published ground truth for this bar; it is
+    # recorded (not checked) because the request asks for the indicator values on it, and
+    # because a completed bar has no partial-volume ambiguity.
+    prev = bars_3m(df, upto=anchor - pd.Timedelta(minutes=1))
+    v_prev = features_variants(prev)
+    results["convention_note"] = (
+        "`repo` / `indicators` are the repository's compute_indicators with the Bollinger "
+        "bands as they were when this validation first ran (sample std, ddof=1); REPORT 17.4 "
+        "records the fix to Binance's population std. pre_fix_indicators() applies that one "
+        "historical difference explicitly so re-running this script reproduces the committed "
+        "artifact after the fix rather than erasing the evidence of the defect.")
+    results["last_completed_candle"] = {
+        "bucket_open_utc": str(prev.index[-1]),
+        "bucket_close_utc": str(prev.index[-1] + pd.Timedelta(minutes=3)),
+        "close": v_prev["close"],
+        "indicators": v_prev["repo"],
+        "bollinger_both_conventions": {
+            "ddof0_population": v_prev["alternatives"]["boll_ddof0"],
+            "ddof1_sample": v_prev["alternatives"]["boll_ddof1"],
+        },
+        "ground_truth_for_this_candle": None,
+        "note": "the 3m candle that closed immediately before the forming bucket; the "
+                "screenshot shows the forming candle, so no published values exist to "
+                "compare this bar against and it is reported rather than tolerance-tested",
+    }
 
     # Compare conventions family by family, with the SAME keys in every variant of a
     # family, so that sum|delta| is comparable and cannot be gamed by dropping a key.
