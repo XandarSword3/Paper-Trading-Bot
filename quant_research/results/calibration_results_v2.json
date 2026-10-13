@@ -1,0 +1,110 @@
+{
+  "development_window": [
+    {
+      "Model": "V1 Turtle (Old Rules: Close fill, no funding, 26 bps)",
+      "total_trades": 238,
+      "total_return_pct": 109.95,
+      "cagr_pct": 11.82,
+      "sharpe_ratio": 0.612,
+      "max_drawdown_pct": 35.24,
+      "expectancy_bps": 69.83,
+      "profit_factor": 1.38,
+      "win_rate_pct": 41.18,
+      "round_trip_cost_bps": 26.0,
+      "final_equity": 209948.64
+    },
+    {
+      "Model": "V1 Turtle (New Rules: Next open fill, funding, 14 bps)",
+      "total_trades": 239,
+      "total_return_pct": 82.65,
+      "cagr_pct": 9.5,
+      "sharpe_ratio": 0.519,
+      "max_drawdown_pct": 40.64,
+      "expectancy_bps": 79.58,
+      "profit_factor": 1.46,
+      "win_rate_pct": 41.0,
+      "round_trip_cost_bps": 14.0,
+      "final_equity": 182646.07
+    },
+    {
+      "Model": "Trail-After-Profit (Old Rules: Donchian fill, no funding, 26 bps)",
+      "total_trades": 117,
+      "total_return_pct": 223.39,
+      "cagr_pct": 19.34,
+      "sharpe_ratio": 1.536,
+      "max_drawdown_pct": 10.18,
+      "expectancy_bps": 259.87,
+      "profit_factor": 3.05,
+      "win_rate_pct": 48.72,
+      "round_trip_cost_bps": 26.0,
+      "final_equity": 323389.3
+    },
+    {
+      "Model": "Trail-After-Profit (New Rules: Next open fill, funding, 14 bps)",
+      "total_trades": 120,
+      "total_return_pct": 120.02,
+      "cagr_pct": 12.61,
+      "sharpe_ratio": 1.083,
+      "max_drawdown_pct": 11.67,
+      "expectancy_bps": 158.39,
+      "profit_factor": 2.45,
+      "win_rate_pct": 40.0,
+      "round_trip_cost_bps": 14.0,
+      "final_equity": 220016.46
+    }
+  ],
+  "full_window": [
+    {
+      "Model": "V1 Turtle (Old Rules: Close fill, no funding, 26 bps)",
+      "total_trades": 273,
+      "total_return_pct": 106.02,
+      "cagr_pct": 9.25,
+      "sharpe_ratio": 0.529,
+      "max_drawdown_pct": 35.24,
+      "expectancy_bps": 54.57,
+      "profit_factor": 1.31,
+      "win_rate_pct": 40.66,
+      "round_trip_cost_bps": 26.0,
+      "final_equity": 206019.35
+    },
+    {
+      "Model": "V1 Turtle (New Rules: Next open fill, funding, 14 bps)",
+      "total_trades": 274,
+      "total_return_pct": 80.95,
+      "cagr_pct": 7.53,
+      "sharpe_ratio": 0.453,
+      "max_drawdown_pct": 40.64,
+      "expectancy_bps": 64.61,
+      "profit_factor": 1.39,
+      "win_rate_pct": 40.88,
+      "round_trip_cost_bps": 14.0,
+      "final_equity": 180946.55
+    },
+    {
+      "Model": "Trail-After-Profit (Old Rules: Donchian fill, no funding, 26 bps)",
+      "total_trades": 139,
+      "total_return_pct": 245.32,
+      "cagr_pct": 16.39,
+      "sharpe_ratio": 1.392,
+      "max_drawdown_pct": 10.18,
+      "expectancy_bps": 223.06,
+      "profit_factor": 2.68,
+      "win_rate_pct": 46.04,
+      "round_trip_cost_bps": 26.0,
+      "final_equity": 345315.1
+    },
+    {
+      "Model": "Trail-After-Profit (New Rules: Next open fill, funding, 14 bps)",
+      "total_trades": 140,
+      "total_return_pct": 130.86,
+      "cagr_pct": 10.79,
+      "sharpe_ratio": 0.988,
+      "max_drawdown_pct": 11.67,
+      "expectancy_bps": 139.22,
+      "profit_factor": 2.29,
+      "win_rate_pct": 39.29,
+      "round_trip_cost_bps": 14.0,
+      "final_equity": 230856.32
+    }
+  ]
+}
