@@ -49,12 +49,14 @@ def load_data_and_funding(timeframe: str):
     return df, funding
 
 
-def log_trial(trial_record: Dict[str, Any]):
+def log_trial(trial_record: Dict[str, Any], log: bool = True):
+    if not log:
+        return
     df_row = pd.DataFrame([trial_record])
     df_row.to_csv(TRIALS_FILE, mode="a", header=not os.path.exists(TRIALS_FILE), index=False)
 
 
-def run_test_1():
+def run_test_1(out_path: str = "quant_research/results/test_1_results.json", log_trials: bool = True):
     print("=" * 100)
     print("TEST 1: MECHANICAL RECONSTRUCTION OF INDICATOR STACK (SOLUSDT)")
     print("=" * 100)
@@ -127,7 +129,7 @@ def run_test_1():
                 "oos_return_pct": m_oos_base["total_return_pct"],
                 "oos_expectancy_bps": m_oos_base["expectancy_bps"],
                 "status": edge_status,
-            })
+            }, log=log_trials)
 
             results_table.append({
                 "TF": tf,
@@ -152,9 +154,9 @@ def run_test_1():
 
     # Save results to json
     os.makedirs("quant_research/results", exist_ok=True)
-    table_df.to_json("quant_research/results/test_1_results.json", orient="records", indent=2)
-    print(f"\nLogged {trial_count} trials to quant_research/trials.csv")
-    print("Saved quant_research/results/test_1_results.json")
+    table_df.to_json(out_path, orient="records", indent=2)
+    print(f"\nLogged {trial_count if log_trials else 0} trials to quant_research/trials.csv")
+    print(f"Saved {out_path}")
     return table_df
 
 

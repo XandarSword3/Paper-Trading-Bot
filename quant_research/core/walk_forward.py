@@ -12,6 +12,14 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm, skew, kurtosis
 
+from quant_research.core.metrics import calculate_daily_sharpe
+
+
+def _as_utc(value) -> pd.Timestamp:
+    """Coerce a timestamp (naive or tz-aware) to a tz-aware UTC Timestamp."""
+    ts = pd.Timestamp(value)
+    return ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+
 
 def generate_walk_forward_folds(
     start_date: str = "2024-01-01",
@@ -135,6 +143,7 @@ def stitch_walk_forward_trades(
 
     equity = initial_capital
     equity_curve = [initial_capital]
+    equity_dates = [_as_utc(all_trades["exit_time"].iloc[0])]
     returns_pct = []
 
     gross_profit = 0.0
@@ -148,6 +157,7 @@ def stitch_walk_forward_trades(
         pnl = equity * r
         equity = max(0.0, equity + pnl)
         equity_curve.append(equity)
+        equity_dates.append(_as_utc(tr["exit_time"]))
 
         if pnl > 0:
             gross_profit += pnl
@@ -173,10 +183,17 @@ def stitch_walk_forward_trades(
 
     profit_factor = (gross_profit / gross_loss) if gross_loss > 0 else (99.0 if gross_profit > 0 else 0.0)
 
+    # Canonical DAILY equity Sharpe (core.metrics.calculate_daily_sharpe, sqrt(365)).
+    # The trade-annualized `sharpe_ratio` above is kept for traceability only.
+    eq_ts = pd.Series(np.asarray(equity_curve, dtype=np.float64), index=pd.DatetimeIndex(equity_dates))
+    eq_ts = eq_ts[~eq_ts.index.duplicated(keep="last")].sort_index()
+    daily_sharpe = calculate_daily_sharpe(eq_ts)
+
     return {
         "total_trades": len(all_trades),
         "total_return_pct": total_return_pct,
         "sharpe_ratio": sharpe,
+        "daily_sharpe": daily_sharpe,
         "max_drawdown_pct": max_dd,
         "expectancy_bps": exp_bps,
         "profit_factor": profit_factor,

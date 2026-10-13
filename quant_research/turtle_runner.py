@@ -145,10 +145,11 @@ def evaluate_asset_tf_config(args: Tuple[str, str, int, int, str]) -> Dict[str, 
     }
 
 
-def run_all_turtle_tests():
+def run_all_turtle_tests(out_path: str = RESULTS_FILE, log_trials: bool = True):
     print("=" * 100)
     print("PRE-REGISTERED TURTLE / DONCHIAN BREAKOUT EVALUATION (SOL, BTC, ETH)")
     print("36 Distinct Configurations: 3 Assets x 3 Timeframes x 4 Lookbacks")
+    print(f"(direction-aware funding per PREREG section 3; output -> {out_path})")
     print("=" * 100)
 
     assets = ["SOLUSDT", "BTCUSDT", "ETHUSDT"]
@@ -179,10 +180,13 @@ def run_all_turtle_tests():
     elapsed = time.time() - t0
     print(f"\nCompleted all {len(results)} backtest simulations in {elapsed:.2f} seconds!", flush=True)
 
-    # Log all 36 runs to trials.csv
-    trial_rows = []
+    # Log all 36 runs to trials.csv (duplicates are re-runs, not new configs).
+    # The append is fully skipped when log_trials is False.
+    if not log_trials:
+        print("Trial logging disabled for this run.")
+        trial_rows = []
     now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    for r in results:
+    for r in (results if log_trials else []):
         trial_rows.append({
             "trial_id": f"TURTLE-{r['asset']}-{r['timeframe']}-N{r['N']}-M{r['M']}",
             "timestamp_utc": now_utc,
@@ -197,7 +201,8 @@ def run_all_turtle_tests():
             "oos_expectancy_bps": r["oos_exp_bps"],
             "status": "EVALUATED",
         })
-    pd.DataFrame(trial_rows).to_csv(TRIALS_FILE, mode="a", header=not os.path.exists(TRIALS_FILE), index=False)
+    if trial_rows:
+        pd.DataFrame(trial_rows).to_csv(TRIALS_FILE, mode="a", header=not os.path.exists(TRIALS_FILE), index=False)
     print(f"Logged {len(trial_rows)} trials to {TRIALS_FILE}.")
 
     # Evaluate Pooled Criteria across the 3 Assets for each (Timeframe, N, M)
@@ -332,10 +337,10 @@ def run_all_turtle_tests():
         "individual_runs": results,
     }
 
-    os.makedirs(os.path.dirname(RESULTS_FILE), exist_ok=True)
-    with open(RESULTS_FILE, "w") as f:
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    with open(out_path, "w") as f:
         json.dump(output_payload, f, indent=2)
-    print(f"\nSaved comprehensive Turtle results to {RESULTS_FILE}")
+    print(f"\nSaved comprehensive Turtle results to {out_path}")
 
     return output_payload
 

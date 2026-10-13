@@ -187,7 +187,7 @@ def parallel_grid_search(
     return all_results
 
 
-def run_test_2():
+def run_test_2(out_path: str = "quant_research/results/test_2_results.json", log_trials: bool = True):
     print("=" * 100, flush=True)
     print("TEST 2: MULTI-CORE PARAMETER GRID EXPLORATION & WALK-FORWARD (SOLUSDT 5m)", flush=True)
     print(f"Parallel Worker Threads: {NUM_WORKERS}", flush=True)
@@ -247,8 +247,11 @@ def run_test_2():
             "oos_expectancy_bps": np.nan,
             "status": "EVALUATED",
         })
-    trials_df = pd.DataFrame(trial_rows)
-    trials_df.to_csv(TRIALS_FILE, mode="a", header=not os.path.exists(TRIALS_FILE), index=False)
+    if log_trials:
+        trials_df = pd.DataFrame(trial_rows)
+        trials_df.to_csv(TRIALS_FILE, mode="a", header=not os.path.exists(TRIALS_FILE), index=False)
+    else:
+        print("Trial logging disabled for this run.", flush=True)
 
     # Selection Filter: trades >= 100 on IS, ranked by net expectancy in bps
     eligible_is = [(c, m) for c, m in is_results if m["total_trades"] >= 100]
@@ -506,6 +509,7 @@ def run_test_2():
             "total_trades": stitched["total_trades"],
             "total_return_pct": stitched["total_return_pct"],
             "sharpe_ratio": stitched["sharpe_ratio"],
+            "daily_sharpe": stitched.get("daily_sharpe", 0.0),
             "max_drawdown_pct": stitched["max_drawdown_pct"],
             "expectancy_bps": stitched["expectancy_bps"],
             "profit_factor": stitched["profit_factor"],
@@ -527,9 +531,9 @@ def run_test_2():
     }
 
     os.makedirs("quant_research/results", exist_ok=True)
-    with open("quant_research/results/test_2_results.json", "w") as f:
+    with open(out_path, "w") as f:
         json.dump(results_summary, f, indent=2, default=str)
-    print("\nSaved test_2_results.json successfully.", flush=True)
+    print(f"\nSaved {out_path} successfully.", flush=True)
 
 
 if __name__ == "__main__":

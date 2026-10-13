@@ -49,3 +49,34 @@ def test_fold_returns_stitching_and_ruin_floor():
     assert cat_result["max_drawdown_pct"] <= 100.0, (
         f"Expected max drawdown <= 100%, got {cat_result['max_drawdown_pct']}"
     )
+
+
+def test_stitching_accepts_tz_aware_exit_times_and_reports_daily_sharpe():
+    """
+    Regression test for the daily-Sharpe stitched equity curve:
+    exit_time values that are ALREADY tz-aware must not be re-localised
+    (pd.Timestamp(value, tz='UTC') raises ValueError on a tz-aware input), and the
+    stitched result must expose the canonical daily Sharpe alongside the legacy
+    trade Sharpe.
+    """
+    idx = pd.date_range("2025-01-01", periods=40, freq="6h", tz="UTC")
+    trades = pd.DataFrame(
+        {
+            "entry_time": idx,
+            "exit_time": idx + pd.Timedelta(hours=6),
+            "return_pct": [0.01, -0.005] * 20,
+            "net_pnl": [100.0, -50.0] * 20,
+        }
+    )
+
+    result = stitch_walk_forward_trades([trades], initial_capital=10_000.0)
+
+    assert result["total_trades"] == 40
+    # 20 x (+1%) and 20 x (-0.5%), fully compounded in exit order
+    expected = ((1.01 ** 20) * (0.995 ** 20) - 1.0) * 100.0
+    assert abs(result["total_return_pct"] - expected) < 1e-6, (
+        f"Expected {expected}%, got {result['total_return_pct']}"
+    )
+    assert "daily_sharpe" in result
+    assert isinstance(result["daily_sharpe"], float)
+    assert abs(result["daily_sharpe"]) > 0.0, "daily Sharpe of a trending equity curve must be non-zero"

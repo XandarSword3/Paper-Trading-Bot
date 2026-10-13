@@ -365,7 +365,7 @@ def run_trail_after_profit_simulation(df: pd.DataFrame, funding_series: pd.Serie
     return metrics
 
 
-def main():
+def main(out_path: str = "quant_research/results/calibration_results.json", only_new_rules: bool = False):
     df, funding = load_btc_4h_and_funding()
     print("=" * 80)
     print("CALIBRATION BENCHMARK RUN (BTCUSDT 4H)")
@@ -417,9 +417,9 @@ def main():
         "full_window": rows_full,
     }
     os.makedirs("quant_research/results", exist_ok=True)
-    with open("quant_research/results/calibration_results.json", "w") as f:
+    with open(out_path, "w") as f:
         json.dump(calib_out, f, indent=2)
-    print("\nSaved quant_research/results/calibration_results.json")
+    print(f"\nSaved {out_path}")
 
 
 if __name__ == "__main__":
