@@ -1,0 +1,1009 @@
+{
+  "SOLUSDT": {
+    "symbol": "SOLUSDT",
+    "bar": "15s",
+    "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+    "source_dir": "../_audit_scratch/aggtrades",
+    "epoch_unit_in_source": [
+      "ms"
+    ],
+    "n_source_files": 40,
+    "date_range_utc": [
+      "2025-04-03",
+      "2025-05-12"
+    ],
+    "n_rows": 230400,
+    "n_trades_total": 19145449,
+    "gap_buckets_filled": 2,
+    "first_ts": "2025-04-03 00:00:00+00:00",
+    "last_ts": "2025-05-12 23:59:45+00:00",
+    "grid_step_seconds": [
+      15.0
+    ],
+    "n_gap_boundaries": 0,
+    "contiguous": true,
+    "gaps": [],
+    "bars_path": "quant_research/data/processed/SOLUSDT_15s.parquet",
+    "bars_sha256": "5341633730f17bd69921a1c474b68d182bdc52ebe40a2fdf5bac7029e86408f2",
+    "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+      "checked": true,
+      "reference": "quant_research/data/processed/SOLUSDT_1m.parquet",
+      "n_minutes_compared": 57600,
+      "volume_attribution": {
+        "minutes_with_any_difference": 6791,
+        "adjacent_minute_pairs_that_exactly_offset": 2857,
+        "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+      },
+      "open": {
+        "n_exact": 55524,
+        "n_within_1e-9_rel": 55524,
+        "max_abs_diff": 0.04000000000000625,
+        "max_rel_diff": 0.00037828636277668107,
+        "mean_abs_diff": 0.0003619791666666663
+      },
+      "high": {
+        "n_exact": 57541,
+        "n_within_1e-9_rel": 57541,
+        "max_abs_diff": 0.010000000000019327,
+        "max_rel_diff": 9.540164090813685e-05,
+        "mean_abs_diff": 1.0243055555556109e-05
+      },
+      "low": {
+        "n_exact": 57547,
+        "n_within_1e-9_rel": 57547,
+        "max_abs_diff": 0.010000000000019327,
+        "max_rel_diff": 9.786651008016153e-05,
+        "mean_abs_diff": 9.201388888890388e-06
+      },
+      "close": {
+        "n_exact": 57600,
+        "n_within_1e-9_rel": 57600,
+        "max_abs_diff": 0.0,
+        "max_rel_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "volume": {
+        "n_exact": 42435,
+        "n_within_1e-9_rel": 50809,
+        "max_abs_diff": 6466.039999999994,
+        "max_rel_diff": 0.2381654617154124,
+        "mean_abs_diff": 5.3277836805558785
+      }
+    },
+    "per_day": [
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-03.zip",
+        "date_utc": "2025-04-03",
+        "n_trades": 440452,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-03 00:00:00+00:00",
+        "last_ts": "2025-04-03 23:59:45+00:00",
+        "bytes": 6071669,
+        "sha256": "91ef6dbd1fc92ff89e4932b3bf546275b2432d6e41c2f49aac3ce4b993106aa4"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-04.zip",
+        "date_utc": "2025-04-04",
+        "n_trades": 512783,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-04 00:00:00+00:00",
+        "last_ts": "2025-04-04 23:59:45+00:00",
+        "bytes": 7080513,
+        "sha256": "72795ea22248ef1e0057468d77d32b1a750f69561c622ae5aeeb060a02d2320d"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-05.zip",
+        "date_utc": "2025-04-05",
+        "n_trades": 214629,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-05 00:00:00+00:00",
+        "last_ts": "2025-04-05 23:59:45+00:00",
+        "bytes": 2939010,
+        "sha256": "3c35ea11361b364f6b52ec5e4253031e854cfb22dfaaa35403006373c5f4fd83"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-06.zip",
+        "date_utc": "2025-04-06",
+        "n_trades": 458528,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-06 00:00:00+00:00",
+        "last_ts": "2025-04-06 23:59:45+00:00",
+        "bytes": 6314552,
+        "sha256": "e4ad8c536d887729e5e6eadd09841b01f046e5ea2c0b3d5a02622778a1715227"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-07.zip",
+        "date_utc": "2025-04-07",
+        "n_trades": 938230,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-07 00:00:00+00:00",
+        "last_ts": "2025-04-07 23:59:45+00:00",
+        "bytes": 13002930,
+        "sha256": "a495d72bea52d793414d853824024c096ecf7eac1ab99f8d04ec424028977d1d"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-08.zip",
+        "date_utc": "2025-04-08",
+        "n_trades": 500070,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-08 00:00:00+00:00",
+        "last_ts": "2025-04-08 23:59:45+00:00",
+        "bytes": 6965392,
+        "sha256": "911e7f5e4b9ddb029e99b076fc8f1a2a2f7c8f33ea0ffb7119c6118dac3f9b63"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-09.zip",
+        "date_utc": "2025-04-09",
+        "n_trades": 800678,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 2,
+        "first_ts": "2025-04-09 00:00:00+00:00",
+        "last_ts": "2025-04-09 23:59:45+00:00",
+        "bytes": 11659791,
+        "sha256": "0df0692fa29aa4a5d052d36d57f34afdbb3e15ebdf4760692b5fd8d61c4abde2"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-10.zip",
+        "date_utc": "2025-04-10",
+        "n_trades": 462793,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-10 00:00:00+00:00",
+        "last_ts": "2025-04-10 23:59:45+00:00",
+        "bytes": 6960674,
+        "sha256": "4c015de0b51a6cf180d8a055ac4e65c52c0f1e77698921ad8c5bd2e53eee37a4"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-11.zip",
+        "date_utc": "2025-04-11",
+        "n_trades": 472047,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-11 00:00:00+00:00",
+        "last_ts": "2025-04-11 23:59:45+00:00",
+        "bytes": 7029439,
+        "sha256": "d8d7799469558704531e5eec3c884c078892ed31b24531b1d843b5851590de88"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-12.zip",
+        "date_utc": "2025-04-12",
+        "n_trades": 527944,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-12 00:00:00+00:00",
+        "last_ts": "2025-04-12 23:59:45+00:00",
+        "bytes": 7778591,
+        "sha256": "811f7f3124b0230c8d90539eb9fe1905af6408a0f778d61b5d49f855b940c5e3"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-13.zip",
+        "date_utc": "2025-04-13",
+        "n_trades": 537575,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-13 00:00:00+00:00",
+        "last_ts": "2025-04-13 23:59:45+00:00",
+        "bytes": 7975300,
+        "sha256": "14fa5a430fd292f3aed5d309a5a62e85fdb3a780ce11dc5926da6271661f0ce7"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-14.zip",
+        "date_utc": "2025-04-14",
+        "n_trades": 579702,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-14 00:00:00+00:00",
+        "last_ts": "2025-04-14 23:59:45+00:00",
+        "bytes": 8712648,
+        "sha256": "811994bb446ec45a7b8783e98c57b77173fd33e060a055b81e40a8344adf21c5"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-15.zip",
+        "date_utc": "2025-04-15",
+        "n_trades": 458709,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-15 00:00:00+00:00",
+        "last_ts": "2025-04-15 23:59:45+00:00",
+        "bytes": 6873696,
+        "sha256": "79d2e53b1fb2bb7ec23c71da704fce9f3a8a06cc118600c2b19b2269539ec940"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-16.zip",
+        "date_utc": "2025-04-16",
+        "n_trades": 557333,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-16 00:00:00+00:00",
+        "last_ts": "2025-04-16 23:59:45+00:00",
+        "bytes": 8373392,
+        "sha256": "24013e4618a673bdc1601d2a8edbc1de00257a2917b3245c94493096656f7688"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-17.zip",
+        "date_utc": "2025-04-17",
+        "n_trades": 511407,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-17 00:00:00+00:00",
+        "last_ts": "2025-04-17 23:59:45+00:00",
+        "bytes": 7588572,
+        "sha256": "8b3c5a5ac0ed9198d8127d517c5b574b222cf21a1d5dbf993de1d740c474d03a"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-18.zip",
+        "date_utc": "2025-04-18",
+        "n_trades": 365624,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-18 00:00:00+00:00",
+        "last_ts": "2025-04-18 23:59:45+00:00",
+        "bytes": 5312344,
+        "sha256": "342491ee6442af372e141d390f551629cffe49e6f84642e4307f6db61e40734a"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-19.zip",
+        "date_utc": "2025-04-19",
+        "n_trades": 411237,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-19 00:00:00+00:00",
+        "last_ts": "2025-04-19 23:59:45+00:00",
+        "bytes": 5951376,
+        "sha256": "e28c8d83b164c5543572fe01b8ad1e68b959b3db0978fe679681e393993c7443"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-20.zip",
+        "date_utc": "2025-04-20",
+        "n_trades": 385766,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-20 00:00:00+00:00",
+        "last_ts": "2025-04-20 23:59:45+00:00",
+        "bytes": 5590192,
+        "sha256": "7e3694d1f4453654f2b63ecec0db7d94f691fb178d227618553b09cf81b51a62"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-21.zip",
+        "date_utc": "2025-04-21",
+        "n_trades": 539878,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-21 00:00:00+00:00",
+        "last_ts": "2025-04-21 23:59:45+00:00",
+        "bytes": 7884945,
+        "sha256": "1a7522d19ea9ee76fb8ff7e2e59008c964c198786be98b8bf2757846575944f4"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-22.zip",
+        "date_utc": "2025-04-22",
+        "n_trades": 579033,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-22 00:00:00+00:00",
+        "last_ts": "2025-04-22 23:59:45+00:00",
+        "bytes": 8542396,
+        "sha256": "a13f19ad2d1d42a56e934821a87113a0059e9ebeaaf5ed2e6b537e495e32796b"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-23.zip",
+        "date_utc": "2025-04-23",
+        "n_trades": 553483,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-23 00:00:00+00:00",
+        "last_ts": "2025-04-23 23:59:45+00:00",
+        "bytes": 8218505,
+        "sha256": "991c28bb2cb7d84131802898e7761290a2af5b60c96c3c778cd28cd8a13aa42e"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-24.zip",
+        "date_utc": "2025-04-24",
+        "n_trades": 440884,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-24 00:00:00+00:00",
+        "last_ts": "2025-04-24 23:59:45+00:00",
+        "bytes": 6537271,
+        "sha256": "94cc9f6cd129b192d54f7830da783d545bf5d301eb9dcea73d8834f215e983c9"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-25.zip",
+        "date_utc": "2025-04-25",
+        "n_trades": 499815,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-25 00:00:00+00:00",
+        "last_ts": "2025-04-25 23:59:45+00:00",
+        "bytes": 7365266,
+        "sha256": "fb2d380a205890d0df8a73069305e9ea61f6721c10977de3b0bd4cdd47f27828"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-26.zip",
+        "date_utc": "2025-04-26",
+        "n_trades": 362146,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-26 00:00:00+00:00",
+        "last_ts": "2025-04-26 23:59:45+00:00",
+        "bytes": 5222003,
+        "sha256": "a787dabfdd2dfc01560702bb836adb465af59d5d3768bd54c9ac455b62113a0c"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-27.zip",
+        "date_utc": "2025-04-27",
+        "n_trades": 374101,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-27 00:00:00+00:00",
+        "last_ts": "2025-04-27 23:59:45+00:00",
+        "bytes": 5389135,
+        "sha256": "2c72d43331474f530d8fac07df4f7e7a025e941511d3c0b4fc9919b28aafdfec"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-28.zip",
+        "date_utc": "2025-04-28",
+        "n_trades": 507899,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-28 00:00:00+00:00",
+        "last_ts": "2025-04-28 23:59:45+00:00",
+        "bytes": 7426752,
+        "sha256": "ff28efe64881eb30d25dd4715992a0fb332e9f1ea7560ddaed921090f4286f4d"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-29.zip",
+        "date_utc": "2025-04-29",
+        "n_trades": 407618,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-29 00:00:00+00:00",
+        "last_ts": "2025-04-29 23:59:45+00:00",
+        "bytes": 5904646,
+        "sha256": "0f092f2b17c16a6a78887a319859117fd625f10b61ab9b1108f47f4b8b07abd6"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-04-30.zip",
+        "date_utc": "2025-04-30",
+        "n_trades": 520323,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-30 00:00:00+00:00",
+        "last_ts": "2025-04-30 23:59:45+00:00",
+        "bytes": 7436490,
+        "sha256": "4bcd63407ff475c0fd5a34222c138f29f9b5911b0be83cb9a3630baae5579d45"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-01.zip",
+        "date_utc": "2025-05-01",
+        "n_trades": 375422,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-01 00:00:00+00:00",
+        "last_ts": "2025-05-01 23:59:45+00:00",
+        "bytes": 5510005,
+        "sha256": "39771d25d07ffa697e01d5d11e909be6cb42d6897138a21c8e60f9e3c2a4f4c2"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-02.zip",
+        "date_utc": "2025-05-02",
+        "n_trades": 343085,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-02 00:00:00+00:00",
+        "last_ts": "2025-05-02 23:59:45+00:00",
+        "bytes": 5005161,
+        "sha256": "f7d959de6e0865973f1e07879b7b5ea264f65df813e44ebf55df4278b6fb2ba0"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-03.zip",
+        "date_utc": "2025-05-03",
+        "n_trades": 291330,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-03 00:00:00+00:00",
+        "last_ts": "2025-05-03 23:59:45+00:00",
+        "bytes": 4147461,
+        "sha256": "a142bad8f19c0b05253e7f81338c4925bbdbb8e47f803e26632b9715ef5f88d3"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-04.zip",
+        "date_utc": "2025-05-04",
+        "n_trades": 307880,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-04 00:00:00+00:00",
+        "last_ts": "2025-05-04 23:59:45+00:00",
+        "bytes": 4432502,
+        "sha256": "d476889ba0818708fc9e07973d0ef165ea8a3db7895648b464ed11de2bd4023a"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-05.zip",
+        "date_utc": "2025-05-05",
+        "n_trades": 357913,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-05 00:00:00+00:00",
+        "last_ts": "2025-05-05 23:59:45+00:00",
+        "bytes": 5222556,
+        "sha256": "185aa22bc6a4d8ca65f52b2d913f13dba0d36d779ea989cdfcd7e5c2d1ebb6e2"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-06.zip",
+        "date_utc": "2025-05-06",
+        "n_trades": 364523,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-06 00:00:00+00:00",
+        "last_ts": "2025-05-06 23:59:45+00:00",
+        "bytes": 5344997,
+        "sha256": "f9b18d459c57d2bac9c0e1aa3450f9f715bcdb26293e24505ced29da4d03678e"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-07.zip",
+        "date_utc": "2025-05-07",
+        "n_trades": 358589,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-07 00:00:00+00:00",
+        "last_ts": "2025-05-07 23:59:45+00:00",
+        "bytes": 5269986,
+        "sha256": "83ff9a06b1c21322bb2bc583bad2d79777fad4e950f70069cbd799ef6783fdfd"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-08.zip",
+        "date_utc": "2025-05-08",
+        "n_trades": 538406,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-08 00:00:00+00:00",
+        "last_ts": "2025-05-08 23:59:45+00:00",
+        "bytes": 7996932,
+        "sha256": "1d72283862c3f8ee97a9898a1ee1badedd4549b9c4ae1f2d51413c6fa125f445"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-09.zip",
+        "date_utc": "2025-05-09",
+        "n_trades": 667558,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-09 00:00:00+00:00",
+        "last_ts": "2025-05-09 23:59:45+00:00",
+        "bytes": 9996046,
+        "sha256": "3b03731ac324a139b44d3bd49c74124b90b47cb696f5c2be1fa6d5a21d28d0a9"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-10.zip",
+        "date_utc": "2025-05-10",
+        "n_trades": 444219,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-10 00:00:00+00:00",
+        "last_ts": "2025-05-10 23:59:45+00:00",
+        "bytes": 6592939,
+        "sha256": "8ed42f4b544ce05c2d82675d9ffcbfc162e30e1aceba8c0e3165d5a4792c1da5"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-11.zip",
+        "date_utc": "2025-05-11",
+        "n_trades": 512214,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-11 00:00:00+00:00",
+        "last_ts": "2025-05-11 23:59:45+00:00",
+        "bytes": 7629406,
+        "sha256": "81f0a01d6500f70b4b351eb56ee2e5095566db69f38efa4911fe6a2c0928fe1b"
+      },
+      {
+        "file": "SOLUSDT-aggTrades-2025-05-12.zip",
+        "date_utc": "2025-05-12",
+        "n_trades": 663623,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-12 00:00:00+00:00",
+        "last_ts": "2025-05-12 23:59:45+00:00",
+        "bytes": 10005504,
+        "sha256": "82c1a57d5b19be1b060f1aef1effa194507cff87999bf8154bfb4cdc1bec7691"
+      }
+    ]
+  },
+  "ETHUSDT": {
+    "symbol": "ETHUSDT",
+    "bar": "15s",
+    "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+    "source_dir": "../_audit_scratch/aggtrades",
+    "epoch_unit_in_source": [
+      "ms"
+    ],
+    "n_source_files": 7,
+    "date_range_utc": [
+      "2025-04-04",
+      "2025-05-13"
+    ],
+    "n_rows": 40320,
+    "n_trades_total": 20128925,
+    "gap_buckets_filled": 0,
+    "first_ts": "2025-04-04 00:00:00+00:00",
+    "last_ts": "2025-05-13 23:59:45+00:00",
+    "grid_step_seconds": [
+      15.0,
+      2851215.0
+    ],
+    "n_gap_boundaries": 1,
+    "contiguous": false,
+    "gaps": [
+      {
+        "after_bucket": "2025-04-04 23:59:45+00:00",
+        "missing_seconds": 2851200.0,
+        "missing_buckets": 190080
+      }
+    ],
+    "bars_path": "quant_research/data/processed/ETHUSDT_15s.parquet",
+    "bars_sha256": "29cf74b3d7d6cb13105946e47ad405d1ae3e1d85bfb7c97a87bd37c85116a79d",
+    "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+      "checked": true,
+      "reference": "quant_research/data/processed/ETHUSDT_1m.parquet",
+      "n_minutes_compared": 10080,
+      "volume_attribution": {
+        "minutes_with_any_difference": 2659,
+        "adjacent_minute_pairs_that_exactly_offset": 956,
+        "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+      },
+      "open": {
+        "n_exact": 9012,
+        "n_within_1e-9_rel": 9012,
+        "max_abs_diff": 1.3399999999996908,
+        "max_rel_diff": 0.0005334692220106578,
+        "mean_abs_diff": 0.0017529761904766488
+      },
+      "high": {
+        "n_exact": 10053,
+        "n_within_1e-9_rel": 10053,
+        "max_abs_diff": 0.07000000000016371,
+        "max_rel_diff": 2.7878894084163876e-05,
+        "mean_abs_diff": 6.349206349205086e-05
+      },
+      "low": {
+        "n_exact": 10045,
+        "n_within_1e-9_rel": 10045,
+        "max_abs_diff": 0.07999999999992724,
+        "max_rel_diff": 3.3276209174220606e-05,
+        "mean_abs_diff": 5.1587301587299783e-05
+      },
+      "close": {
+        "n_exact": 10080,
+        "n_within_1e-9_rel": 10080,
+        "max_abs_diff": 0.0,
+        "max_rel_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "volume": {
+        "n_exact": 5956,
+        "n_within_1e-9_rel": 7421,
+        "max_abs_diff": 754.1790000000001,
+        "max_rel_diff": 0.14618952489097398,
+        "mean_abs_diff": 1.4398866071429797
+      }
+    },
+    "per_day": [
+      {
+        "file": "ETHUSDT-aggTrades-2025-04-04.zip",
+        "date_utc": "2025-04-04",
+        "n_trades": 1846867,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-04 00:00:00+00:00",
+        "last_ts": "2025-04-04 23:59:45+00:00",
+        "bytes": 24930362,
+        "sha256": "d5ac558c9f2ffa5ed56926dabb3078166ca499ccb937989f894cbffbb9021d30"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-08.zip",
+        "date_utc": "2025-05-08",
+        "n_trades": 2881740,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-08 00:00:00+00:00",
+        "last_ts": "2025-05-08 23:59:45+00:00",
+        "bytes": 39200421,
+        "sha256": "b4d18697b15c59d5f75467bda66d18d34e25a4f49f0fb52ed26e5e328e35d7d5"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-09.zip",
+        "date_utc": "2025-05-09",
+        "n_trades": 4099772,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-09 00:00:00+00:00",
+        "last_ts": "2025-05-09 23:59:45+00:00",
+        "bytes": 54423562,
+        "sha256": "b623b37dbe005773f4f981c7ccf8d4ec31924ea1d4ba4d88be0543d422c38554"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-10.zip",
+        "date_utc": "2025-05-10",
+        "n_trades": 2959198,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-10 00:00:00+00:00",
+        "last_ts": "2025-05-10 23:59:45+00:00",
+        "bytes": 39721695,
+        "sha256": "f0bb6739eae183cfb60f6cf8102baa8b14e01541046bfe4ae2c7d34369a74d5a"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-11.zip",
+        "date_utc": "2025-05-11",
+        "n_trades": 2558856,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-11 00:00:00+00:00",
+        "last_ts": "2025-05-11 23:59:45+00:00",
+        "bytes": 34219250,
+        "sha256": "f6aa11355ca857c3f3df13ccc77624fc50796f5518b610256bc3eb1c07e7eb7e"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-12.zip",
+        "date_utc": "2025-05-12",
+        "n_trades": 3076914,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-12 00:00:00+00:00",
+        "last_ts": "2025-05-12 23:59:45+00:00",
+        "bytes": 40976954,
+        "sha256": "d75fe480e606e9e6ce29e27536fd016729356ffe3778531fec10304a976c376f"
+      },
+      {
+        "file": "ETHUSDT-aggTrades-2025-05-13.zip",
+        "date_utc": "2025-05-13",
+        "n_trades": 2705578,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-13 00:00:00+00:00",
+        "last_ts": "2025-05-13 23:59:45+00:00",
+        "bytes": 36350674,
+        "sha256": "438cc596b66b07f48cd40e42cb0d9a3ebb43dd74d192ad52380b222d11b78e76"
+      }
+    ]
+  },
+  "BTCUSDT": {
+    "symbol": "BTCUSDT",
+    "bar": "15s",
+    "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+    "source_dir": "../_audit_scratch/aggtrades",
+    "epoch_unit_in_source": [
+      "ms"
+    ],
+    "n_source_files": 22,
+    "date_range_utc": [
+      "2025-04-03",
+      "2025-05-13"
+    ],
+    "n_rows": 126720,
+    "n_trades_total": 36492653,
+    "gap_buckets_filled": 0,
+    "first_ts": "2025-04-03 00:00:00+00:00",
+    "last_ts": "2025-05-13 23:59:45+00:00",
+    "grid_step_seconds": [
+      15.0,
+      86415.0,
+      172815.0,
+      1382415.0
+    ],
+    "n_gap_boundaries": 3,
+    "contiguous": false,
+    "gaps": [
+      {
+        "after_bucket": "2025-04-09 23:59:45+00:00",
+        "missing_seconds": 86400.0,
+        "missing_buckets": 5760
+      },
+      {
+        "after_bucket": "2025-04-15 23:59:45+00:00",
+        "missing_seconds": 1382400.0,
+        "missing_buckets": 92160
+      },
+      {
+        "after_bucket": "2025-05-04 23:59:45+00:00",
+        "missing_seconds": 172800.0,
+        "missing_buckets": 11520
+      }
+    ],
+    "bars_path": "quant_research/data/processed/BTCUSDT_15s.parquet",
+    "bars_sha256": "b5f04778fbce7e3a1093a12de431a88ec666d6dd2112c69ffc719bb5ce687d1f",
+    "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+      "checked": true,
+      "reference": "quant_research/data/processed/BTCUSDT_1m.parquet",
+      "n_minutes_compared": 31680,
+      "volume_attribution": {
+        "minutes_with_any_difference": 5310,
+        "adjacent_minute_pairs_that_exactly_offset": 2069,
+        "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+      },
+      "open": {
+        "n_exact": 29775,
+        "n_within_1e-9_rel": 29775,
+        "max_abs_diff": 4.0,
+        "max_rel_diff": 5.357542281053989e-05,
+        "mean_abs_diff": 0.01181818181821976
+      },
+      "high": {
+        "n_exact": 31615,
+        "n_within_1e-9_rel": 31615,
+        "max_abs_diff": 2.6999999999970896,
+        "max_rel_diff": 3.479605644689851e-05,
+        "mean_abs_diff": 0.0006218434343456392
+      },
+      "low": {
+        "n_exact": 31610,
+        "n_within_1e-9_rel": 31610,
+        "max_abs_diff": 2.8000000000029104,
+        "max_rel_diff": 3.610983580345559e-05,
+        "mean_abs_diff": 0.0007228535353556483
+      },
+      "close": {
+        "n_exact": 31680,
+        "n_within_1e-9_rel": 31680,
+        "max_abs_diff": 0.0,
+        "max_rel_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "volume": {
+        "n_exact": 20967,
+        "n_within_1e-9_rel": 26370,
+        "max_abs_diff": 16.249000000000024,
+        "max_rel_diff": 0.6134769230769231,
+        "mean_abs_diff": 0.0497119318181851
+      }
+    },
+    "per_day": [
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-03.zip",
+        "date_utc": "2025-04-03",
+        "n_trades": 1754173,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-03 00:00:00+00:00",
+        "last_ts": "2025-04-03 23:59:45+00:00",
+        "bytes": 21863235,
+        "sha256": "374c1a10a0018ee474ada7984a53af4cf98efd49cfdfe913adf0c28699ff97bd"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-04.zip",
+        "date_utc": "2025-04-04",
+        "n_trades": 2419411,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-04 00:00:00+00:00",
+        "last_ts": "2025-04-04 23:59:45+00:00",
+        "bytes": 30079415,
+        "sha256": "381e7be0d54741ba7ab398e9d2074da860d28fc4f4b57eab291a650d6e41a3d8"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-05.zip",
+        "date_utc": "2025-04-05",
+        "n_trades": 697749,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-05 00:00:00+00:00",
+        "last_ts": "2025-04-05 23:59:45+00:00",
+        "bytes": 8877022,
+        "sha256": "d10b714c33010edf99682fba95f87c3c2796904cfa1b5c8c538409343eb84874"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-06.zip",
+        "date_utc": "2025-04-06",
+        "n_trades": 1914030,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-06 00:00:00+00:00",
+        "last_ts": "2025-04-06 23:59:45+00:00",
+        "bytes": 23949040,
+        "sha256": "f290bd41c83d312c17838bd16a68b808572a00915c99813da2d1db3d916a2c6e"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-07.zip",
+        "date_utc": "2025-04-07",
+        "n_trades": 4889328,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-07 00:00:00+00:00",
+        "last_ts": "2025-04-07 23:59:45+00:00",
+        "bytes": 60518183,
+        "sha256": "5ad51685f958a72b2c6cd05df1671333fa734bf0742c3cd500bcca5e3dc0cc7c"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-08.zip",
+        "date_utc": "2025-04-08",
+        "n_trades": 2341606,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-08 00:00:00+00:00",
+        "last_ts": "2025-04-08 23:59:45+00:00",
+        "bytes": 29170285,
+        "sha256": "945d251141d70df84e87535ff5cedff5fb9214be7c6237e6eec02e687af436e0"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-09.zip",
+        "date_utc": "2025-04-09",
+        "n_trades": 3993176,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-09 00:00:00+00:00",
+        "last_ts": "2025-04-09 23:59:45+00:00",
+        "bytes": 49261405,
+        "sha256": "428ac841f534169a7892a4c6a71a68e9c9e9b3f497264913d8d6fdeab23e99e5"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-11.zip",
+        "date_utc": "2025-04-11",
+        "n_trades": 2045564,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-11 00:00:00+00:00",
+        "last_ts": "2025-04-11 23:59:45+00:00",
+        "bytes": 25509482,
+        "sha256": "ca254451b646c4771d4f839bb7f4a4b7186e3d8525177d5abcad10e02af691eb"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-12.zip",
+        "date_utc": "2025-04-12",
+        "n_trades": 1188129,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-12 00:00:00+00:00",
+        "last_ts": "2025-04-12 23:59:45+00:00",
+        "bytes": 14941592,
+        "sha256": "67a6c372b6e574962247456d80ff5ebf613c92c2d7152b62bfa07853a660203e"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-13.zip",
+        "date_utc": "2025-04-13",
+        "n_trades": 1466380,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-13 00:00:00+00:00",
+        "last_ts": "2025-04-13 23:59:45+00:00",
+        "bytes": 18457406,
+        "sha256": "d635c1cc71967125508dc9b7e44bac4e1c8eed1cd6503082a3254143a80511c6"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-14.zip",
+        "date_utc": "2025-04-14",
+        "n_trades": 1509019,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-14 00:00:00+00:00",
+        "last_ts": "2025-04-14 23:59:45+00:00",
+        "bytes": 19149864,
+        "sha256": "a05b7c15107e2c655ee1774be91924a0677d575238137ef43d63ec8aabfa0c0a"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-04-15.zip",
+        "date_utc": "2025-04-15",
+        "n_trades": 1311319,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-04-15 00:00:00+00:00",
+        "last_ts": "2025-04-15 23:59:45+00:00",
+        "bytes": 16592214,
+        "sha256": "99054422bd1c432b96de4c4467b52d3a33f01bf39c95a91ae78e973640fdbf6d"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-02.zip",
+        "date_utc": "2025-05-02",
+        "n_trades": 900331,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-02 00:00:00+00:00",
+        "last_ts": "2025-05-02 23:59:45+00:00",
+        "bytes": 11443726,
+        "sha256": "04a34e2315899699fdf76393791f7eaa81d50859795da1b14f9514a08080b563"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-03.zip",
+        "date_utc": "2025-05-03",
+        "n_trades": 497814,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-03 00:00:00+00:00",
+        "last_ts": "2025-05-03 23:59:45+00:00",
+        "bytes": 6421205,
+        "sha256": "beaa36f14dcb7cb0535d09ad56413002ed3fda615d975eb21a359fc9346a4364"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-04.zip",
+        "date_utc": "2025-05-04",
+        "n_trades": 630713,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-04 00:00:00+00:00",
+        "last_ts": "2025-05-04 23:59:45+00:00",
+        "bytes": 8005938,
+        "sha256": "f212bd35f761a7bd61a2b9bc920dcfae5900bbb6c7e3c34489ad90afe8b2e7cd"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-07.zip",
+        "date_utc": "2025-05-07",
+        "n_trades": 1064267,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-07 00:00:00+00:00",
+        "last_ts": "2025-05-07 23:59:45+00:00",
+        "bytes": 13528362,
+        "sha256": "e759eb7d1d730c1dbe3e0872be74373ad9d7b335b28ed3d94154a87f43abdabe"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-08.zip",
+        "date_utc": "2025-05-08",
+        "n_trades": 1805609,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-08 00:00:00+00:00",
+        "last_ts": "2025-05-08 23:59:45+00:00",
+        "bytes": 22769747,
+        "sha256": "3417c9b0abce55b42b807951b6614865fdc0d8071297489e50acfd4529815dc2"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-09.zip",
+        "date_utc": "2025-05-09",
+        "n_trades": 1311715,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-09 00:00:00+00:00",
+        "last_ts": "2025-05-09 23:59:45+00:00",
+        "bytes": 16492406,
+        "sha256": "8dfef313d4b64498f077624c581ca8c17ed4ed4f12c1be9f38a9cba2b9986e37"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-10.zip",
+        "date_utc": "2025-05-10",
+        "n_trades": 804623,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-10 00:00:00+00:00",
+        "last_ts": "2025-05-10 23:59:45+00:00",
+        "bytes": 10221567,
+        "sha256": "25c089097c381e8d545937328c68b22e80555e4de10ec2d4f268288027a0bb36"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-11.zip",
+        "date_utc": "2025-05-11",
+        "n_trades": 1026504,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-11 00:00:00+00:00",
+        "last_ts": "2025-05-11 23:59:45+00:00",
+        "bytes": 12999331,
+        "sha256": "eb98bd9087b3011206c70fe1fbb75a00981a57ef47853a213ecfd35a46fce1b5"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-12.zip",
+        "date_utc": "2025-05-12",
+        "n_trades": 1724988,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-12 00:00:00+00:00",
+        "last_ts": "2025-05-12 23:59:45+00:00",
+        "bytes": 21589053,
+        "sha256": "a4133e323be015c0f6eac19152fbb56ce047c83639a2d4b9d56ca1ca0475423a"
+      },
+      {
+        "file": "BTCUSDT-aggTrades-2025-05-13.zip",
+        "date_utc": "2025-05-13",
+        "n_trades": 1196205,
+        "n_buckets": 5760,
+        "gap_buckets_filled": 0,
+        "first_ts": "2025-05-13 00:00:00+00:00",
+        "last_ts": "2025-05-13 23:59:45+00:00",
+        "bytes": 15070939,
+        "sha256": "eceef4e02566e0624154135584752a29b46ed2e2f76252ad3aaf7147fb1e1f0e"
+      }
+    ]
+  }
+}

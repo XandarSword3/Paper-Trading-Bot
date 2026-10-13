@@ -1,0 +1,4693 @@
+{
+  "script": "quant_research/entry_autopsy_15s.py",
+  "bar_builder": "quant_research/build_15s_bars.py",
+  "inputs": {
+    "bars": [
+      "quant_research/data/processed/BTCUSDT_15s.parquet",
+      "quant_research/data/processed/ETHUSDT_15s.parquet",
+      "quant_research/data/processed/SOLUSDT_15s.parquet"
+    ],
+    "bar_provenance": "quant_research/results/aggtrades_15s_provenance.json",
+    "fills": "quant_research/inputs/trade_history.csv",
+    "ledger": "quant_research/inputs/transaction_history.csv",
+    "indicators": "quant_research/core/indicators.py::compute_indicators",
+    "shared_method": "quant_research/entry_autopsy.py (imported: entry definition, clock pinning, 13 indicators, matched controls, Holm)"
+  },
+  "bar_provenance": {
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "bar": "15s",
+      "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+      "source_dir": "../_audit_scratch/aggtrades",
+      "epoch_unit_in_source": [
+        "ms"
+      ],
+      "n_source_files": 22,
+      "date_range_utc": [
+        "2025-04-03",
+        "2025-05-13"
+      ],
+      "n_rows": 126720,
+      "n_trades_total": 36492653,
+      "gap_buckets_filled": 0,
+      "first_ts": "2025-04-03 00:00:00+00:00",
+      "last_ts": "2025-05-13 23:59:45+00:00",
+      "grid_step_seconds": [
+        15.0,
+        86415.0,
+        172815.0,
+        1382415.0
+      ],
+      "n_gap_boundaries": 3,
+      "contiguous": false,
+      "gaps": [
+        {
+          "after_bucket": "2025-04-09 23:59:45+00:00",
+          "missing_seconds": 86400.0,
+          "missing_buckets": 5760
+        },
+        {
+          "after_bucket": "2025-04-15 23:59:45+00:00",
+          "missing_seconds": 1382400.0,
+          "missing_buckets": 92160
+        },
+        {
+          "after_bucket": "2025-05-04 23:59:45+00:00",
+          "missing_seconds": 172800.0,
+          "missing_buckets": 11520
+        }
+      ],
+      "bars_path": "quant_research/data/processed/BTCUSDT_15s.parquet",
+      "bars_sha256": "b5f04778fbce7e3a1093a12de431a88ec666d6dd2112c69ffc719bb5ce687d1f",
+      "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+        "checked": true,
+        "reference": "quant_research/data/processed/BTCUSDT_1m.parquet",
+        "n_minutes_compared": 31680,
+        "volume_attribution": {
+          "minutes_with_any_difference": 5310,
+          "adjacent_minute_pairs_that_exactly_offset": 2069,
+          "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+        },
+        "open": {
+          "n_exact": 29775,
+          "n_within_1e-9_rel": 29775,
+          "max_abs_diff": 4.0,
+          "max_rel_diff": 5.357542281053989e-05,
+          "mean_abs_diff": 0.01181818181821976
+        },
+        "high": {
+          "n_exact": 31615,
+          "n_within_1e-9_rel": 31615,
+          "max_abs_diff": 2.6999999999970896,
+          "max_rel_diff": 3.479605644689851e-05,
+          "mean_abs_diff": 0.0006218434343456392
+        },
+        "low": {
+          "n_exact": 31610,
+          "n_within_1e-9_rel": 31610,
+          "max_abs_diff": 2.8000000000029104,
+          "max_rel_diff": 3.610983580345559e-05,
+          "mean_abs_diff": 0.0007228535353556483
+        },
+        "close": {
+          "n_exact": 31680,
+          "n_within_1e-9_rel": 31680,
+          "max_abs_diff": 0.0,
+          "max_rel_diff": 0.0,
+          "mean_abs_diff": 0.0
+        },
+        "volume": {
+          "n_exact": 20967,
+          "n_within_1e-9_rel": 26370,
+          "max_abs_diff": 16.249000000000024,
+          "max_rel_diff": 0.6134769230769231,
+          "mean_abs_diff": 0.0497119318181851
+        }
+      },
+      "per_day": [
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-03.zip",
+          "date_utc": "2025-04-03",
+          "n_trades": 1754173,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-03 00:00:00+00:00",
+          "last_ts": "2025-04-03 23:59:45+00:00",
+          "bytes": 21863235,
+          "sha256": "374c1a10a0018ee474ada7984a53af4cf98efd49cfdfe913adf0c28699ff97bd"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-04.zip",
+          "date_utc": "2025-04-04",
+          "n_trades": 2419411,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-04 00:00:00+00:00",
+          "last_ts": "2025-04-04 23:59:45+00:00",
+          "bytes": 30079415,
+          "sha256": "381e7be0d54741ba7ab398e9d2074da860d28fc4f4b57eab291a650d6e41a3d8"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-05.zip",
+          "date_utc": "2025-04-05",
+          "n_trades": 697749,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-05 00:00:00+00:00",
+          "last_ts": "2025-04-05 23:59:45+00:00",
+          "bytes": 8877022,
+          "sha256": "d10b714c33010edf99682fba95f87c3c2796904cfa1b5c8c538409343eb84874"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-06.zip",
+          "date_utc": "2025-04-06",
+          "n_trades": 1914030,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-06 00:00:00+00:00",
+          "last_ts": "2025-04-06 23:59:45+00:00",
+          "bytes": 23949040,
+          "sha256": "f290bd41c83d312c17838bd16a68b808572a00915c99813da2d1db3d916a2c6e"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-07.zip",
+          "date_utc": "2025-04-07",
+          "n_trades": 4889328,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-07 00:00:00+00:00",
+          "last_ts": "2025-04-07 23:59:45+00:00",
+          "bytes": 60518183,
+          "sha256": "5ad51685f958a72b2c6cd05df1671333fa734bf0742c3cd500bcca5e3dc0cc7c"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-08.zip",
+          "date_utc": "2025-04-08",
+          "n_trades": 2341606,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-08 00:00:00+00:00",
+          "last_ts": "2025-04-08 23:59:45+00:00",
+          "bytes": 29170285,
+          "sha256": "945d251141d70df84e87535ff5cedff5fb9214be7c6237e6eec02e687af436e0"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-09.zip",
+          "date_utc": "2025-04-09",
+          "n_trades": 3993176,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-09 00:00:00+00:00",
+          "last_ts": "2025-04-09 23:59:45+00:00",
+          "bytes": 49261405,
+          "sha256": "428ac841f534169a7892a4c6a71a68e9c9e9b3f497264913d8d6fdeab23e99e5"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-11.zip",
+          "date_utc": "2025-04-11",
+          "n_trades": 2045564,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-11 00:00:00+00:00",
+          "last_ts": "2025-04-11 23:59:45+00:00",
+          "bytes": 25509482,
+          "sha256": "ca254451b646c4771d4f839bb7f4a4b7186e3d8525177d5abcad10e02af691eb"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-12.zip",
+          "date_utc": "2025-04-12",
+          "n_trades": 1188129,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-12 00:00:00+00:00",
+          "last_ts": "2025-04-12 23:59:45+00:00",
+          "bytes": 14941592,
+          "sha256": "67a6c372b6e574962247456d80ff5ebf613c92c2d7152b62bfa07853a660203e"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-13.zip",
+          "date_utc": "2025-04-13",
+          "n_trades": 1466380,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-13 00:00:00+00:00",
+          "last_ts": "2025-04-13 23:59:45+00:00",
+          "bytes": 18457406,
+          "sha256": "d635c1cc71967125508dc9b7e44bac4e1c8eed1cd6503082a3254143a80511c6"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-14.zip",
+          "date_utc": "2025-04-14",
+          "n_trades": 1509019,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-14 00:00:00+00:00",
+          "last_ts": "2025-04-14 23:59:45+00:00",
+          "bytes": 19149864,
+          "sha256": "a05b7c15107e2c655ee1774be91924a0677d575238137ef43d63ec8aabfa0c0a"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-04-15.zip",
+          "date_utc": "2025-04-15",
+          "n_trades": 1311319,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-15 00:00:00+00:00",
+          "last_ts": "2025-04-15 23:59:45+00:00",
+          "bytes": 16592214,
+          "sha256": "99054422bd1c432b96de4c4467b52d3a33f01bf39c95a91ae78e973640fdbf6d"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-02.zip",
+          "date_utc": "2025-05-02",
+          "n_trades": 900331,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-02 00:00:00+00:00",
+          "last_ts": "2025-05-02 23:59:45+00:00",
+          "bytes": 11443726,
+          "sha256": "04a34e2315899699fdf76393791f7eaa81d50859795da1b14f9514a08080b563"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-03.zip",
+          "date_utc": "2025-05-03",
+          "n_trades": 497814,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-03 00:00:00+00:00",
+          "last_ts": "2025-05-03 23:59:45+00:00",
+          "bytes": 6421205,
+          "sha256": "beaa36f14dcb7cb0535d09ad56413002ed3fda615d975eb21a359fc9346a4364"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-04.zip",
+          "date_utc": "2025-05-04",
+          "n_trades": 630713,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-04 00:00:00+00:00",
+          "last_ts": "2025-05-04 23:59:45+00:00",
+          "bytes": 8005938,
+          "sha256": "f212bd35f761a7bd61a2b9bc920dcfae5900bbb6c7e3c34489ad90afe8b2e7cd"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-07.zip",
+          "date_utc": "2025-05-07",
+          "n_trades": 1064267,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-07 00:00:00+00:00",
+          "last_ts": "2025-05-07 23:59:45+00:00",
+          "bytes": 13528362,
+          "sha256": "e759eb7d1d730c1dbe3e0872be74373ad9d7b335b28ed3d94154a87f43abdabe"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-08.zip",
+          "date_utc": "2025-05-08",
+          "n_trades": 1805609,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-08 00:00:00+00:00",
+          "last_ts": "2025-05-08 23:59:45+00:00",
+          "bytes": 22769747,
+          "sha256": "3417c9b0abce55b42b807951b6614865fdc0d8071297489e50acfd4529815dc2"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-09.zip",
+          "date_utc": "2025-05-09",
+          "n_trades": 1311715,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-09 00:00:00+00:00",
+          "last_ts": "2025-05-09 23:59:45+00:00",
+          "bytes": 16492406,
+          "sha256": "8dfef313d4b64498f077624c581ca8c17ed4ed4f12c1be9f38a9cba2b9986e37"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-10.zip",
+          "date_utc": "2025-05-10",
+          "n_trades": 804623,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-10 00:00:00+00:00",
+          "last_ts": "2025-05-10 23:59:45+00:00",
+          "bytes": 10221567,
+          "sha256": "25c089097c381e8d545937328c68b22e80555e4de10ec2d4f268288027a0bb36"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-11.zip",
+          "date_utc": "2025-05-11",
+          "n_trades": 1026504,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-11 00:00:00+00:00",
+          "last_ts": "2025-05-11 23:59:45+00:00",
+          "bytes": 12999331,
+          "sha256": "eb98bd9087b3011206c70fe1fbb75a00981a57ef47853a213ecfd35a46fce1b5"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-12.zip",
+          "date_utc": "2025-05-12",
+          "n_trades": 1724988,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-12 00:00:00+00:00",
+          "last_ts": "2025-05-12 23:59:45+00:00",
+          "bytes": 21589053,
+          "sha256": "a4133e323be015c0f6eac19152fbb56ce047c83639a2d4b9d56ca1ca0475423a"
+        },
+        {
+          "file": "BTCUSDT-aggTrades-2025-05-13.zip",
+          "date_utc": "2025-05-13",
+          "n_trades": 1196205,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-13 00:00:00+00:00",
+          "last_ts": "2025-05-13 23:59:45+00:00",
+          "bytes": 15070939,
+          "sha256": "eceef4e02566e0624154135584752a29b46ed2e2f76252ad3aaf7147fb1e1f0e"
+        }
+      ]
+    },
+    "ETHUSDT": {
+      "symbol": "ETHUSDT",
+      "bar": "15s",
+      "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+      "source_dir": "../_audit_scratch/aggtrades",
+      "epoch_unit_in_source": [
+        "ms"
+      ],
+      "n_source_files": 7,
+      "date_range_utc": [
+        "2025-04-04",
+        "2025-05-13"
+      ],
+      "n_rows": 40320,
+      "n_trades_total": 20128925,
+      "gap_buckets_filled": 0,
+      "first_ts": "2025-04-04 00:00:00+00:00",
+      "last_ts": "2025-05-13 23:59:45+00:00",
+      "grid_step_seconds": [
+        15.0,
+        2851215.0
+      ],
+      "n_gap_boundaries": 1,
+      "contiguous": false,
+      "gaps": [
+        {
+          "after_bucket": "2025-04-04 23:59:45+00:00",
+          "missing_seconds": 2851200.0,
+          "missing_buckets": 190080
+        }
+      ],
+      "bars_path": "quant_research/data/processed/ETHUSDT_15s.parquet",
+      "bars_sha256": "29cf74b3d7d6cb13105946e47ad405d1ae3e1d85bfb7c97a87bd37c85116a79d",
+      "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+        "checked": true,
+        "reference": "quant_research/data/processed/ETHUSDT_1m.parquet",
+        "n_minutes_compared": 10080,
+        "volume_attribution": {
+          "minutes_with_any_difference": 2659,
+          "adjacent_minute_pairs_that_exactly_offset": 956,
+          "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+        },
+        "open": {
+          "n_exact": 9012,
+          "n_within_1e-9_rel": 9012,
+          "max_abs_diff": 1.3399999999996908,
+          "max_rel_diff": 0.0005334692220106578,
+          "mean_abs_diff": 0.0017529761904766488
+        },
+        "high": {
+          "n_exact": 10053,
+          "n_within_1e-9_rel": 10053,
+          "max_abs_diff": 0.07000000000016371,
+          "max_rel_diff": 2.7878894084163876e-05,
+          "mean_abs_diff": 6.349206349205086e-05
+        },
+        "low": {
+          "n_exact": 10045,
+          "n_within_1e-9_rel": 10045,
+          "max_abs_diff": 0.07999999999992724,
+          "max_rel_diff": 3.3276209174220606e-05,
+          "mean_abs_diff": 5.1587301587299783e-05
+        },
+        "close": {
+          "n_exact": 10080,
+          "n_within_1e-9_rel": 10080,
+          "max_abs_diff": 0.0,
+          "max_rel_diff": 0.0,
+          "mean_abs_diff": 0.0
+        },
+        "volume": {
+          "n_exact": 5956,
+          "n_within_1e-9_rel": 7421,
+          "max_abs_diff": 754.1790000000001,
+          "max_rel_diff": 0.14618952489097398,
+          "mean_abs_diff": 1.4398866071429797
+        }
+      },
+      "per_day": [
+        {
+          "file": "ETHUSDT-aggTrades-2025-04-04.zip",
+          "date_utc": "2025-04-04",
+          "n_trades": 1846867,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-04 00:00:00+00:00",
+          "last_ts": "2025-04-04 23:59:45+00:00",
+          "bytes": 24930362,
+          "sha256": "d5ac558c9f2ffa5ed56926dabb3078166ca499ccb937989f894cbffbb9021d30"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-08.zip",
+          "date_utc": "2025-05-08",
+          "n_trades": 2881740,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-08 00:00:00+00:00",
+          "last_ts": "2025-05-08 23:59:45+00:00",
+          "bytes": 39200421,
+          "sha256": "b4d18697b15c59d5f75467bda66d18d34e25a4f49f0fb52ed26e5e328e35d7d5"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-09.zip",
+          "date_utc": "2025-05-09",
+          "n_trades": 4099772,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-09 00:00:00+00:00",
+          "last_ts": "2025-05-09 23:59:45+00:00",
+          "bytes": 54423562,
+          "sha256": "b623b37dbe005773f4f981c7ccf8d4ec31924ea1d4ba4d88be0543d422c38554"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-10.zip",
+          "date_utc": "2025-05-10",
+          "n_trades": 2959198,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-10 00:00:00+00:00",
+          "last_ts": "2025-05-10 23:59:45+00:00",
+          "bytes": 39721695,
+          "sha256": "f0bb6739eae183cfb60f6cf8102baa8b14e01541046bfe4ae2c7d34369a74d5a"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-11.zip",
+          "date_utc": "2025-05-11",
+          "n_trades": 2558856,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-11 00:00:00+00:00",
+          "last_ts": "2025-05-11 23:59:45+00:00",
+          "bytes": 34219250,
+          "sha256": "f6aa11355ca857c3f3df13ccc77624fc50796f5518b610256bc3eb1c07e7eb7e"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-12.zip",
+          "date_utc": "2025-05-12",
+          "n_trades": 3076914,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-12 00:00:00+00:00",
+          "last_ts": "2025-05-12 23:59:45+00:00",
+          "bytes": 40976954,
+          "sha256": "d75fe480e606e9e6ce29e27536fd016729356ffe3778531fec10304a976c376f"
+        },
+        {
+          "file": "ETHUSDT-aggTrades-2025-05-13.zip",
+          "date_utc": "2025-05-13",
+          "n_trades": 2705578,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-13 00:00:00+00:00",
+          "last_ts": "2025-05-13 23:59:45+00:00",
+          "bytes": 36350674,
+          "sha256": "438cc596b66b07f48cd40e42cb0d9a3ebb43dd74d192ad52380b222d11b78e76"
+        }
+      ]
+    },
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "bar": "15s",
+      "source_url_pattern": "https://data.binance.vision/data/futures/um/daily/aggTrades/{sym}/{sym}-aggTrades-YYYY-MM-DD.zip",
+      "source_dir": "../_audit_scratch/aggtrades",
+      "epoch_unit_in_source": [
+        "ms"
+      ],
+      "n_source_files": 40,
+      "date_range_utc": [
+        "2025-04-03",
+        "2025-05-12"
+      ],
+      "n_rows": 230400,
+      "n_trades_total": 19145449,
+      "gap_buckets_filled": 2,
+      "first_ts": "2025-04-03 00:00:00+00:00",
+      "last_ts": "2025-05-12 23:59:45+00:00",
+      "grid_step_seconds": [
+        15.0
+      ],
+      "n_gap_boundaries": 0,
+      "contiguous": true,
+      "gaps": [],
+      "bars_path": "quant_research/data/processed/SOLUSDT_15s.parquet",
+      "bars_sha256": "5341633730f17bd69921a1c474b68d182bdc52ebe40a2fdf5bac7029e86408f2",
+      "cross_check_15s_aggregated_to_1m_vs_binance_1m_klines": {
+        "checked": true,
+        "reference": "quant_research/data/processed/SOLUSDT_1m.parquet",
+        "n_minutes_compared": 57600,
+        "volume_attribution": {
+          "minutes_with_any_difference": 6791,
+          "adjacent_minute_pairs_that_exactly_offset": 2857,
+          "note": "a pair means minute i carries +x and minute i+1 carries -x, so the day's total volume is unchanged and only the minute assignment of a block of trades differs; the repo's klines come from the raw trade stream while this rebuild uses aggTrade rows (one timestamp per aggregated block)"
+        },
+        "open": {
+          "n_exact": 55524,
+          "n_within_1e-9_rel": 55524,
+          "max_abs_diff": 0.04000000000000625,
+          "max_rel_diff": 0.00037828636277668107,
+          "mean_abs_diff": 0.0003619791666666663
+        },
+        "high": {
+          "n_exact": 57541,
+          "n_within_1e-9_rel": 57541,
+          "max_abs_diff": 0.010000000000019327,
+          "max_rel_diff": 9.540164090813685e-05,
+          "mean_abs_diff": 1.0243055555556109e-05
+        },
+        "low": {
+          "n_exact": 57547,
+          "n_within_1e-9_rel": 57547,
+          "max_abs_diff": 0.010000000000019327,
+          "max_rel_diff": 9.786651008016153e-05,
+          "mean_abs_diff": 9.201388888890388e-06
+        },
+        "close": {
+          "n_exact": 57600,
+          "n_within_1e-9_rel": 57600,
+          "max_abs_diff": 0.0,
+          "max_rel_diff": 0.0,
+          "mean_abs_diff": 0.0
+        },
+        "volume": {
+          "n_exact": 42435,
+          "n_within_1e-9_rel": 50809,
+          "max_abs_diff": 6466.039999999994,
+          "max_rel_diff": 0.2381654617154124,
+          "mean_abs_diff": 5.3277836805558785
+        }
+      },
+      "per_day": [
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-03.zip",
+          "date_utc": "2025-04-03",
+          "n_trades": 440452,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-03 00:00:00+00:00",
+          "last_ts": "2025-04-03 23:59:45+00:00",
+          "bytes": 6071669,
+          "sha256": "91ef6dbd1fc92ff89e4932b3bf546275b2432d6e41c2f49aac3ce4b993106aa4"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-04.zip",
+          "date_utc": "2025-04-04",
+          "n_trades": 512783,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-04 00:00:00+00:00",
+          "last_ts": "2025-04-04 23:59:45+00:00",
+          "bytes": 7080513,
+          "sha256": "72795ea22248ef1e0057468d77d32b1a750f69561c622ae5aeeb060a02d2320d"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-05.zip",
+          "date_utc": "2025-04-05",
+          "n_trades": 214629,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-05 00:00:00+00:00",
+          "last_ts": "2025-04-05 23:59:45+00:00",
+          "bytes": 2939010,
+          "sha256": "3c35ea11361b364f6b52ec5e4253031e854cfb22dfaaa35403006373c5f4fd83"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-06.zip",
+          "date_utc": "2025-04-06",
+          "n_trades": 458528,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-06 00:00:00+00:00",
+          "last_ts": "2025-04-06 23:59:45+00:00",
+          "bytes": 6314552,
+          "sha256": "e4ad8c536d887729e5e6eadd09841b01f046e5ea2c0b3d5a02622778a1715227"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-07.zip",
+          "date_utc": "2025-04-07",
+          "n_trades": 938230,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-07 00:00:00+00:00",
+          "last_ts": "2025-04-07 23:59:45+00:00",
+          "bytes": 13002930,
+          "sha256": "a495d72bea52d793414d853824024c096ecf7eac1ab99f8d04ec424028977d1d"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-08.zip",
+          "date_utc": "2025-04-08",
+          "n_trades": 500070,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-08 00:00:00+00:00",
+          "last_ts": "2025-04-08 23:59:45+00:00",
+          "bytes": 6965392,
+          "sha256": "911e7f5e4b9ddb029e99b076fc8f1a2a2f7c8f33ea0ffb7119c6118dac3f9b63"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-09.zip",
+          "date_utc": "2025-04-09",
+          "n_trades": 800678,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 2,
+          "first_ts": "2025-04-09 00:00:00+00:00",
+          "last_ts": "2025-04-09 23:59:45+00:00",
+          "bytes": 11659791,
+          "sha256": "0df0692fa29aa4a5d052d36d57f34afdbb3e15ebdf4760692b5fd8d61c4abde2"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-10.zip",
+          "date_utc": "2025-04-10",
+          "n_trades": 462793,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-10 00:00:00+00:00",
+          "last_ts": "2025-04-10 23:59:45+00:00",
+          "bytes": 6960674,
+          "sha256": "4c015de0b51a6cf180d8a055ac4e65c52c0f1e77698921ad8c5bd2e53eee37a4"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-11.zip",
+          "date_utc": "2025-04-11",
+          "n_trades": 472047,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-11 00:00:00+00:00",
+          "last_ts": "2025-04-11 23:59:45+00:00",
+          "bytes": 7029439,
+          "sha256": "d8d7799469558704531e5eec3c884c078892ed31b24531b1d843b5851590de88"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-12.zip",
+          "date_utc": "2025-04-12",
+          "n_trades": 527944,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-12 00:00:00+00:00",
+          "last_ts": "2025-04-12 23:59:45+00:00",
+          "bytes": 7778591,
+          "sha256": "811f7f3124b0230c8d90539eb9fe1905af6408a0f778d61b5d49f855b940c5e3"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-13.zip",
+          "date_utc": "2025-04-13",
+          "n_trades": 537575,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-13 00:00:00+00:00",
+          "last_ts": "2025-04-13 23:59:45+00:00",
+          "bytes": 7975300,
+          "sha256": "14fa5a430fd292f3aed5d309a5a62e85fdb3a780ce11dc5926da6271661f0ce7"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-14.zip",
+          "date_utc": "2025-04-14",
+          "n_trades": 579702,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-14 00:00:00+00:00",
+          "last_ts": "2025-04-14 23:59:45+00:00",
+          "bytes": 8712648,
+          "sha256": "811994bb446ec45a7b8783e98c57b77173fd33e060a055b81e40a8344adf21c5"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-15.zip",
+          "date_utc": "2025-04-15",
+          "n_trades": 458709,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-15 00:00:00+00:00",
+          "last_ts": "2025-04-15 23:59:45+00:00",
+          "bytes": 6873696,
+          "sha256": "79d2e53b1fb2bb7ec23c71da704fce9f3a8a06cc118600c2b19b2269539ec940"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-16.zip",
+          "date_utc": "2025-04-16",
+          "n_trades": 557333,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-16 00:00:00+00:00",
+          "last_ts": "2025-04-16 23:59:45+00:00",
+          "bytes": 8373392,
+          "sha256": "24013e4618a673bdc1601d2a8edbc1de00257a2917b3245c94493096656f7688"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-17.zip",
+          "date_utc": "2025-04-17",
+          "n_trades": 511407,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-17 00:00:00+00:00",
+          "last_ts": "2025-04-17 23:59:45+00:00",
+          "bytes": 7588572,
+          "sha256": "8b3c5a5ac0ed9198d8127d517c5b574b222cf21a1d5dbf993de1d740c474d03a"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-18.zip",
+          "date_utc": "2025-04-18",
+          "n_trades": 365624,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-18 00:00:00+00:00",
+          "last_ts": "2025-04-18 23:59:45+00:00",
+          "bytes": 5312344,
+          "sha256": "342491ee6442af372e141d390f551629cffe49e6f84642e4307f6db61e40734a"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-19.zip",
+          "date_utc": "2025-04-19",
+          "n_trades": 411237,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-19 00:00:00+00:00",
+          "last_ts": "2025-04-19 23:59:45+00:00",
+          "bytes": 5951376,
+          "sha256": "e28c8d83b164c5543572fe01b8ad1e68b959b3db0978fe679681e393993c7443"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-20.zip",
+          "date_utc": "2025-04-20",
+          "n_trades": 385766,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-20 00:00:00+00:00",
+          "last_ts": "2025-04-20 23:59:45+00:00",
+          "bytes": 5590192,
+          "sha256": "7e3694d1f4453654f2b63ecec0db7d94f691fb178d227618553b09cf81b51a62"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-21.zip",
+          "date_utc": "2025-04-21",
+          "n_trades": 539878,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-21 00:00:00+00:00",
+          "last_ts": "2025-04-21 23:59:45+00:00",
+          "bytes": 7884945,
+          "sha256": "1a7522d19ea9ee76fb8ff7e2e59008c964c198786be98b8bf2757846575944f4"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-22.zip",
+          "date_utc": "2025-04-22",
+          "n_trades": 579033,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-22 00:00:00+00:00",
+          "last_ts": "2025-04-22 23:59:45+00:00",
+          "bytes": 8542396,
+          "sha256": "a13f19ad2d1d42a56e934821a87113a0059e9ebeaaf5ed2e6b537e495e32796b"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-23.zip",
+          "date_utc": "2025-04-23",
+          "n_trades": 553483,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-23 00:00:00+00:00",
+          "last_ts": "2025-04-23 23:59:45+00:00",
+          "bytes": 8218505,
+          "sha256": "991c28bb2cb7d84131802898e7761290a2af5b60c96c3c778cd28cd8a13aa42e"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-24.zip",
+          "date_utc": "2025-04-24",
+          "n_trades": 440884,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-24 00:00:00+00:00",
+          "last_ts": "2025-04-24 23:59:45+00:00",
+          "bytes": 6537271,
+          "sha256": "94cc9f6cd129b192d54f7830da783d545bf5d301eb9dcea73d8834f215e983c9"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-25.zip",
+          "date_utc": "2025-04-25",
+          "n_trades": 499815,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-25 00:00:00+00:00",
+          "last_ts": "2025-04-25 23:59:45+00:00",
+          "bytes": 7365266,
+          "sha256": "fb2d380a205890d0df8a73069305e9ea61f6721c10977de3b0bd4cdd47f27828"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-26.zip",
+          "date_utc": "2025-04-26",
+          "n_trades": 362146,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-26 00:00:00+00:00",
+          "last_ts": "2025-04-26 23:59:45+00:00",
+          "bytes": 5222003,
+          "sha256": "a787dabfdd2dfc01560702bb836adb465af59d5d3768bd54c9ac455b62113a0c"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-27.zip",
+          "date_utc": "2025-04-27",
+          "n_trades": 374101,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-27 00:00:00+00:00",
+          "last_ts": "2025-04-27 23:59:45+00:00",
+          "bytes": 5389135,
+          "sha256": "2c72d43331474f530d8fac07df4f7e7a025e941511d3c0b4fc9919b28aafdfec"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-28.zip",
+          "date_utc": "2025-04-28",
+          "n_trades": 507899,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-28 00:00:00+00:00",
+          "last_ts": "2025-04-28 23:59:45+00:00",
+          "bytes": 7426752,
+          "sha256": "ff28efe64881eb30d25dd4715992a0fb332e9f1ea7560ddaed921090f4286f4d"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-29.zip",
+          "date_utc": "2025-04-29",
+          "n_trades": 407618,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-29 00:00:00+00:00",
+          "last_ts": "2025-04-29 23:59:45+00:00",
+          "bytes": 5904646,
+          "sha256": "0f092f2b17c16a6a78887a319859117fd625f10b61ab9b1108f47f4b8b07abd6"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-04-30.zip",
+          "date_utc": "2025-04-30",
+          "n_trades": 520323,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-04-30 00:00:00+00:00",
+          "last_ts": "2025-04-30 23:59:45+00:00",
+          "bytes": 7436490,
+          "sha256": "4bcd63407ff475c0fd5a34222c138f29f9b5911b0be83cb9a3630baae5579d45"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-01.zip",
+          "date_utc": "2025-05-01",
+          "n_trades": 375422,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-01 00:00:00+00:00",
+          "last_ts": "2025-05-01 23:59:45+00:00",
+          "bytes": 5510005,
+          "sha256": "39771d25d07ffa697e01d5d11e909be6cb42d6897138a21c8e60f9e3c2a4f4c2"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-02.zip",
+          "date_utc": "2025-05-02",
+          "n_trades": 343085,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-02 00:00:00+00:00",
+          "last_ts": "2025-05-02 23:59:45+00:00",
+          "bytes": 5005161,
+          "sha256": "f7d959de6e0865973f1e07879b7b5ea264f65df813e44ebf55df4278b6fb2ba0"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-03.zip",
+          "date_utc": "2025-05-03",
+          "n_trades": 291330,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-03 00:00:00+00:00",
+          "last_ts": "2025-05-03 23:59:45+00:00",
+          "bytes": 4147461,
+          "sha256": "a142bad8f19c0b05253e7f81338c4925bbdbb8e47f803e26632b9715ef5f88d3"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-04.zip",
+          "date_utc": "2025-05-04",
+          "n_trades": 307880,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-04 00:00:00+00:00",
+          "last_ts": "2025-05-04 23:59:45+00:00",
+          "bytes": 4432502,
+          "sha256": "d476889ba0818708fc9e07973d0ef165ea8a3db7895648b464ed11de2bd4023a"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-05.zip",
+          "date_utc": "2025-05-05",
+          "n_trades": 357913,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-05 00:00:00+00:00",
+          "last_ts": "2025-05-05 23:59:45+00:00",
+          "bytes": 5222556,
+          "sha256": "185aa22bc6a4d8ca65f52b2d913f13dba0d36d779ea989cdfcd7e5c2d1ebb6e2"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-06.zip",
+          "date_utc": "2025-05-06",
+          "n_trades": 364523,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-06 00:00:00+00:00",
+          "last_ts": "2025-05-06 23:59:45+00:00",
+          "bytes": 5344997,
+          "sha256": "f9b18d459c57d2bac9c0e1aa3450f9f715bcdb26293e24505ced29da4d03678e"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-07.zip",
+          "date_utc": "2025-05-07",
+          "n_trades": 358589,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-07 00:00:00+00:00",
+          "last_ts": "2025-05-07 23:59:45+00:00",
+          "bytes": 5269986,
+          "sha256": "83ff9a06b1c21322bb2bc583bad2d79777fad4e950f70069cbd799ef6783fdfd"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-08.zip",
+          "date_utc": "2025-05-08",
+          "n_trades": 538406,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-08 00:00:00+00:00",
+          "last_ts": "2025-05-08 23:59:45+00:00",
+          "bytes": 7996932,
+          "sha256": "1d72283862c3f8ee97a9898a1ee1badedd4549b9c4ae1f2d51413c6fa125f445"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-09.zip",
+          "date_utc": "2025-05-09",
+          "n_trades": 667558,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-09 00:00:00+00:00",
+          "last_ts": "2025-05-09 23:59:45+00:00",
+          "bytes": 9996046,
+          "sha256": "3b03731ac324a139b44d3bd49c74124b90b47cb696f5c2be1fa6d5a21d28d0a9"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-10.zip",
+          "date_utc": "2025-05-10",
+          "n_trades": 444219,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-10 00:00:00+00:00",
+          "last_ts": "2025-05-10 23:59:45+00:00",
+          "bytes": 6592939,
+          "sha256": "8ed42f4b544ce05c2d82675d9ffcbfc162e30e1aceba8c0e3165d5a4792c1da5"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-11.zip",
+          "date_utc": "2025-05-11",
+          "n_trades": 512214,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-11 00:00:00+00:00",
+          "last_ts": "2025-05-11 23:59:45+00:00",
+          "bytes": 7629406,
+          "sha256": "81f0a01d6500f70b4b351eb56ee2e5095566db69f38efa4911fe6a2c0928fe1b"
+        },
+        {
+          "file": "SOLUSDT-aggTrades-2025-05-12.zip",
+          "date_utc": "2025-05-12",
+          "n_trades": 663623,
+          "n_buckets": 5760,
+          "gap_buckets_filled": 0,
+          "first_ts": "2025-05-12 00:00:00+00:00",
+          "last_ts": "2025-05-12 23:59:45+00:00",
+          "bytes": 10005504,
+          "sha256": "82c1a57d5b19be1b060f1aef1effa194507cff87999bf8154bfb4cdc1bec7691"
+        }
+      ]
+    }
+  },
+  "timezone_evidence": {
+    "settlement_times_in_csv_clock": {
+      "03:00": 15,
+      "11:00": 20,
+      "19:00": 15
+    },
+    "n_funding_rows": 50,
+    "binance_settlement_hours_utc": [
+      "00:00",
+      "08:00",
+      "16:00"
+    ],
+    "candidate_utc_offsets_hours_that_map_all_settlements_onto_00_08_16_utc": [
+      -5,
+      3,
+      11
+    ],
+    "adopted_offset_hours": 3,
+    "why": "all 50 funding rows read 03:00/11:00/19:00, so the CSV clock is 00:00/08:00/16:00 UTC shifted by +3h (mod 8h the candidates are -5h, +3h and +11h; only the phase is pinned). +3h is adopted because the commit author timezone of this repository is +0300 and neither -5h nor +11h is a plausible account timezone for this ledger. Both the +3h and the +0h readings are nevertheless computed end to end and reported."
+  },
+  "check_no_nan_in_null": {
+    "non_finite_null_means": [],
+    "ok": true,
+    "note": "a non-finite null mean means a drawn control bar carried NaN; the pools are built so this cannot happen"
+  },
+  "definitions": {
+    "bar": "15s bucket stamped T covers [T, T + 15s); open/high/low/close are first/max/min/last traded price, volume is summed base quantity",
+    "as_of": "last 15s bucket stamped floor(entry_utc,'15s') - 15s, i.e. the last bucket that had closed strictly before the entry",
+    "print_bucket": "b = as-of index + 1, the bucket the print landed in",
+    "print_minute_first_bucket": "m0 = the first 15s bucket of the minute containing b",
+    "forward_references": {
+      "actual_fill_price": "ref = fill price, end = close[m0 + 4h - 1]",
+      "open_of_fill_minute": "ref = open[m0], end = close[m0 + 4h - 1]",
+      "close_of_fill_minute": "ref = close[m0 + 3], end = close[m0 + 4h + 3]",
+      "next_minute_open": "ref = open[m0 + 4], end = close[m0 + 4h + 3]",
+      "why": "minute-anchored so the four references are the same tradeable instants as the 1m autopsy's, making the two blocks directly comparable"
+    },
+    "warmup_bars": 300,
+    "indicator_metrics": [
+      "bb_pctb",
+      "rsi6",
+      "stoch_k",
+      "stoch_d",
+      "macd_hist_bps",
+      "ema20_dist_bps",
+      "ema50_dist_bps",
+      "ema80_dist_bps",
+      "ema200_dist_bps",
+      "adx14",
+      "daily_trend_ema20",
+      "daily_dist_ema20_bps",
+      "daily_trend_c2c"
+    ],
+    "intra_15s_adverse_print": "side * (fill / open[b] - 1) * 1e4 - the part of the adverse print that happened INSIDE the 15s bucket the trade printed in; the 1m run could only measure the whole minute",
+    "post_print_path_bps": "side * (close[b + k] / fill - 1) * 1e4 for k = 0..3; the key `print_bucket_start+15s(k+1)` is the close of the (k+1)-th bucket after the print's own bucket, so elapsed time since the actual print is 0-15s LESS than the key says",
+    "control": "same as entry_autopsy.py, drawn from 15s bars",
+    "multiple_testing": "Holm within family (13 indicators; 4 horizons per reference)"
+  },
+  "results": {
+    "primary_csv_clock_utc_plus_3": {
+      "csv_clock_offset_hours": 3,
+      "units": {
+        "open": {
+          "n_entries_used": 255,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.5432979768693924,
+              "real_median": 0.5723366415191277,
+              "real_mean_se_boot": 0.02506949564274151,
+              "real_mean_ci95": [
+                0.49416176540961904,
+                0.5924341883291657
+              ],
+              "null_mean_of_set_means": 0.506810821614595,
+              "null_sd_of_set_means": 0.020361595494591288,
+              "null_set_mean_ci95": [
+                0.4669020944451961,
+                0.546719548783994
+              ],
+              "diff_real_minus_null": 0.0364871552547974,
+              "diff_se": 0.03229665900471434,
+              "diff_ci95": [
+                -0.026814296394442702,
+                0.0997886069040375
+              ],
+              "z_vs_null_set_means": 1.791959537968898,
+              "p_two_sided_parametric": 0.07313944767223135,
+              "p_two_sided_empirical": 0.07692307692307693,
+              "null_sets_ge_real_abs": 76,
+              "p_holm": 0.6923076923076923,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 255,
+              "real_mean": 52.62093225607286,
+              "real_median": 55.24429298892622,
+              "real_mean_se_boot": 1.4346075198119446,
+              "real_mean_ci95": [
+                49.80910151724145,
+                55.43276299490427
+              ],
+              "null_mean_of_set_means": 50.37924300006922,
+              "null_sd_of_set_means": 1.1372627265892743,
+              "null_set_mean_ci95": [
+                48.150208055954245,
+                52.6082779441842
+              ],
+              "diff_real_minus_null": 2.2416892560036388,
+              "diff_se": 1.8307007524962264,
+              "diff_ci95": [
+                -1.346484218888965,
+                5.8298627308962425
+              ],
+              "z_vs_null_set_means": 1.9711269907935982,
+              "p_two_sided_parametric": 0.048709352177159326,
+              "p_two_sided_empirical": 0.052947052947052944,
+              "null_sets_ge_real_abs": 52,
+              "p_holm": 0.5294705294705294,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 255,
+              "real_mean": 52.436927720031065,
+              "real_median": 54.24739354311169,
+              "real_mean_se_boot": 2.202063430398648,
+              "real_mean_ci95": [
+                48.12088339644971,
+                56.75297204361242
+              ],
+              "null_mean_of_set_means": 50.11562938941707,
+              "null_sd_of_set_means": 1.97114577216274,
+              "null_set_mean_ci95": [
+                46.2521836759781,
+                53.979075102856044
+              ],
+              "diff_real_minus_null": 2.321298330613992,
+              "diff_se": 2.9554185839934934,
+              "diff_ci95": [
+                -3.4713220940132556,
+                8.11391875524124
+              ],
+              "z_vs_null_set_means": 1.1776390987395442,
+              "p_two_sided_parametric": 0.2389405155824451,
+              "p_two_sided_empirical": 0.25574425574425574,
+              "null_sets_ge_real_abs": 255,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 255,
+              "real_mean": 52.09710765179611,
+              "real_median": 52.060877987823204,
+              "real_mean_se_boot": 2.0676509641716687,
+              "real_mean_ci95": [
+                48.04451176201964,
+                56.14970354157258
+              ],
+              "null_mean_of_set_means": 50.10443094043177,
+              "null_sd_of_set_means": 1.8753596096752256,
+              "null_set_mean_ci95": [
+                46.42872610546833,
+                53.78013577539521
+              ],
+              "diff_real_minus_null": 1.9926767113643393,
+              "diff_se": 2.791443027403792,
+              "diff_ci95": [
+                -3.4785516223470925,
+                7.463905045075771
+              ],
+              "z_vs_null_set_means": 1.0625571229559703,
+              "p_two_sided_parametric": 0.28798284017152076,
+              "p_two_sided_empirical": 0.2987012987012987,
+              "null_sets_ge_real_abs": 298,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.1503515206695133,
+              "real_median": 0.20297396368203127,
+              "real_mean_se_boot": 0.1717046363139171,
+              "real_mean_ci95": [
+                -0.18618956650576424,
+                0.4868926078447908
+              ],
+              "null_mean_of_set_means": 0.005363002260535505,
+              "null_sd_of_set_means": 0.13345657238133285,
+              "null_set_mean_ci95": [
+                -0.2562118796068769,
+                0.2669378841279479
+              ],
+              "diff_real_minus_null": 0.14498851840897778,
+              "diff_se": 0.21746985732158025,
+              "diff_ci95": [
+                -0.2812524019413195,
+                0.571229438759275
+              ],
+              "z_vs_null_set_means": 1.086409727313347,
+              "p_two_sided_parametric": 0.2772977598800255,
+              "p_two_sided_empirical": 0.2837162837162837,
+              "null_sets_ge_real_abs": 283,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 1.3766420668835475,
+              "real_median": 1.68092063123515,
+              "real_mean_se_boot": 1.1305645860856963,
+              "real_mean_ci95": [
+                -0.839264521844417,
+                3.592548655611512
+              ],
+              "null_mean_of_set_means": 0.25584473269264607,
+              "null_sd_of_set_means": 0.8082079066305659,
+              "null_set_mean_ci95": [
+                -1.328242764303263,
+                1.8399322296885552
+              ],
+              "diff_real_minus_null": 1.1207973341909014,
+              "diff_se": 1.3897396531909434,
+              "diff_ci95": [
+                -1.6030923860633475,
+                3.84468705444515
+              ],
+              "z_vs_null_set_means": 1.3867685839198565,
+              "p_two_sided_parametric": 0.16551233966546963,
+              "p_two_sided_empirical": 0.15984015984015984,
+              "null_sets_ge_real_abs": 159,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 1.9051647411346921,
+              "real_median": 1.2485883490054306,
+              "real_mean_se_boot": 1.6946253027009508,
+              "real_mean_ci95": [
+                -1.4163008521591716,
+                5.226630334428556
+              ],
+              "null_mean_of_set_means": 0.6003085053275181,
+              "null_sd_of_set_means": 1.3151668087091413,
+              "null_set_mean_ci95": [
+                -1.9774184397423986,
+                3.178035450397435
+              ],
+              "diff_real_minus_null": 1.304856235807174,
+              "diff_se": 2.1450917582435665,
+              "diff_ci95": [
+                -2.899523610350216,
+                5.509236081964564
+              ],
+              "z_vs_null_set_means": 0.9921602546280139,
+              "p_two_sided_parametric": 0.3211193573554407,
+              "p_two_sided_empirical": 0.32667332667332666,
+              "null_sets_ge_real_abs": 326,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 2.18742192946274,
+              "real_median": 2.028305409291775,
+              "real_mean_se_boot": 2.0642699449222115,
+              "real_mean_ci95": [
+                -1.8585471625847942,
+                6.233391021510275
+              ],
+              "null_mean_of_set_means": 0.9291516847525834,
+              "null_sd_of_set_means": 1.6761293998890425,
+              "null_set_mean_ci95": [
+                -2.3560619390299395,
+                4.214365308535107
+              ],
+              "diff_real_minus_null": 1.2582702447101568,
+              "diff_se": 2.6590637770992918,
+              "diff_ci95": [
+                -3.953494758404455,
+                6.470035247824768
+              ],
+              "z_vs_null_set_means": 0.7506999428525343,
+              "p_two_sided_parametric": 0.4528332574321876,
+              "p_two_sided_empirical": 0.44455544455544455,
+              "null_sets_ge_real_abs": 444,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 3.3615400729520726,
+              "real_median": 1.9974278350032293,
+              "real_mean_se_boot": 3.2822911954779945,
+              "real_mean_ci95": [
+                -3.0717506701847963,
+                9.794830816088941
+              ],
+              "null_mean_of_set_means": 2.2031572688149748,
+              "null_sd_of_set_means": 2.682743896692086,
+              "null_set_mean_ci95": [
+                -3.055020768701513,
+                7.4613353063314625
+              ],
+              "diff_real_minus_null": 1.1583828041370978,
+              "diff_se": 4.239168586781021,
+              "diff_ci95": [
+                -7.150387625953703,
+                9.467153234227899
+              ],
+              "z_vs_null_set_means": 0.43179030453313977,
+              "p_two_sided_parametric": 0.6658938268242363,
+              "p_two_sided_empirical": 0.6753246753246753,
+              "null_sets_ge_real_abs": 675,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 255,
+              "real_mean": 29.06374182926933,
+              "real_median": 26.48008661132424,
+              "real_mean_se_boot": 0.6812821009284292,
+              "real_mean_ci95": [
+                27.72842891144961,
+                30.39905474708905
+              ],
+              "null_mean_of_set_means": 25.829667174923866,
+              "null_sd_of_set_means": 0.6566184431221431,
+              "null_set_mean_ci95": [
+                24.542695026404466,
+                27.116639323443266
+              ],
+              "diff_real_minus_null": 3.234074654345463,
+              "diff_se": 0.9461992818078027,
+              "diff_ci95": [
+                1.3795240620021696,
+                5.088625246688756
+              ],
+              "z_vs_null_set_means": 4.925348485442809,
+              "p_two_sided_parametric": 8.421014037196528e-07,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.38823529411764707,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.05807618994301765,
+              "real_mean_ci95": [
+                0.27440596182933247,
+                0.5020646264059616
+              ],
+              "null_mean_of_set_means": 0.5794588235294117,
+              "null_sd_of_set_means": 0.048901639204385484,
+              "null_set_mean_ci95": [
+                0.48361161068881614,
+                0.6753060363700072
+              ],
+              "diff_real_minus_null": -0.19122352941176463,
+              "diff_se": 0.07592242195276278,
+              "diff_ci95": [
+                -0.34003147643917964,
+                -0.04241558238434959
+              ],
+              "z_vs_null_set_means": -3.9103705422335975,
+              "p_two_sided_parametric": 9.215464130418738e-05,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 402.49302770234135,
+              "real_median": 272.4137039342578,
+              "real_mean_se_boot": 64.07337263536218,
+              "real_mean_ci95": [
+                276.90921733703146,
+                528.0768380676512
+              ],
+              "null_mean_of_set_means": 555.147205923076,
+              "null_sd_of_set_means": 46.19577213203856,
+              "null_set_mean_ci95": [
+                464.60349254428036,
+                645.6909193018715
+              ],
+              "diff_real_minus_null": -152.6541782207346,
+              "diff_se": 78.99016675349667,
+              "diff_ci95": [
+                -307.47490505758805,
+                2.1665486161188596
+              ],
+              "z_vs_null_set_means": -3.304505394658465,
+              "p_two_sided_parametric": 0.0009514414479998567,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.17647058823529413,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.060737131540649164,
+              "real_mean_ci95": [
+                0.05742581041562177,
+                0.2955153660549665
+              ],
+              "null_mean_of_set_means": 0.07148235294117647,
+              "null_sd_of_set_means": 0.06196347446104477,
+              "null_set_mean_ci95": [
+                -0.04996605700247128,
+                0.19293076288482422
+              ],
+              "diff_real_minus_null": 0.10498823529411766,
+              "diff_se": 0.08676676388497306,
+              "diff_ci95": [
+                -0.06507462192042954,
+                0.2750510925086649
+              ],
+              "z_vs_null_set_means": 1.694356815967796,
+              "p_two_sided_parametric": 0.09019750023891149,
+              "p_two_sided_empirical": 0.11488511488511488,
+              "null_sets_ge_real_abs": 114,
+              "p_holm": 0.919080919080919,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "horizons_bps": {
+                "1m": -1.1374488899407655,
+                "5m": -0.40032085743859164,
+                "15m": 2.5558074786987226,
+                "60m": 5.8701531508135725
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -2.2125300551778886,
+                  -0.09894910069851932
+                ],
+                "5m": [
+                  -3.439513476803456,
+                  2.9578103928805777
+                ],
+                "15m": [
+                  -3.00563574061236,
+                  8.216654133146056
+                ],
+                "60m": [
+                  -3.686319608471208,
+                  15.355680061822067
+                ]
+              }
+            },
+            "open_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 3.9984499284971378,
+                  "real_median": 3.829216925138601,
+                  "real_mean_se_boot": 0.89565130369783,
+                  "real_mean_ci95": [
+                    2.242973373249391,
+                    5.753926483744884
+                  ],
+                  "null_mean_of_set_means": 0.1693234715558939,
+                  "null_sd_of_set_means": 0.7885171180085793,
+                  "null_set_mean_ci95": [
+                    -1.3761700797409215,
+                    1.714817022852709
+                  ],
+                  "diff_real_minus_null": 3.829126456941244,
+                  "diff_se": 1.1932939718309894,
+                  "diff_ci95": [
+                    1.4902702721525047,
+                    6.167982641729983
+                  ],
+                  "z_vs_null_set_means": 4.856110754591865,
+                  "p_two_sided_parametric": 1.1971375979413779e-06,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 4.735705519849487,
+                  "real_median": 3.4227820372390028,
+                  "real_mean_se_boot": 1.9625179477346733,
+                  "real_mean_ci95": [
+                    0.8891703422895278,
+                    8.582240697409446
+                  ],
+                  "null_mean_of_set_means": 0.5426719634190638,
+                  "null_sd_of_set_means": 1.738088784068869,
+                  "null_set_mean_ci95": [
+                    -2.8639820533559197,
+                    3.949325980194047
+                  ],
+                  "diff_real_minus_null": 4.193033556430423,
+                  "diff_se": 2.62153186448052,
+                  "diff_ci95": [
+                    -0.9451688979513957,
+                    9.331236010812242
+                  ],
+                  "z_vs_null_set_means": 2.4124392233948626,
+                  "p_two_sided_parametric": 0.01584617910590036,
+                  "p_two_sided_empirical": 0.012987012987012988,
+                  "null_sets_ge_real_abs": 12,
+                  "p_holm": 0.03896103896103896,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.693928702306929,
+                  "real_median": 6.1008159841380305,
+                  "real_mean_se_boot": 3.052982793765238,
+                  "real_mean_ci95": [
+                    1.7100824265270624,
+                    13.677774978086795
+                  ],
+                  "null_mean_of_set_means": 1.413743784164594,
+                  "null_sd_of_set_means": 3.018956914301662,
+                  "null_set_mean_ci95": [
+                    -4.503411767866663,
+                    7.330899336195851
+                  ],
+                  "diff_real_minus_null": 6.280184918142335,
+                  "diff_se": 4.293577155407413,
+                  "diff_ci95": [
+                    -2.135226306456194,
+                    14.695596142740865
+                  ],
+                  "z_vs_null_set_means": 2.080249932813318,
+                  "p_two_sided_parametric": 0.037502614452189054,
+                  "p_two_sided_empirical": 0.03596403596403597,
+                  "null_sets_ge_real_abs": 35,
+                  "p_holm": 0.07192807192807193,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 11.005459692331625,
+                  "real_median": 12.09921355111776,
+                  "real_mean_se_boot": 5.068815583210175,
+                  "real_mean_ci95": [
+                    1.0705811492396826,
+                    20.940338235423567
+                  ],
+                  "null_mean_of_set_means": 6.5508096906880215,
+                  "null_sd_of_set_means": 6.042084611644015,
+                  "null_set_mean_ci95": [
+                    -5.291676148134247,
+                    18.39329552951029
+                  ],
+                  "diff_real_minus_null": 4.4546500016436035,
+                  "diff_se": 7.886677238917522,
+                  "diff_ci95": [
+                    -11.003237386634739,
+                    19.912537389921944
+                  ],
+                  "z_vs_null_set_means": 0.7372703773559901,
+                  "p_two_sided_parametric": 0.46095794268798973,
+                  "p_two_sided_empirical": 0.45554445554445555,
+                  "null_sets_ge_real_abs": 455,
+                  "p_holm": 0.45554445554445555,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "close_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.8993551584634629,
+                  "real_median": -0.6884207627699812,
+                  "real_mean_se_boot": 0.8252982882684091,
+                  "real_mean_ci95": [
+                    -0.7182294865426189,
+                    2.516939803469545
+                  ],
+                  "null_mean_of_set_means": 0.06241581867107945,
+                  "null_sd_of_set_means": 0.8220213245876763,
+                  "null_set_mean_ci95": [
+                    -1.548745977520766,
+                    1.673577614862925
+                  ],
+                  "diff_real_minus_null": 0.8369393397923834,
+                  "diff_se": 1.1648331737616524,
+                  "diff_ci95": [
+                    -1.4461336807804555,
+                    3.120012360365222
+                  ],
+                  "z_vs_null_set_means": 1.0181479661883346,
+                  "p_two_sided_parametric": 0.3086076431881426,
+                  "p_two_sided_empirical": 0.3146853146853147,
+                  "null_sets_ge_real_abs": 314,
+                  "p_holm": 0.991008991008991,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.5314371330076826,
+                  "real_median": 0.6449948400422123,
+                  "real_mean_se_boot": 1.6545730407608361,
+                  "real_mean_ci95": [
+                    -0.7115260268835559,
+                    5.774400292898921
+                  ],
+                  "null_mean_of_set_means": 0.4644725920536038,
+                  "null_sd_of_set_means": 1.779112395304621,
+                  "null_set_mean_ci95": [
+                    -3.0225877027434533,
+                    3.9515328868506607
+                  ],
+                  "diff_real_minus_null": 2.066964540954079,
+                  "diff_se": 2.4295787417449772,
+                  "diff_ci95": [
+                    -2.695009792866076,
+                    6.828938874774234
+                  ],
+                  "z_vs_null_set_means": 1.1617953685271085,
+                  "p_two_sided_parametric": 0.2453185958100097,
+                  "p_two_sided_empirical": 0.24775224775224775,
+                  "null_sets_ge_real_abs": 247,
+                  "p_holm": 0.991008991008991,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 3.612895927418303,
+                  "real_median": 4.664252230217603,
+                  "real_mean_se_boot": 2.814642905905097,
+                  "real_mean_ci95": [
+                    -1.9038041681556868,
+                    9.129596022992292
+                  ],
+                  "null_mean_of_set_means": 1.3842963979916771,
+                  "null_sd_of_set_means": 3.0494730660049476,
+                  "null_set_mean_ci95": [
+                    -4.59267081137802,
+                    7.361263607361374
+                  ],
+                  "diff_real_minus_null": 2.228599529426626,
+                  "diff_se": 4.149879596813805,
+                  "diff_ci95": [
+                    -5.905164480328432,
+                    10.362363539181684
+                  ],
+                  "z_vs_null_set_means": 0.7308146296718301,
+                  "p_two_sided_parametric": 0.4648923863733021,
+                  "p_two_sided_empirical": 0.4645354645354645,
+                  "null_sets_ge_real_abs": 464,
+                  "p_holm": 0.991008991008991,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.231429691154253,
+                  "real_median": 5.516430507070957,
+                  "real_mean_se_boot": 4.995554343707303,
+                  "real_mean_ci95": [
+                    -2.559856822512061,
+                    17.02271620482057
+                  ],
+                  "null_mean_of_set_means": 6.448068338614862,
+                  "null_sd_of_set_means": 6.056605608406552,
+                  "null_set_mean_ci95": [
+                    -5.42287865386198,
+                    18.319015331091705
+                  ],
+                  "diff_real_minus_null": 0.7833613525393917,
+                  "diff_se": 7.8509894087761065,
+                  "diff_ci95": [
+                    -14.604577888661776,
+                    16.17130059374056
+                  ],
+                  "z_vs_null_set_means": 0.12933999721759795,
+                  "p_two_sided_parametric": 0.897088624011867,
+                  "p_two_sided_empirical": 0.8981018981018981,
+                  "null_sets_ge_real_abs": 898,
+                  "p_holm": 0.991008991008991,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "next_minute_open": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.91880143078702,
+                  "real_median": -0.6754018641086379,
+                  "real_mean_se_boot": 0.8259775934740587,
+                  "real_mean_ci95": [
+                    -0.7001146524221351,
+                    2.537717513996175
+                  ],
+                  "null_mean_of_set_means": 0.0916837694793153,
+                  "null_sd_of_set_means": 0.8218121764302153,
+                  "null_set_mean_ci95": [
+                    -1.5190680963239067,
+                    1.7024356352825374
+                  ],
+                  "diff_real_minus_null": 0.8271176613077047,
+                  "diff_se": 1.165167043067287,
+                  "diff_ci95": [
+                    -1.4566097431041778,
+                    3.1108450657195874
+                  ],
+                  "z_vs_null_set_means": 1.0064558362964824,
+                  "p_two_sided_parametric": 0.31419634583373424,
+                  "p_two_sided_empirical": 0.31368631368631367,
+                  "null_sets_ge_real_abs": 313,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.5510716120701136,
+                  "real_median": 0.7519927808696814,
+                  "real_mean_se_boot": 1.6552201787857974,
+                  "real_mean_ci95": [
+                    -0.6931599383500493,
+                    5.795303162490276
+                  ],
+                  "null_mean_of_set_means": 0.4937596360440618,
+                  "null_sd_of_set_means": 1.7784417487530975,
+                  "null_set_mean_ci95": [
+                    -2.991986191512009,
+                    3.9795054636001326
+                  ],
+                  "diff_real_minus_null": 2.057311976026052,
+                  "diff_se": 2.4295285332688854,
+                  "diff_ci95": [
+                    -2.704563949180964,
+                    6.819187901233068
+                  ],
+                  "z_vs_null_set_means": 1.1568059383831246,
+                  "p_two_sided_parametric": 0.24735165511469237,
+                  "p_two_sided_empirical": 0.25374625374625376,
+                  "null_sets_ge_real_abs": 253,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 3.6326011577690642,
+                  "real_median": 4.375718825395669,
+                  "real_mean_se_boot": 2.8109769941943923,
+                  "real_mean_ci95": [
+                    -1.8769137508519447,
+                    9.142116066390074
+                  ],
+                  "null_mean_of_set_means": 1.4135984089166351,
+                  "null_sd_of_set_means": 3.049206411997988,
+                  "null_set_mean_ci95": [
+                    -4.562846158599421,
+                    7.390042976432691
+                  ],
+                  "diff_real_minus_null": 2.219002748852429,
+                  "diff_se": 4.147198018525253,
+                  "diff_ci95": [
+                    -5.909505367457067,
+                    10.347510865161924
+                  ],
+                  "z_vs_null_set_means": 0.727731235288342,
+                  "p_two_sided_parametric": 0.4667781258128174,
+                  "p_two_sided_empirical": 0.46553446553446554,
+                  "null_sets_ge_real_abs": 465,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.251364124258876,
+                  "real_median": 6.154687820556504,
+                  "real_mean_se_boot": 4.998101801399014,
+                  "real_mean_ci95": [
+                    -2.5449154064831916,
+                    17.047643655000943
+                  ],
+                  "null_mean_of_set_means": 6.47743126101401,
+                  "null_sd_of_set_means": 6.05731082872635,
+                  "null_set_mean_ci95": [
+                    -5.394897963289637,
+                    18.349760485317656
+                  ],
+                  "diff_real_minus_null": 0.7739328632448661,
+                  "diff_se": 7.853154531330297,
+                  "diff_ci95": [
+                    -14.618250018162517,
+                    16.16611574465225
+                  ],
+                  "z_vs_null_set_means": 0.1277683918042552,
+                  "p_two_sided_parametric": 0.8983322646902543,
+                  "p_two_sided_empirical": 0.8981018981018981,
+                  "null_sets_ge_real_abs": 898,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / reference - 1) * 1e4; positive means the print was WORSE than the reference in the direction of the trade",
+            "against_15s_bucket_open_bps": 1.8644232552978957,
+            "against_15s_bucket_open_bps_ci95": [
+              1.1508119502057497,
+              2.640377850066205
+            ],
+            "against_fill_minute_open_bps": 5.136593444209611,
+            "against_fill_minute_open_bps_ci95": [
+              3.7420709083028667,
+              6.57461232146529
+            ],
+            "post_print_path_bps": {
+              "print_bucket_start+15s": -0.7884175473950017,
+              "print_bucket_start+30s": -1.1216254708127653,
+              "print_bucket_start+45s": -1.4364518569463012,
+              "print_bucket_start+60s": -1.0994926841402046
+            },
+            "post_print_path_bps_ci95": {
+              "print_bucket_start+15s": [
+                -1.341797949418548,
+                -0.21846826369905062
+              ],
+              "print_bucket_start+30s": [
+                -2.209700203104005,
+                -0.14180800346875236
+              ],
+              "print_bucket_start+45s": [
+                -2.7322250481363355,
+                -0.2602016359989154
+              ],
+              "print_bucket_start+60s": [
+                -2.6545511377531366,
+                0.5610024988388584
+              ]
+            }
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 35,
+              "from_fill_bps": {
+                "1m": 0.5806116589094198,
+                "5m": -5.787212485942161,
+                "15m": -3.727402675354589,
+                "60m": -3.8195220477588157
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 4.063440256168623,
+                "5m": -2.3019105871620344,
+                "15m": -0.24368337055166286,
+                "60m": -0.3289401740424383
+              },
+              "intra_15s_adverse_print_bps": 0.7607826600582536,
+              "intra_minute_adverse_print_bps": 3.4827777149052546
+            },
+            "ETHUSDT": {
+              "n_entries": 25,
+              "from_fill_bps": {
+                "1m": -4.562834647240255,
+                "5m": -10.375254699479397,
+                "15m": -1.6024486150372215,
+                "60m": -23.012035908651157
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 1.2557776439273476,
+                "5m": -4.558419246269851,
+                "15m": 4.220409557258886,
+                "60m": -17.219412974254308
+              },
+              "intra_15s_adverse_print_bps": 2.9369531391612913,
+              "intra_minute_adverse_print_bps": 5.8177781275492
+            },
+            "SOLUSDT": {
+              "n_entries": 195,
+              "from_fill_bps": {
+                "1m": -1.0066667118754797,
+                "5m": 1.8453947992211266,
+                "15m": 4.21667290298213,
+                "60m": 11.312170373565632
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 4.338409649757356,
+                "5m": 7.190421842405317,
+                "15m": 9.563951272441553,
+                "60m": 16.658412574320035
+              },
+              "intra_15s_adverse_print_bps": 1.925008761640473,
+              "intra_minute_adverse_print_bps": 5.346100795195061
+            }
+          },
+          "control_pool_bars": 369780,
+          "control_pool_strata": 72
+        },
+        "add": {
+          "n_entries_used": 737,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.5850153347649323,
+              "real_median": 0.6189298057412141,
+              "real_mean_se_boot": 0.014970351611723144,
+              "real_mean_ci95": [
+                0.5556734456059549,
+                0.6143572239239097
+              ],
+              "null_mean_of_set_means": 0.5049949113854111,
+              "null_sd_of_set_means": 0.01192820142199035,
+              "null_set_mean_ci95": [
+                0.48161563659830997,
+                0.5283741861725122
+              ],
+              "diff_real_minus_null": 0.0800204233795212,
+              "diff_se": 0.01914140581415572,
+              "diff_ci95": [
+                0.04250326798377599,
+                0.11753757877526641
+              ],
+              "z_vs_null_set_means": 6.7085070538797895,
+              "p_two_sided_parametric": 1.9662493855321372e-11,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 737,
+              "real_mean": 54.89370411747314,
+              "real_median": 57.742213587490085,
+              "real_mean_se_boot": 0.7804194241937316,
+              "real_mean_ci95": [
+                53.364082046053426,
+                56.42332618889286
+              ],
+              "null_mean_of_set_means": 50.27674583271073,
+              "null_sd_of_set_means": 0.6578644959717432,
+              "null_set_mean_ci95": [
+                48.98733142060611,
+                51.56616024481535
+              ],
+              "diff_real_minus_null": 4.616958284762411,
+              "diff_se": 1.0207057228795338,
+              "diff_ci95": [
+                2.616375067918525,
+                6.617541501606297
+              ],
+              "z_vs_null_set_means": 7.0180991876490015,
+              "p_two_sided_parametric": 2.249089803285642e-12,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 737,
+              "real_mean": 54.98482934056138,
+              "real_median": 57.12833841180848,
+              "real_mean_se_boot": 1.2482405147113713,
+              "real_mean_ci95": [
+                52.538277931727094,
+                57.43138074939567
+              ],
+              "null_mean_of_set_means": 50.18083899241235,
+              "null_sd_of_set_means": 1.2055578665656255,
+              "null_set_mean_ci95": [
+                47.817945573943724,
+                52.54373241088097
+              ],
+              "diff_real_minus_null": 4.803990348149036,
+              "diff_se": 1.7353599488881757,
+              "diff_ci95": [
+                1.4026848483282115,
+                8.20529584796986
+              ],
+              "z_vs_null_set_means": 3.9848691476209006,
+              "p_two_sided_parametric": 6.751732094789631e-05,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 737,
+              "real_mean": 55.19506663359753,
+              "real_median": 56.86170319352467,
+              "real_mean_se_boot": 1.1980280863664872,
+              "real_mean_ci95": [
+                52.846931584319215,
+                57.54320168287584
+              ],
+              "null_mean_of_set_means": 50.1719380775821,
+              "null_sd_of_set_means": 1.1456506069835959,
+              "null_set_mean_ci95": [
+                47.92646288789425,
+                52.41741326726994
+              ],
+              "diff_real_minus_null": 5.023128556015429,
+              "diff_se": 1.6576448983436798,
+              "diff_ci95": [
+                1.7741445552618167,
+                8.272112556769041
+              ],
+              "z_vs_null_set_means": 4.384520485910547,
+              "p_two_sided_parametric": 1.1624154402145592e-05,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.21777305155777846,
+              "real_median": 0.5293667665459996,
+              "real_mean_se_boot": 0.09793402041479461,
+              "real_mean_ci95": [
+                0.02582237154478101,
+                0.4097237315707759
+              ],
+              "null_mean_of_set_means": 0.0003275800190419026,
+              "null_sd_of_set_means": 0.08134787118164645,
+              "null_set_mean_ci95": [
+                -0.15911424749698513,
+                0.15976940753506894
+              ],
+              "diff_real_minus_null": 0.21744547153873656,
+              "diff_se": 0.12731279786569438,
+              "diff_ci95": [
+                -0.032087612278024424,
+                0.46697855535549754
+              ],
+              "z_vs_null_set_means": 2.6730321074191328,
+              "p_two_sided_parametric": 0.007516905556079756,
+              "p_two_sided_empirical": 0.006993006993006993,
+              "null_sets_ge_real_abs": 6,
+              "p_holm": 0.02097902097902098,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 2.6854723361972543,
+              "real_median": 2.367156332836462,
+              "real_mean_se_boot": 0.6606218264010637,
+              "real_mean_ci95": [
+                1.3906535564511695,
+                3.980291115943339
+              ],
+              "null_mean_of_set_means": 0.12762776580876226,
+              "null_sd_of_set_means": 0.49338620705569364,
+              "null_set_mean_ci95": [
+                -0.8394092000203973,
+                1.0946647316379219
+              ],
+              "diff_real_minus_null": 2.5578445703884922,
+              "diff_se": 0.8245308646923297,
+              "diff_ci95": [
+                0.941764075591526,
+                4.1739250651854585
+              ],
+              "z_vs_null_set_means": 5.184264443978997,
+              "p_two_sided_parametric": 2.1686904450035627e-07,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 4.381989325245461,
+              "real_median": 4.578546322941968,
+              "real_mean_se_boot": 1.0429992028409374,
+              "real_mean_ci95": [
+                2.3377108876772232,
+                6.426267762813698
+              ],
+              "null_mean_of_set_means": 0.34168728567876927,
+              "null_sd_of_set_means": 0.7925167532302468,
+              "null_set_mean_ci95": [
+                -1.2116455506525146,
+                1.8950201220100529
+              ],
+              "diff_real_minus_null": 4.040302039566692,
+              "diff_se": 1.3099351668221764,
+              "diff_ci95": [
+                1.472829112595226,
+                6.607774966538157
+              ],
+              "z_vs_null_set_means": 5.0980651489052855,
+              "p_two_sided_parametric": 3.4314273156255126e-07,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 4.9403655692037844,
+              "real_median": 6.99921935711334,
+              "real_mean_se_boot": 1.3247033128905443,
+              "real_mean_ci95": [
+                2.3439470759383174,
+                7.536784062469252
+              ],
+              "null_mean_of_set_means": 0.6011701655025126,
+              "null_sd_of_set_means": 0.9913978117103688,
+              "null_set_mean_ci95": [
+                -1.3419695454498102,
+                2.544309876454835
+              ],
+              "diff_real_minus_null": 4.339195403701272,
+              "diff_se": 1.6546022145057377,
+              "diff_ci95": [
+                1.0961750632700258,
+                7.582215744132517
+              ],
+              "z_vs_null_set_means": 4.376845855868141,
+              "p_two_sided_parametric": 1.2040906441246335e-05,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 5.893169496603118,
+              "real_median": 6.476768910681496,
+              "real_mean_se_boot": 2.2061364048942282,
+              "real_mean_ci95": [
+                1.5691421430104304,
+                10.217196850195805
+              ],
+              "null_mean_of_set_means": 1.8128314860286252,
+              "null_sd_of_set_means": 1.5451483648007747,
+              "null_set_mean_ci95": [
+                -1.2156593089808931,
+                4.841322281038144
+              ],
+              "diff_real_minus_null": 4.080338010574493,
+              "diff_se": 2.693421858203081,
+              "diff_ci95": [
+                -1.1987688315035454,
+                9.35944485265253
+              ],
+              "z_vs_null_set_means": 2.6407418883044254,
+              "p_two_sided_parametric": 0.00827247163248268,
+              "p_two_sided_empirical": 0.012987012987012988,
+              "null_sets_ge_real_abs": 12,
+              "p_holm": 0.025974025974025976,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 737,
+              "real_mean": 29.540813599582208,
+              "real_median": 26.752686987560594,
+              "real_mean_se_boot": 0.4098084294934854,
+              "real_mean_ci95": [
+                28.737589077774977,
+                30.34403812138944
+              ],
+              "null_mean_of_set_means": 25.664458983779717,
+              "null_sd_of_set_means": 0.37721630794654604,
+              "null_set_mean_ci95": [
+                24.925115020204487,
+                26.403802947354947
+              ],
+              "diff_real_minus_null": 3.876354615802491,
+              "diff_se": 0.5569875149989812,
+              "diff_ci95": [
+                2.7846590864044876,
+                4.968050145200494
+              ],
+              "z_vs_null_set_means": 10.276211643404864,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.34599728629579374,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.034665718892824084,
+              "real_mean_ci95": [
+                0.2780524772658585,
+                0.41394209532572895
+              ],
+              "null_mean_of_set_means": 0.5866675712347355,
+              "null_sd_of_set_means": 0.03006360064453975,
+              "null_set_mean_ci95": [
+                0.5277429139714376,
+                0.6455922284980333
+              ],
+              "diff_real_minus_null": -0.24067028493894171,
+              "diff_se": 0.04588607795476392,
+              "diff_ci95": [
+                -0.330606997730279,
+                -0.15073357214760444
+              ],
+              "z_vs_null_set_means": -8.00537127220831,
+              "p_two_sided_parametric": 1.3322676295501878e-15,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 165.88877165302722,
+              "real_median": 228.5404365211341,
+              "real_mean_se_boot": 33.12225379594488,
+              "real_mean_ci95": [
+                100.96915421297525,
+                230.8083890930792
+              ],
+              "null_mean_of_set_means": 470.08615857779307,
+              "null_sd_of_set_means": 29.47913064815531,
+              "null_set_mean_ci95": [
+                412.30706250740866,
+                527.8652546481775
+              ],
+              "diff_real_minus_null": -304.19738692476585,
+              "diff_se": 44.34075822867708,
+              "diff_ci95": [
+                -391.10527305297296,
+                -217.28950079655877
+              ],
+              "z_vs_null_set_means": -10.319075910191447,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.09362279511533243,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.0373243238025877,
+              "real_mean_ci95": [
+                0.02046712046226054,
+                0.16677846976840432
+              ],
+              "null_mean_of_set_means": 0.04965535956580733,
+              "null_sd_of_set_means": 0.03637323946699454,
+              "null_set_mean_ci95": [
+                -0.021636189789501978,
+                0.12094690892111663
+              ],
+              "diff_real_minus_null": 0.043967435549525105,
+              "diff_se": 0.05211638606660811,
+              "diff_ci95": [
+                -0.058180681141026785,
+                0.146115552240077
+              ],
+              "z_vs_null_set_means": 1.2087852551440081,
+              "p_two_sided_parametric": 0.22674535777598592,
+              "p_two_sided_empirical": 0.22877122877122877,
+              "null_sets_ge_real_abs": 228,
+              "p_holm": 0.22877122877122877,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "horizons_bps": {
+                "1m": 0.42146497167519065,
+                "5m": 1.7598189818656818,
+                "15m": 8.225535347796471,
+                "60m": 15.709664070425077
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -0.23812966860460577,
+                  1.0618460412699926
+                ],
+                "5m": [
+                  -0.2995658155128847,
+                  3.983267763457611
+                ],
+                "15m": [
+                  4.652523579255646,
+                  11.892942751598065
+                ],
+                "60m": [
+                  10.366795934746238,
+                  21.378675715258087
+                ]
+              }
+            },
+            "open_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 6.316134029047525,
+                  "real_median": 5.708228002936355,
+                  "real_mean_se_boot": 0.5162404680423303,
+                  "real_mean_ci95": [
+                    5.304302711684558,
+                    7.327965346410492
+                  ],
+                  "null_mean_of_set_means": 0.12140414221457894,
+                  "null_sd_of_set_means": 0.4745105805570666,
+                  "null_set_mean_ci95": [
+                    -0.8086365956772715,
+                    1.0514448801064293
+                  ],
+                  "diff_real_minus_null": 6.194729886832946,
+                  "diff_se": 0.7011879290925996,
+                  "diff_ci95": [
+                    4.8204015458114515,
+                    7.569058227854441
+                  ],
+                  "z_vs_null_set_means": 13.054987898395119,
+                  "p_two_sided_parametric": 0.0,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 7.651703310359967,
+                  "real_median": 3.312629399586653,
+                  "real_mean_se_boot": 1.18801925152716,
+                  "real_mean_ci95": [
+                    5.3231855773667345,
+                    9.9802210433532
+                  ],
+                  "null_mean_of_set_means": 0.35901239354939046,
+                  "null_sd_of_set_means": 1.1123234253673675,
+                  "null_set_mean_ci95": [
+                    -1.8211415201706498,
+                    2.5391663072694306
+                  ],
+                  "diff_real_minus_null": 7.292690916810577,
+                  "diff_se": 1.6274683236917844,
+                  "diff_ci95": [
+                    4.10285300237468,
+                    10.482528831246475
+                  ],
+                  "z_vs_null_set_means": 6.556268393252634,
+                  "p_two_sided_parametric": 5.517097889651268e-11,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 14.115342403858367,
+                  "real_median": 14.416553595657522,
+                  "real_mean_se_boot": 1.871011053811496,
+                  "real_mean_ci95": [
+                    10.448160738387836,
+                    17.7825240693289
+                  ],
+                  "null_mean_of_set_means": 1.0202605113116634,
+                  "null_sd_of_set_means": 1.7523817007801596,
+                  "null_set_mean_ci95": [
+                    -2.4144076222174498,
+                    4.454928644840776
+                  ],
+                  "diff_real_minus_null": 13.095081892546704,
+                  "diff_se": 2.5634983886700553,
+                  "diff_ci95": [
+                    8.070625050753396,
+                    18.11953873434001
+                  ],
+                  "z_vs_null_set_means": 7.472733758128596,
+                  "p_two_sided_parametric": 7.860379014346108e-14,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 21.597183103973357,
+                  "real_median": 13.580805794475292,
+                  "real_mean_se_boot": 2.905164154993689,
+                  "real_mean_ci95": [
+                    15.903061360185728,
+                    27.291304847760987
+                  ],
+                  "null_mean_of_set_means": 6.1196727153888935,
+                  "null_sd_of_set_means": 3.5632287946057053,
+                  "null_set_mean_ci95": [
+                    -0.8642557220382887,
+                    13.103601152816076
+                  ],
+                  "diff_real_minus_null": 15.477510388584463,
+                  "diff_se": 4.597453448395908,
+                  "diff_ci95": [
+                    6.466501629728484,
+                    24.488519147440442
+                  ],
+                  "z_vs_null_set_means": 4.34367571681491,
+                  "p_two_sided_parametric": 1.401183043259202e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "close_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.7201149197667884,
+                  "real_median": -1.4181379848265951,
+                  "real_mean_se_boot": 0.5468481403755165,
+                  "real_mean_ci95": [
+                    -0.351707435369224,
+                    1.7919372749028009
+                  ],
+                  "null_mean_of_set_means": 0.06293850601605112,
+                  "null_sd_of_set_means": 0.4975576246448527,
+                  "null_set_mean_ci95": [
+                    -0.9122744382878601,
+                    1.0381514503199625
+                  ],
+                  "diff_real_minus_null": 0.6571764137507373,
+                  "diff_se": 0.7393283969078889,
+                  "diff_ci95": [
+                    -0.7919072441887248,
+                    2.1062600716901994
+                  ],
+                  "z_vs_null_set_means": 1.320804628850412,
+                  "p_two_sided_parametric": 0.18656651591057072,
+                  "p_two_sided_empirical": 0.17582417582417584,
+                  "null_sets_ge_real_abs": 175,
+                  "p_holm": 0.17582417582417584,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 2.9142650471451907,
+                  "real_median": 1.6291951775815328,
+                  "real_mean_se_boot": 1.0263195284151307,
+                  "real_mean_ci95": [
+                    0.9026787714515345,
+                    4.925851322838847
+                  ],
+                  "null_mean_of_set_means": 0.3125408315520856,
+                  "null_sd_of_set_means": 1.0999348696977858,
+                  "null_set_mean_ci95": [
+                    -1.8433315130555745,
+                    2.468413176159746
+                  ],
+                  "diff_real_minus_null": 2.601724215593105,
+                  "diff_se": 1.5043897407199178,
+                  "diff_ci95": [
+                    -0.3468796762179336,
+                    5.550328107404144
+                  ],
+                  "z_vs_null_set_means": 2.365343882868215,
+                  "p_two_sided_parametric": 0.01801333612710443,
+                  "p_two_sided_empirical": 0.024975024975024976,
+                  "null_sets_ge_real_abs": 24,
+                  "p_holm": 0.04995004995004995,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 7.997566246234139,
+                  "real_median": 6.767935027824912,
+                  "real_mean_se_boot": 1.7729099334059941,
+                  "real_mean_ci95": [
+                    4.5226627767583905,
+                    11.472469715709888
+                  ],
+                  "null_mean_of_set_means": 0.958121964890182,
+                  "null_sd_of_set_means": 1.7664654659668784,
+                  "null_set_mean_ci95": [
+                    -2.5041503484048997,
+                    4.420394278185263
+                  ],
+                  "diff_real_minus_null": 7.039444281343957,
+                  "diff_se": 2.5027204946663995,
+                  "diff_ci95": [
+                    2.1341121117978137,
+                    11.9447764508901
+                  ],
+                  "z_vs_null_set_means": 3.9850449482129573,
+                  "p_two_sided_parametric": 6.746735343954313e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 16.34159523727542,
+                  "real_median": 9.593092973059214,
+                  "real_mean_se_boot": 2.9338056608012084,
+                  "real_mean_ci95": [
+                    10.591336142105053,
+                    22.091854332445788
+                  ],
+                  "null_mean_of_set_means": 6.1062468099878435,
+                  "null_sd_of_set_means": 3.582429549752523,
+                  "null_set_mean_ci95": [
+                    -0.9153151075271015,
+                    13.127808727502789
+                  ],
+                  "diff_real_minus_null": 10.235348427287576,
+                  "diff_se": 4.630444593588101,
+                  "diff_ci95": [
+                    1.1596770238548988,
+                    19.311019830720255
+                  ],
+                  "z_vs_null_set_means": 2.85709691848501,
+                  "p_two_sided_parametric": 0.004275352711761382,
+                  "p_two_sided_empirical": 0.004995004995004995,
+                  "null_sets_ge_real_abs": 4,
+                  "p_holm": 0.014985014985014984,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "next_minute_open": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.7285050897637959,
+                  "real_median": -1.6058154017273285,
+                  "real_mean_se_boot": 0.5427791991244287,
+                  "real_mean_ci95": [
+                    -0.3353421405200845,
+                    1.7923523200476763
+                  ],
+                  "null_mean_of_set_means": 0.09833647511706317,
+                  "null_sd_of_set_means": 0.495833131881734,
+                  "null_set_mean_ci95": [
+                    -0.8734964633711355,
+                    1.0701694136052617
+                  ],
+                  "diff_real_minus_null": 0.6301686146467327,
+                  "diff_se": 0.7351596790315729,
+                  "diff_ci95": [
+                    -0.8107443562551502,
+                    2.0710815855486153
+                  ],
+                  "z_vs_null_set_means": 1.2709288148115128,
+                  "p_two_sided_parametric": 0.20375397428806874,
+                  "p_two_sided_empirical": 0.19880119880119881,
+                  "null_sets_ge_real_abs": 198,
+                  "p_holm": 0.19880119880119881,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 2.9227183625246185,
+                  "real_median": 2.2621022470215024,
+                  "real_mean_se_boot": 1.0231030882996777,
+                  "real_mean_ci95": [
+                    0.9174363094572504,
+                    4.9280004155919865
+                  ],
+                  "null_mean_of_set_means": 0.34794877972442384,
+                  "null_sd_of_set_means": 1.0987863366012784,
+                  "null_set_mean_ci95": [
+                    -1.805672440014082,
+                    2.5015699994629297
+                  ],
+                  "diff_real_minus_null": 2.5747695828001946,
+                  "diff_se": 1.5013565008984362,
+                  "diff_ci95": [
+                    -0.36788915896074004,
+                    5.517428324561129
+                  ],
+                  "z_vs_null_set_means": 2.343285038258091,
+                  "p_two_sided_parametric": 0.019114773572140642,
+                  "p_two_sided_empirical": 0.025974025974025976,
+                  "null_sets_ge_real_abs": 25,
+                  "p_holm": 0.05194805194805195,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 8.00626622511397,
+                  "real_median": 6.767935027824912,
+                  "real_mean_se_boot": 1.7694970756551496,
+                  "real_mean_ci95": [
+                    4.538051956829877,
+                    11.474480493398064
+                  ],
+                  "null_mean_of_set_means": 0.9935480398757293,
+                  "null_sd_of_set_means": 1.765656188608748,
+                  "null_set_mean_ci95": [
+                    -2.467138089797417,
+                    4.454234169548875
+                  ],
+                  "diff_real_minus_null": 7.012718185238241,
+                  "diff_se": 2.4997323210945,
+                  "diff_ci95": [
+                    2.113242835893021,
+                    11.912193534583462
+                  ],
+                  "z_vs_null_set_means": 3.971734831776012,
+                  "p_two_sided_parametric": 7.13511170913339e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 16.350075458420825,
+                  "real_median": 9.588331901708713,
+                  "real_mean_se_boot": 2.933398464124583,
+                  "real_mean_ci95": [
+                    10.600614468736643,
+                    22.099536448105006
+                  ],
+                  "null_mean_of_set_means": 6.141693543269381,
+                  "null_sd_of_set_means": 3.582581912348201,
+                  "null_set_mean_ci95": [
+                    -0.8801670049330923,
+                    13.163554091471854
+                  ],
+                  "diff_real_minus_null": 10.208381915151445,
+                  "diff_se": 4.630304494092473,
+                  "diff_ci95": [
+                    1.1329851067301977,
+                    19.283778723572695
+                  ],
+                  "z_vs_null_set_means": 2.849448293133476,
+                  "p_two_sided_parametric": 0.0043795123797352176,
+                  "p_two_sided_empirical": 0.004995004995004995,
+                  "null_sets_ge_real_abs": 4,
+                  "p_holm": 0.014985014985014984,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / reference - 1) * 1e4; positive means the print was WORSE than the reference in the direction of the trade",
+            "against_15s_bucket_open_bps": 2.544698172807877,
+            "against_15s_bucket_open_bps_ci95": [
+              2.1004926502018204,
+              3.019269463666123
+            ],
+            "against_fill_minute_open_bps": 5.896026273312777,
+            "against_fill_minute_open_bps_ci95": [
+              5.06508908397042,
+              6.710140297623447
+            ],
+            "post_print_path_bps": {
+              "print_bucket_start+15s": -0.08575773334384053,
+              "print_bucket_start+30s": -0.056271537382524675,
+              "print_bucket_start+45s": -0.19763712689051047,
+              "print_bucket_start+60s": -0.5352812205721028
+            },
+            "post_print_path_bps_ci95": {
+              "print_bucket_start+15s": [
+                -0.4131040847880174,
+                0.23842258149988896
+              ],
+              "print_bucket_start+30s": [
+                -0.6944952087126246,
+                0.5638315750582922
+              ],
+              "print_bucket_start+45s": [
+                -0.9169749399331906,
+                0.4859340938480415
+              ],
+              "print_bucket_start+60s": [
+                -1.4478974434246838,
+                0.41804129080136193
+              ]
+            }
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 38,
+              "from_fill_bps": {
+                "1m": 2.9079673270379782,
+                "5m": -7.597531080743483,
+                "15m": -32.37615890135162,
+                "60m": -29.88052655054711
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 5.605518049853646,
+                "5m": -4.904989380363066,
+                "15m": -29.683258698730146,
+                "60m": -27.171283323514366
+              },
+              "intra_15s_adverse_print_bps": 0.9858677293155494,
+              "intra_minute_adverse_print_bps": 2.6969004533187357
+            },
+            "ETHUSDT": {
+              "n_entries": 37,
+              "from_fill_bps": {
+                "1m": -5.978226807406187,
+                "5m": -14.734888551253237,
+                "15m": 9.922666326535555,
+                "60m": -38.61614791795322
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 1.0518466489648919,
+                "5m": -7.7303141775458375,
+                "15m": 16.861654010130728,
+                "60m": -31.712464957245672
+              },
+              "intra_15s_adverse_print_bps": 6.207937256027889,
+              "intra_minute_adverse_print_bps": 7.039234523050084
+            },
+            "SOLUSDT": {
+              "n_entries": 662,
+              "from_fill_bps": {
+                "1m": 0.6364219298658631,
+                "5m": 3.218857472960165,
+                "15m": 10.461291443346745,
+                "60m": 21.362960576719548
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 6.65115221677022,
+                "5m": 9.232200242837294,
+                "15m": 16.47596674293131,
+                "60m": 27.37612374220544
+              },
+              "intra_15s_adverse_print_bps": 2.4294348960307897,
+              "intra_minute_adverse_print_bps": 6.015766569263672
+            }
+          },
+          "control_pool_bars": 365859,
+          "control_pool_strata": 72
+        }
+      }
+    },
+    "sensitivity_csv_clock_utc": {
+      "csv_clock_offset_hours": 0,
+      "units": {
+        "open": {
+          "n_entries_used": 255,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.49123130003530224,
+              "real_median": 0.45564582643333423,
+              "real_mean_se_boot": 0.020888914606043713,
+              "real_mean_ci95": [
+                0.4502890274074566,
+                0.5321735726631479
+              ],
+              "null_mean_of_set_means": 0.5056296409225683,
+              "null_sd_of_set_means": 0.021245645979390885,
+              "null_set_mean_ci95": [
+                0.4639881748029622,
+                0.5472711070421745
+              ],
+              "diff_real_minus_null": -0.014398340887266103,
+              "diff_se": 0.029794701315841284,
+              "diff_ci95": [
+                -0.07279595546631501,
+                0.04399927369178281
+              ],
+              "z_vs_null_set_means": -0.6777078419377346,
+              "p_two_sided_parametric": 0.49795695328973144,
+              "p_two_sided_empirical": 0.4985014985014985,
+              "null_sets_ge_real_abs": 498,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 255,
+              "real_mean": 49.72489669148154,
+              "real_median": 48.65330616239686,
+              "real_mean_se_boot": 1.1407540541211163,
+              "real_mean_ci95": [
+                47.48901874540415,
+                51.96077463755893
+              ],
+              "null_mean_of_set_means": 50.35079793262352,
+              "null_sd_of_set_means": 1.1651057159101055,
+              "null_set_mean_ci95": [
+                48.067190729439716,
+                52.63440513580733
+              ],
+              "diff_real_minus_null": -0.6259012411419818,
+              "diff_se": 1.6305800014841842,
+              "diff_ci95": [
+                -3.821838044050983,
+                2.5700355617670194
+              ],
+              "z_vs_null_set_means": -0.5372055364547482,
+              "p_two_sided_parametric": 0.5911256473757287,
+              "p_two_sided_empirical": 0.5744255744255744,
+              "null_sets_ge_real_abs": 574,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 255,
+              "real_mean": 49.254256463315016,
+              "real_median": 48.51322522964949,
+              "real_mean_se_boot": 2.123481720396825,
+              "real_mean_ci95": [
+                45.09223229133724,
+                53.41628063529279
+              ],
+              "null_mean_of_set_means": 50.08680759926449,
+              "null_sd_of_set_means": 2.0341323510799847,
+              "null_set_mean_ci95": [
+                46.09990819114772,
+                54.07370700738126
+              ],
+              "diff_real_minus_null": -0.8325511359494726,
+              "diff_se": 2.940555906383969,
+              "diff_ci95": [
+                -6.5960407124620515,
+                4.930938440563106
+              ],
+              "z_vs_null_set_means": -0.40929054370894064,
+              "p_two_sided_parametric": 0.6823264543147813,
+              "p_two_sided_empirical": 0.6543456543456544,
+              "null_sets_ge_real_abs": 654,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 255,
+              "real_mean": 49.498043094368214,
+              "real_median": 48.40795194426562,
+              "real_mean_se_boot": 2.0322624270918763,
+              "real_mean_ci95": [
+                45.51480873726813,
+                53.481277451468294
+              ],
+              "null_mean_of_set_means": 50.09696731482093,
+              "null_sd_of_set_means": 1.9504618738964579,
+              "null_set_mean_ci95": [
+                46.274062041983875,
+                53.919872587657984
+              ],
+              "diff_real_minus_null": -0.5989242204527159,
+              "diff_se": 2.816805299287305,
+              "diff_ci95": [
+                -6.1198626070558335,
+                4.922014166150402
+              ],
+              "z_vs_null_set_means": -0.3070678942604701,
+              "p_two_sided_parametric": 0.7587916945787627,
+              "p_two_sided_empirical": 0.7342657342657343,
+              "null_sets_ge_real_abs": 734,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.008567502241848613,
+              "real_median": -0.08337406650397962,
+              "real_mean_se_boot": 0.1259843829077618,
+              "real_mean_ci95": [
+                -0.2383618882573645,
+                0.25549689274106174
+              ],
+              "null_mean_of_set_means": -0.006362258358157322,
+              "null_sd_of_set_means": 0.13320338562192674,
+              "null_set_mean_ci95": [
+                -0.26744089417713374,
+                0.25471637746081904
+              ],
+              "diff_real_minus_null": 0.014929760600005936,
+              "diff_se": 0.1833445027204068,
+              "diff_ci95": [
+                -0.34442546473199137,
+                0.37428498593200327
+              ],
+              "z_vs_null_set_means": 0.11208244092519773,
+              "p_two_sided_parametric": 0.9107580398025921,
+              "p_two_sided_empirical": 0.906093906093906,
+              "null_sets_ge_real_abs": 906,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": -0.08241573964741655,
+              "real_median": -0.6947431909209989,
+              "real_mean_se_boot": 0.7323709227793995,
+              "real_mean_ci95": [
+                -1.5178627482950395,
+                1.3530312690002064
+              ],
+              "null_mean_of_set_means": 0.19882739237859007,
+              "null_sd_of_set_means": 0.818170757364959,
+              "null_set_mean_ci95": [
+                -1.4047872920567295,
+                1.8024420768139098
+              ],
+              "diff_real_minus_null": -0.2812431320260066,
+              "diff_se": 1.0980758428905992,
+              "diff_ci95": [
+                -2.433471784091581,
+                1.870985520039568
+              ],
+              "z_vs_null_set_means": -0.343746252838212,
+              "p_two_sided_parametric": 0.7310371236577948,
+              "p_two_sided_empirical": 0.7282717282717283,
+              "null_sets_ge_real_abs": 728,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": -0.19478657344751393,
+              "real_median": -0.3711236996239986,
+              "real_mean_se_boot": 1.1495809760573408,
+              "real_mean_ci95": [
+                -2.447965286519902,
+                2.058392139624874
+              ],
+              "null_mean_of_set_means": 0.5595765729317073,
+              "null_sd_of_set_means": 1.2868219958117024,
+              "null_set_mean_ci95": [
+                -1.9625945388592294,
+                3.081747684722644
+              ],
+              "diff_real_minus_null": -0.7543631463792212,
+              "diff_se": 1.7255281131925269,
+              "diff_ci95": [
+                -4.136398248236573,
+                2.627671955478131
+              ],
+              "z_vs_null_set_means": -0.586221830862771,
+              "p_two_sided_parametric": 0.5577264530616814,
+              "p_two_sided_empirical": 0.5734265734265734,
+              "null_sets_ge_real_abs": 573,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": -0.32933550877605317,
+              "real_median": -0.03182748153918169,
+              "real_mean_se_boot": 1.4633599982096626,
+              "real_mean_ci95": [
+                -3.1975211052669916,
+                2.538850087714885
+              ],
+              "null_mean_of_set_means": 0.910845973913898,
+              "null_sd_of_set_means": 1.615671239326368,
+              "null_set_mean_ci95": [
+                -2.255869655165783,
+                4.077561602993579
+              ],
+              "diff_real_minus_null": -1.240181482689951,
+              "diff_se": 2.179866059634533,
+              "diff_ci95": [
+                -5.512718959573635,
+                3.0323559941937335
+              ],
+              "z_vs_null_set_means": -0.7675951966608181,
+              "p_two_sided_parametric": 0.4427277169662336,
+              "p_two_sided_empirical": 0.44755244755244755,
+              "null_sets_ge_real_abs": 447,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": -0.19004918127045006,
+              "real_median": 0.9341312872401808,
+              "real_mean_se_boot": 2.294020294582646,
+              "real_mean_ci95": [
+                -4.686328958652436,
+                4.3062305961115355
+              ],
+              "null_mean_of_set_means": 2.3188736848208302,
+              "null_sd_of_set_means": 2.5710321136505097,
+              "null_set_mean_ci95": [
+                -2.720349257934169,
+                7.358096627575829
+              ],
+              "diff_real_minus_null": -2.50892286609128,
+              "diff_se": 3.4456835666351107,
+              "diff_ci95": [
+                -9.262462656696098,
+                4.244616924513537
+              ],
+              "z_vs_null_set_means": -0.9758426791989607,
+              "p_two_sided_parametric": 0.3291424312398128,
+              "p_two_sided_empirical": 0.3256743256743257,
+              "null_sets_ge_real_abs": 325,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 255,
+              "real_mean": 25.881654204404157,
+              "real_median": 23.695017401045725,
+              "real_mean_se_boot": 0.6450208855395844,
+              "real_mean_ci95": [
+                24.61741326874657,
+                27.145895140061743
+              ],
+              "null_mean_of_set_means": 26.067000155257627,
+              "null_sd_of_set_means": 0.6400635168337706,
+              "null_set_mean_ci95": [
+                24.812475662263438,
+                27.321524648251817
+              ],
+              "diff_real_minus_null": -0.1853459508534705,
+              "diff_se": 0.9086986565214478,
+              "diff_ci95": [
+                -1.966395317635508,
+                1.595703415928567
+              ],
+              "z_vs_null_set_means": -0.2895743093909323,
+              "p_two_sided_parametric": 0.7721419234161231,
+              "p_two_sided_empirical": 0.7832167832167832,
+              "null_sets_ge_real_abs": 783,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.38823529411764707,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.05860596896355696,
+              "real_mean_ci95": [
+                0.2733675949490754,
+                0.5031029932862187
+              ],
+              "null_mean_of_set_means": 0.5795607843137255,
+              "null_sd_of_set_means": 0.05295968208643629,
+              "null_set_mean_ci95": [
+                0.47575980742431034,
+                0.6833617612031406
+              ],
+              "diff_real_minus_null": -0.19132549019607842,
+              "diff_se": 0.07898979380181849,
+              "diff_ci95": [
+                -0.3461454860476426,
+                -0.036505494344514194
+              ],
+              "z_vs_null_set_means": -3.612663117648879,
+              "p_two_sided_parametric": 0.00030306833777027364,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 402.49302770234135,
+              "real_median": 272.4137039342578,
+              "real_mean_se_boot": 64.45860681154691,
+              "real_mean_ci95": [
+                276.1541583517094,
+                528.8318970529733
+              ],
+              "null_mean_of_set_means": 555.1169430806045,
+              "null_sd_of_set_means": 50.00882707881326,
+              "null_set_mean_ci95": [
+                457.0996420061305,
+                653.1342441550785
+              ],
+              "diff_real_minus_null": -152.62391537826318,
+              "diff_se": 81.5830544775338,
+              "diff_ci95": [
+                -312.52670215422944,
+                7.278871397703085
+              ],
+              "z_vs_null_set_means": -3.05193951335291,
+              "p_two_sided_parametric": 0.0022736791265307588,
+              "p_two_sided_empirical": 0.003996003996003996,
+              "null_sets_ge_real_abs": 3,
+              "p_holm": 0.04795204795204795,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.17647058823529413,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.06147997430704214,
+              "real_mean_ci95": [
+                0.05596983859349153,
+                0.29697133787709673
+              ],
+              "null_mean_of_set_means": 0.06964705882352942,
+              "null_sd_of_set_means": 0.06209778167509702,
+              "null_set_mean_ci95": [
+                -0.05206459325966073,
+                0.19135871090671958
+              ],
+              "diff_real_minus_null": 0.1068235294117647,
+              "diff_se": 0.08738376124751428,
+              "diff_ci95": [
+                -0.06444864263336328,
+                0.27809570145689266
+              ],
+              "z_vs_null_set_means": 1.7202471091588767,
+              "p_two_sided_parametric": 0.08538753311758818,
+              "p_two_sided_empirical": 0.0899100899100899,
+              "null_sets_ge_real_abs": 89,
+              "p_holm": 0.9890109890109889,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "horizons_bps": {
+                "1m": -1.842037097948369,
+                "5m": -1.0184478197984408,
+                "15m": 0.01210876860048159,
+                "60m": 5.823721148474998
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -17.7233624925314,
+                  13.991919501771685
+                ],
+                "5m": [
+                  -16.35095045489169,
+                  14.547924478847317
+                ],
+                "15m": [
+                  -18.22703782901507,
+                  16.559964394594097
+                ],
+                "60m": [
+                  -14.01503552401249,
+                  26.872349053038757
+                ]
+              }
+            },
+            "open_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.44611462919905087,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6171890472920346,
+                  "real_mean_ci95": [
+                    -0.763575903493337,
+                    1.655805161891439
+                  ],
+                  "null_mean_of_set_means": 0.12139017966746463,
+                  "null_sd_of_set_means": 0.746145418371241,
+                  "null_set_mean_ci95": [
+                    -1.3410548403401679,
+                    1.583835199675097
+                  ],
+                  "diff_real_minus_null": 0.32472444953158625,
+                  "diff_se": 0.9683260326220935,
+                  "diff_ci95": [
+                    -1.573194574407717,
+                    2.2226434734708893
+                  ],
+                  "z_vs_null_set_means": 0.4352026314661644,
+                  "p_two_sided_parametric": 0.6634153526881734,
+                  "p_two_sided_empirical": 0.6733266733266733,
+                  "null_sets_ge_real_abs": 673,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.2491131434190599,
+                  "real_median": 1.8902468020343122,
+                  "real_mean_se_boot": 1.695789932870211,
+                  "real_mean_ci95": [
+                    -2.0746351250065533,
+                    4.5728614118446735
+                  ],
+                  "null_mean_of_set_means": 0.5187026487801993,
+                  "null_sd_of_set_means": 1.6888896237073803,
+                  "null_set_mean_ci95": [
+                    -2.791521013686266,
+                    3.828926311246665
+                  ],
+                  "diff_real_minus_null": 0.7304104946388605,
+                  "diff_se": 2.3933348402366126,
+                  "diff_ci95": [
+                    -3.9605257922249004,
+                    5.4213467815026215
+                  ],
+                  "z_vs_null_set_means": 0.43247970997387847,
+                  "p_two_sided_parametric": 0.6653927958895567,
+                  "p_two_sided_empirical": 0.6713286713286714,
+                  "null_sets_ge_real_abs": 671,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.2810301116260288,
+                  "real_median": 1.7192479890737467,
+                  "real_mean_se_boot": 2.762755607673172,
+                  "real_mean_ci95": [
+                    -3.133970879413388,
+                    7.6960311026654455
+                  ],
+                  "null_mean_of_set_means": 1.4743591343657205,
+                  "null_sd_of_set_means": 2.9251394011074097,
+                  "null_set_mean_ci95": [
+                    -4.258914091804803,
+                    7.207632360536243
+                  ],
+                  "diff_real_minus_null": 0.8066709772603082,
+                  "diff_se": 4.023587834711773,
+                  "diff_ci95": [
+                    -7.079561178774766,
+                    8.692903133295383
+                  ],
+                  "z_vs_null_set_means": 0.27577180662053774,
+                  "p_two_sided_parametric": 0.7827233393726813,
+                  "p_two_sided_empirical": 0.7762237762237763,
+                  "null_sets_ge_real_abs": 776,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 8.070811409923015,
+                  "real_median": -0.2629122793185168,
+                  "real_mean_se_boot": 6.142399029487532,
+                  "real_mean_ci95": [
+                    -3.968290687872546,
+                    20.109913507718577
+                  ],
+                  "null_mean_of_set_means": 6.189803996695088,
+                  "null_sd_of_set_means": 5.6990541368271055,
+                  "null_set_mean_ci95": [
+                    -4.980342111486039,
+                    17.359950104876216
+                  ],
+                  "diff_real_minus_null": 1.8810074132279277,
+                  "diff_se": 8.379038363197504,
+                  "diff_ci95": [
+                    -14.541907778639178,
+                    18.303922605095032
+                  ],
+                  "z_vs_null_set_means": 0.3300560703701546,
+                  "p_two_sided_parametric": 0.7413575956631189,
+                  "p_two_sided_empirical": 0.7122877122877123,
+                  "null_sets_ge_real_abs": 712,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "close_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.1989637040057528,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6425577295947844,
+                  "real_mean_ci95": [
+                    -0.060449446000024665,
+                    2.4583768540115303
+                  ],
+                  "null_mean_of_set_means": 0.11586306278747362,
+                  "null_sd_of_set_means": 0.8015535072253721,
+                  "null_set_mean_ci95": [
+                    -1.4551818113742556,
+                    1.686907936949203
+                  ],
+                  "diff_real_minus_null": 1.083100641218279,
+                  "diff_se": 1.027311277465257,
+                  "diff_ci95": [
+                    -0.9304294626136247,
+                    3.0966307450501827
+                  ],
+                  "z_vs_null_set_means": 1.3512518271768283,
+                  "p_two_sided_parametric": 0.17661477767108225,
+                  "p_two_sided_empirical": 0.1798201798201798,
+                  "null_sets_ge_real_abs": 179,
+                  "p_holm": 0.7192807192807192,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.2824168510353524,
+                  "real_median": 0.8765778401131907,
+                  "real_mean_se_boot": 1.7326916105773973,
+                  "real_mean_ci95": [
+                    -3.1136587056963463,
+                    3.678492407767051
+                  ],
+                  "null_mean_of_set_means": 0.4571586679899885,
+                  "null_sd_of_set_means": 1.6950486426053941,
+                  "null_set_mean_ci95": [
+                    -2.8651366715165842,
+                    3.779454007496561
+                  ],
+                  "diff_real_minus_null": -0.1747418169546361,
+                  "diff_se": 2.4239245281492745,
+                  "diff_ci95": [
+                    -4.925633892127214,
+                    4.576150258217941
+                  ],
+                  "z_vs_null_set_means": -0.10308955894389388,
+                  "p_two_sided_parametric": 0.917891891627542,
+                  "p_two_sided_empirical": 0.9120879120879121,
+                  "null_sets_ge_real_abs": 912,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.521988469227978,
+                  "real_median": 3.401939105289742,
+                  "real_mean_se_boot": 2.5007554701835577,
+                  "real_mean_ci95": [
+                    -3.3794922523317954,
+                    6.423469190787751
+                  ],
+                  "null_mean_of_set_means": 1.4812104149900152,
+                  "null_sd_of_set_means": 2.9733993341240708,
+                  "null_set_mean_ci95": [
+                    -4.3466522798931635,
+                    7.309073109873193
+                  ],
+                  "diff_real_minus_null": 0.04077805423796277,
+                  "diff_se": 3.8852131887223966,
+                  "diff_ci95": [
+                    -7.574239795657935,
+                    7.655795904133861
+                  ],
+                  "z_vs_null_set_means": 0.013714287808561548,
+                  "p_two_sided_parametric": 0.9890579244968927,
+                  "p_two_sided_empirical": 0.988011988011988,
+                  "null_sets_ge_real_abs": 988,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.573826730552316,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 6.3740749183289855,
+                  "real_mean_ci95": [
+                    -4.919360109372496,
+                    20.06701357047713
+                  ],
+                  "null_mean_of_set_means": 6.210514674836252,
+                  "null_sd_of_set_means": 5.701504420517454,
+                  "null_set_mean_ci95": [
+                    -4.964433989377958,
+                    17.38546333905046
+                  ],
+                  "diff_real_minus_null": 1.3633120557160643,
+                  "diff_se": 8.551957888206111,
+                  "diff_ci95": [
+                    -15.398525405167913,
+                    18.125149516600043
+                  ],
+                  "z_vs_null_set_means": 0.23911444334061108,
+                  "p_two_sided_parametric": 0.8110168424229953,
+                  "p_two_sided_empirical": 0.7992007992007992,
+                  "null_sets_ge_real_abs": 799,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "next_minute_open": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.2063340137572074,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6432205384417562,
+                  "real_mean_ci95": [
+                    -0.05437824158863469,
+                    2.4670462691030495
+                  ],
+                  "null_mean_of_set_means": 0.14409430622633335,
+                  "null_sd_of_set_means": 0.8018004275425743,
+                  "null_set_mean_ci95": [
+                    -1.4274345317571122,
+                    1.715623144209779
+                  ],
+                  "diff_real_minus_null": 1.062239707530874,
+                  "diff_se": 1.027918570063192,
+                  "diff_ci95": [
+                    -0.9524806897929825,
+                    3.076960104854731
+                  ],
+                  "z_vs_null_set_means": 1.3248180857005976,
+                  "p_two_sided_parametric": 0.1852314947604614,
+                  "p_two_sided_empirical": 0.1888111888111888,
+                  "null_sets_ge_real_abs": 188,
+                  "p_holm": 0.7552447552447552,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.2897432786895305,
+                  "real_median": 1.3524479307558401,
+                  "real_mean_se_boot": 1.731478873755682,
+                  "real_mean_ci95": [
+                    -3.103955313871606,
+                    3.6834418712506674
+                  ],
+                  "null_mean_of_set_means": 0.48539984103916767,
+                  "null_sd_of_set_means": 1.696267218138548,
+                  "null_set_mean_ci95": [
+                    -2.8392839065123865,
+                    3.810083588590722
+                  ],
+                  "diff_real_minus_null": -0.1956565623496372,
+                  "diff_se": 2.4239103872861585,
+                  "diff_ci95": [
+                    -4.946520921430508,
+                    4.555207796731233
+                  ],
+                  "z_vs_null_set_means": -0.11534536555174782,
+                  "p_two_sided_parametric": 0.908171381785803,
+                  "p_two_sided_empirical": 0.903096903096903,
+                  "null_sets_ge_real_abs": 903,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.5293416261498614,
+                  "real_median": 3.3955857385414845,
+                  "real_mean_se_boot": 2.5043324009388446,
+                  "real_mean_ci95": [
+                    -3.3791498796902735,
+                    6.437833131989996
+                  ],
+                  "null_mean_of_set_means": 1.5094663307121547,
+                  "null_sd_of_set_means": 2.9740903658055537,
+                  "null_set_mean_ci95": [
+                    -4.319750786266731,
+                    7.338683447691039
+                  ],
+                  "diff_real_minus_null": 0.019875295437706608,
+                  "diff_se": 3.888045045825669,
+                  "diff_ci95": [
+                    -7.600692994380605,
+                    7.640443585256017
+                  ],
+                  "z_vs_null_set_means": 0.006682814909130456,
+                  "p_two_sided_parametric": 0.9946679248497572,
+                  "p_two_sided_empirical": 0.998001998001998,
+                  "null_sets_ge_real_abs": 998,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.581598927061404,
+                  "real_median": 0.2150869130368438,
+                  "real_mean_se_boot": 6.375889557569952,
+                  "real_mean_ci95": [
+                    -4.915144605775702,
+                    20.07834245989851
+                  ],
+                  "null_mean_of_set_means": 6.238789515057595,
+                  "null_sd_of_set_means": 5.702461564042576,
+                  "null_set_mean_ci95": [
+                    -4.938035150465852,
+                    17.415614180581045
+                  ],
+                  "diff_real_minus_null": 1.3428094120038088,
+                  "diff_se": 8.55394853501659,
+                  "diff_ci95": [
+                    -15.422929716628705,
+                    18.108548540636324
+                  ],
+                  "z_vs_null_set_means": 0.23547890624480902,
+                  "p_two_sided_parametric": 0.8138370489774924,
+                  "p_two_sided_empirical": 0.8111888111888111,
+                  "null_sets_ge_real_abs": 811,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / reference - 1) * 1e4; positive means the print was WORSE than the reference in the direction of the trade",
+            "against_15s_bucket_open_bps": 2.1085716242754633,
+            "against_15s_bucket_open_bps_ci95": [
+              -13.835713764368775,
+              17.82324020055553
+            ],
+            "against_fill_minute_open_bps": 2.4317515284921787,
+            "against_fill_minute_open_bps_ci95": [
+              -12.219666002674295,
+              18.10410244141155
+            ],
+            "post_print_path_bps": {
+              "print_bucket_start+15s": -2.063555813634566,
+              "print_bucket_start+30s": -1.6733655974306643,
+              "print_bucket_start+45s": -1.6555062998123689,
+              "print_bucket_start+60s": -1.000646340252748
+            },
+            "post_print_path_bps_ci95": {
+              "print_bucket_start+15s": [
+                -17.51185225384276,
+                12.883265170281321
+              ],
+              "print_bucket_start+30s": [
+                -16.19970689963674,
+                13.069725662504416
+              ],
+              "print_bucket_start+45s": [
+                -17.23870122073606,
+                14.745161065341298
+              ],
+              "print_bucket_start+60s": [
+                -16.667396748421027,
+                14.492803628981786
+              ]
+            }
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 35,
+              "from_fill_bps": {
+                "1m": -3.690384273064133,
+                "5m": -6.386709447612787,
+                "15m": -6.057566886745968,
+                "60m": 3.4062881871112447
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 3.1078530570603267,
+                "5m": 0.378167078817501,
+                "15m": 0.7123784843744589,
+                "60m": 10.214384222947086
+              },
+              "intra_15s_adverse_print_bps": 4.737859289913659,
+              "intra_minute_adverse_print_bps": 6.244325238439111
+            },
+            "ETHUSDT": {
+              "n_entries": 25,
+              "from_fill_bps": {
+                "1m": -47.88882342126248,
+                "5m": -49.49091213951919,
+                "15m": -51.53007214409051,
+                "60m": -57.937073473100625
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 0.5998753182101524,
+                "5m": -0.9831222190807684,
+                "15m": -3.131195626381267,
+                "60m": -9.650166224470393
+              },
+              "intra_15s_adverse_print_bps": 50.51767077363904,
+              "intra_minute_adverse_print_bps": 50.14732870212052
+            },
+            "SOLUSDT": {
+              "n_entries": 195,
+              "from_fill_bps": {
+                "1m": 4.393151667240884,
+                "5m": 6.159504821055511,
+                "15m": 7.709509644264073,
+                "60m": 14.432080221229464
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": -0.051346202597985946,
+                "5m": 1.6916208168731635,
+                "15m": 3.2564580624157067,
+                "60m": 9.95798778122554
+              },
+              "intra_15s_adverse_print_bps": -4.569646565629286,
+              "intra_minute_adverse_print_bps": -4.369938262219878
+            }
+          },
+          "control_pool_bars": 369780,
+          "control_pool_strata": 72
+        },
+        "add": {
+          "n_entries_used": 737,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.5184976638950927,
+              "real_median": 0.5375052090792449,
+              "real_mean_se_boot": 0.012301769969766433,
+              "real_mean_ci95": [
+                0.49438619475435047,
+                0.5426091330358349
+              ],
+              "null_mean_of_set_means": 0.5075103384526487,
+              "null_sd_of_set_means": 0.012157866817431213,
+              "null_set_mean_ci95": [
+                0.48368091949048353,
+                0.5313397574148139
+              ],
+              "diff_real_minus_null": 0.010987325442443963,
+              "diff_se": 0.01729587436180785,
+              "diff_ci95": [
+                -0.02291258830669942,
+                0.044887239191587346
+              ],
+              "z_vs_null_set_means": 0.903721483993475,
+              "p_two_sided_parametric": 0.36614310417618623,
+              "p_two_sided_empirical": 0.3776223776223776,
+              "null_sets_ge_real_abs": 377,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 737,
+              "real_mean": 50.144830762536856,
+              "real_median": 49.80502229112329,
+              "real_mean_se_boot": 0.6842206813421247,
+              "real_mean_ci95": [
+                48.80375822710629,
+                51.48590329796742
+              ],
+              "null_mean_of_set_means": 50.42466185013654,
+              "null_sd_of_set_means": 0.6867530874866495,
+              "null_set_mean_ci95": [
+                49.078625798662706,
+                51.77069790161037
+              ],
+              "diff_real_minus_null": -0.2798310875996819,
+              "diff_se": 0.9694265026028157,
+              "diff_ci95": [
+                -2.179907032701201,
+                1.6202448575018369
+              ],
+              "z_vs_null_set_means": -0.40746971902783297,
+              "p_two_sided_parametric": 0.6836630300025919,
+              "p_two_sided_empirical": 0.6753246753246753,
+              "null_sets_ge_real_abs": 675,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 737,
+              "real_mean": 46.1596245530753,
+              "real_median": 44.02761460085103,
+              "real_mean_se_boot": 1.2574215331518659,
+              "real_mean_ci95": [
+                43.69507834809764,
+                48.624170758052955
+              ],
+              "null_mean_of_set_means": 50.13156062794636,
+              "null_sd_of_set_means": 1.1819022961638677,
+              "null_set_mean_ci95": [
+                47.81503212746517,
+                52.44808912842754
+              ],
+              "diff_real_minus_null": -3.97193607487106,
+              "diff_se": 1.7256888333970906,
+              "diff_ci95": [
+                -7.3542861883293575,
+                -0.5895859614127623
+              ],
+              "z_vs_null_set_means": -3.3606297980491964,
+              "p_two_sided_parametric": 0.0007776498148075461,
+              "p_two_sided_empirical": 0.001998001998001998,
+              "null_sets_ge_real_abs": 1,
+              "p_holm": 0.01998001998001998,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 737,
+              "real_mean": 47.86049420212818,
+              "real_median": 45.660586375611494,
+              "real_mean_se_boot": 1.218743849065666,
+              "real_mean_ci95": [
+                45.47175625795948,
+                50.24923214629688
+              ],
+              "null_mean_of_set_means": 50.141129510790925,
+              "null_sd_of_set_means": 1.128100442836974,
+              "null_set_mean_ci95": [
+                47.930052642830454,
+                52.3522063787514
+              ],
+              "diff_real_minus_null": -2.2806353086627453,
+              "diff_se": 1.660706831070545,
+              "diff_ci95": [
+                -5.535620697561013,
+                0.9743500802355229
+              ],
+              "z_vs_null_set_means": -2.021659793809981,
+              "p_two_sided_parametric": 0.04321151022191261,
+              "p_two_sided_empirical": 0.03696303696303696,
+              "null_sets_ge_real_abs": 36,
+              "p_holm": 0.3326673326673326,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": -0.017265483109794286,
+              "real_median": -0.09297653907312847,
+              "real_mean_se_boot": 0.08441625624783843,
+              "real_mean_ci95": [
+                -0.1827213453555576,
+                0.14819037913596902
+              ],
+              "null_mean_of_set_means": 0.0002869984165091171,
+              "null_sd_of_set_means": 0.07747744861326641,
+              "null_set_mean_ci95": [
+                -0.15156880086549304,
+                0.15214279769851127
+              ],
+              "diff_real_minus_null": -0.017552481526303402,
+              "diff_se": 0.11458123477481842,
+              "diff_ci95": [
+                -0.2421317016849475,
+                0.2070267386323407
+              ],
+              "z_vs_null_set_means": -0.22654955526372228,
+              "p_two_sided_parametric": 0.8207740213987109,
+              "p_two_sided_empirical": 0.8451548451548452,
+              "null_sets_ge_real_abs": 845,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.8716982145530489,
+              "real_median": 0.12301242744650054,
+              "real_mean_se_boot": 0.4963973352408609,
+              "real_mean_ci95": [
+                -0.10124056251903846,
+                1.8446369916251362
+              ],
+              "null_mean_of_set_means": 0.3010349571619861,
+              "null_sd_of_set_means": 0.4916687999196367,
+              "null_set_mean_ci95": [
+                -0.6626358906805019,
+                1.264705805004474
+              ],
+              "diff_real_minus_null": 0.5706632573910628,
+              "diff_se": 0.6986762649816032,
+              "diff_ci95": [
+                -0.7987422219728795,
+                1.9400687367550051
+              ],
+              "z_vs_null_set_means": 1.1606659960614498,
+              "p_two_sided_parametric": 0.24577775535142354,
+              "p_two_sided_empirical": 0.24475524475524477,
+              "null_sets_ge_real_abs": 244,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 2.2247189755068155,
+              "real_median": 0.7272825089876811,
+              "real_mean_se_boot": 0.7599564242885993,
+              "real_mean_ci95": [
+                0.7352043839011608,
+                3.71423356711247
+              ],
+              "null_mean_of_set_means": 0.7559822516627389,
+              "null_sd_of_set_means": 0.787528083887151,
+              "null_set_mean_ci95": [
+                -0.7875727927560771,
+                2.2995372960815548
+              ],
+              "diff_real_minus_null": 1.4687367238440765,
+              "diff_se": 1.0944104576110742,
+              "diff_ci95": [
+                -0.6763077730736291,
+                3.613781220761782
+              ],
+              "z_vs_null_set_means": 1.8649959968342404,
+              "p_two_sided_parametric": 0.062181965331979505,
+              "p_two_sided_empirical": 0.06893106893106893,
+              "null_sets_ge_real_abs": 68,
+              "p_holm": 0.5514485514485514,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 2.874960698936075,
+              "real_median": 2.6313308677083924,
+              "real_mean_se_boot": 0.9320531939704534,
+              "real_mean_ci95": [
+                1.0481364387539864,
+                4.7017849591181635
+              ],
+              "null_mean_of_set_means": 1.1784460027738937,
+              "null_sd_of_set_means": 0.9962182273555793,
+              "null_set_mean_ci95": [
+                -0.7741417228430418,
+                3.131033728390829
+              ],
+              "diff_real_minus_null": 1.6965146961621813,
+              "diff_se": 1.3642484791657332,
+              "diff_ci95": [
+                -0.9774123230026559,
+                4.3704417153270185
+              ],
+              "z_vs_null_set_means": 1.702954884358531,
+              "p_two_sided_parametric": 0.08857651168979874,
+              "p_two_sided_empirical": 0.08791208791208792,
+              "null_sets_ge_real_abs": 87,
+              "p_holm": 0.6153846153846154,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 5.179185325403823,
+              "real_median": 8.76306666750537,
+              "real_mean_se_boot": 1.4145089034421576,
+              "real_mean_ci95": [
+                2.4067478746571944,
+                7.951622776150453
+              ],
+              "null_mean_of_set_means": 2.7557531539855438,
+              "null_sd_of_set_means": 1.5638207118986924,
+              "null_set_mean_ci95": [
+                -0.3093354413358935,
+                5.820841749306981
+              ],
+              "diff_real_minus_null": 2.4234321714182796,
+              "diff_se": 2.1086418986827677,
+              "diff_ci95": [
+                -1.7095059499999454,
+                6.556370292836505
+              ],
+              "z_vs_null_set_means": 1.5496867083157513,
+              "p_two_sided_parametric": 0.12121672990733168,
+              "p_two_sided_empirical": 0.11488511488511488,
+              "null_sets_ge_real_abs": 114,
+              "p_holm": 0.6893106893106893,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 737,
+              "real_mean": 27.765342718824442,
+              "real_median": 25.157371016881473,
+              "real_mean_se_boot": 0.4437791804194142,
+              "real_mean_ci95": [
+                26.89553552520239,
+                28.635149912446494
+              ],
+              "null_mean_of_set_means": 25.965996082927926,
+              "null_sd_of_set_means": 0.3973078661604006,
+              "null_set_mean_ci95": [
+                25.18727266525354,
+                26.74471950060231
+              ],
+              "diff_real_minus_null": 1.7993466358965158,
+              "diff_se": 0.595645449480358,
+              "diff_ci95": [
+                0.6318815549150141,
+                2.9668117168780173
+              ],
+              "z_vs_null_set_means": 4.528847247061768,
+              "p_two_sided_parametric": 5.930635291306885e-06,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.34599728629579374,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.035190128419096904,
+              "real_mean_ci95": [
+                0.2770246345943638,
+                0.41496993799722365
+              ],
+              "null_mean_of_set_means": 0.5875820895522388,
+              "null_sd_of_set_means": 0.029366057202055932,
+              "null_set_mean_ci95": [
+                0.5300246174362091,
+                0.6451395616682685
+              ],
+              "diff_real_minus_null": -0.24158480325644505,
+              "diff_se": 0.045833507979937044,
+              "diff_ci95": [
+                -0.33141847889712167,
+                -0.15175112761576842
+              ],
+              "z_vs_null_set_means": -8.226668006337997,
+              "p_two_sided_parametric": 2.220446049250313e-16,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 166.6434979811235,
+              "real_median": 228.5404365211341,
+              "real_mean_se_boot": 33.59375539085417,
+              "real_mean_ci95": [
+                100.79973741504932,
+                232.48725854719765
+              ],
+              "null_mean_of_set_means": 472.1254337609197,
+              "null_sd_of_set_means": 28.309349934824628,
+              "null_set_mean_ci95": [
+                416.63910788866343,
+                527.611759633176
+              ],
+              "diff_real_minus_null": -305.48193577979623,
+              "diff_se": 43.93130654775588,
+              "diff_ci95": [
+                -391.58729661339777,
+                -219.3765749461947
+              ],
+              "z_vs_null_set_means": -10.790849542045079,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.09362279511533243,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.035830256222994884,
+              "real_mean_ci95": [
+                0.023395492918262456,
+                0.1638500973124024
+              ],
+              "null_mean_of_set_means": 0.050040705563093625,
+              "null_sd_of_set_means": 0.03522016367617093,
+              "null_set_mean_ci95": [
+                -0.0189908152422014,
+                0.11907222636838866
+              ],
+              "diff_real_minus_null": 0.04358208955223881,
+              "diff_se": 0.050242085848238166,
+              "diff_ci95": [
+                -0.054892398710307995,
+                0.14205657781478562
+              ],
+              "z_vs_null_set_means": 1.2374187114219841,
+              "p_two_sided_parametric": 0.2159316756855676,
+              "p_two_sided_empirical": 0.22677322677322678,
+              "null_sets_ge_real_abs": 226,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "horizons_bps": {
+                "1m": 18.107102502343384,
+                "5m": 17.783439726304096,
+                "15m": 15.683347130701025,
+                "60m": 21.600358345665175
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  8.38900948801496,
+                  28.299884065592245
+                ],
+                "5m": [
+                  8.213486918591181,
+                  27.82041357999266
+                ],
+                "15m": [
+                  4.949847524446762,
+                  26.77464744399611
+                ],
+                "60m": [
+                  8.225782159359605,
+                  34.71447979290352
+                ]
+              }
+            },
+            "open_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.13739895729229473,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.3767990240976023,
+                  "real_mean_ci95": [
+                    -0.6011271299390057,
+                    0.8759250445235953
+                  ],
+                  "null_mean_of_set_means": 0.15754598200594608,
+                  "null_sd_of_set_means": 0.47946353758677496,
+                  "null_set_mean_ci95": [
+                    -0.7822025516641329,
+                    1.097294515676025
+                  ],
+                  "diff_real_minus_null": -0.020147024713651346,
+                  "diff_se": 0.6098055332941233,
+                  "diff_ci95": [
+                    -1.215365869970133,
+                    1.1750718205428305
+                  ],
+                  "z_vs_null_set_means": -0.04201993088995859,
+                  "p_two_sided_parametric": 0.966482809595606,
+                  "p_two_sided_empirical": 0.9660339660339661,
+                  "null_sets_ge_real_abs": 966,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.2143229677974631,
+                  "real_median": -0.9099181073701779,
+                  "real_mean_se_boot": 0.9440295726029906,
+                  "real_mean_ci95": [
+                    -2.064620930099325,
+                    1.6359749945043984
+                  ],
+                  "null_mean_of_set_means": 0.6124044609917387,
+                  "null_sd_of_set_means": 1.0369520908161554,
+                  "null_set_mean_ci95": [
+                    -1.4200216370079257,
+                    2.644830558991403
+                  ],
+                  "diff_real_minus_null": -0.8267274287892018,
+                  "diff_se": 1.402305770007733,
+                  "diff_ci95": [
+                    -3.5752467380043584,
+                    1.9217918804259546
+                  ],
+                  "z_vs_null_set_means": -0.7972667552446983,
+                  "p_two_sided_parametric": 0.42529612363090674,
+                  "p_two_sided_empirical": 0.4385614385614386,
+                  "null_sets_ge_real_abs": 438,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.272090927018867,
+                  "real_median": -2.0839121978333264,
+                  "real_mean_se_boot": 1.7327315379806567,
+                  "real_mean_ci95": [
+                    -5.6682447414609545,
+                    1.1240628874232201
+                  ],
+                  "null_mean_of_set_means": 1.6719712848753914,
+                  "null_sd_of_set_means": 1.6689499266858374,
+                  "null_set_mean_ci95": [
+                    -1.59917057142885,
+                    4.943113141179633
+                  ],
+                  "diff_real_minus_null": -3.9440622118942583,
+                  "diff_se": 2.405774810845245,
+                  "diff_ci95": [
+                    -8.659380841150938,
+                    0.7712564173624212
+                  ],
+                  "z_vs_null_set_means": -2.3631998472993656,
+                  "p_two_sided_parametric": 0.01811789642438355,
+                  "p_two_sided_empirical": 0.017982017982017984,
+                  "null_sets_ge_real_abs": 17,
+                  "p_holm": 0.07192807192807193,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.6700257276396937,
+                  "real_median": -2.6676605009723353,
+                  "real_mean_se_boot": 4.018823726259071,
+                  "real_mean_ci95": [
+                    -4.2068687758280845,
+                    11.546920231107473
+                  ],
+                  "null_mean_of_set_means": 4.934647959374641,
+                  "null_sd_of_set_means": 3.2443659981533535,
+                  "null_set_mean_ci95": [
+                    -1.4243093970059313,
+                    11.293605315755213
+                  ],
+                  "diff_real_minus_null": -1.2646222317349474,
+                  "diff_se": 5.164964169548173,
+                  "diff_ci95": [
+                    -11.387952004049366,
+                    8.858707540579472
+                  ],
+                  "z_vs_null_set_means": -0.389790249452359,
+                  "p_two_sided_parametric": 0.69669165443936,
+                  "p_two_sided_empirical": 0.6753246753246753,
+                  "null_sets_ge_real_abs": 675,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "close_of_fill_minute": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.7207701319915362,
+                  "real_median": -0.9651578033009756,
+                  "real_mean_se_boot": 0.3906575788159239,
+                  "real_mean_ci95": [
+                    -1.486458986470747,
+                    0.04491872248767459
+                  ],
+                  "null_mean_of_set_means": 0.10346483008675152,
+                  "null_sd_of_set_means": 0.4753818664148212,
+                  "null_set_mean_ci95": [
+                    -0.828283628086298,
+                    1.035213288259801
+                  ],
+                  "diff_real_minus_null": -0.8242349620782877,
+                  "diff_se": 0.6153058286757559,
+                  "diff_ci95": [
+                    -2.0302343862827694,
+                    0.38176446212619386
+                  ],
+                  "z_vs_null_set_means": -1.7338376162608085,
+                  "p_two_sided_parametric": 0.08294689925299203,
+                  "p_two_sided_empirical": 0.07792207792207792,
+                  "null_sets_ge_real_abs": 77,
+                  "p_holm": 0.15584415584415584,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.654940697543325,
+                  "real_median": -1.4385384449400185,
+                  "real_mean_se_boot": 0.9808784422398407,
+                  "real_mean_ci95": [
+                    -4.577462444333413,
+                    -0.7324189507532375
+                  ],
+                  "null_mean_of_set_means": 0.5644996080441619,
+                  "null_sd_of_set_means": 1.0073513688046218,
+                  "null_set_mean_ci95": [
+                    -1.409909074812897,
+                    2.5389082909012206
+                  ],
+                  "diff_real_minus_null": -3.219440305587487,
+                  "diff_se": 1.406015397740509,
+                  "diff_ci95": [
+                    -5.975230485158884,
+                    -0.46365012601608946
+                  ],
+                  "z_vs_null_set_means": -3.195945729847819,
+                  "p_two_sided_parametric": 0.0013937332417255366,
+                  "p_two_sided_empirical": 0.001998001998001998,
+                  "null_sets_ge_real_abs": 1,
+                  "p_holm": 0.005994005994005994,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -4.214295721210056,
+                  "real_median": -1.442585112519934,
+                  "real_mean_se_boot": 1.6611411359038766,
+                  "real_mean_ci95": [
+                    -7.470132347581654,
+                    -0.9584590948384579
+                  ],
+                  "null_mean_of_set_means": 1.5908835479143233,
+                  "null_sd_of_set_means": 1.6782792054899027,
+                  "null_set_mean_ci95": [
+                    -1.6985436948458859,
+                    4.880310790674533
+                  ],
+                  "diff_real_minus_null": -5.8051792691243795,
+                  "diff_se": 2.3613578646558087,
+                  "diff_ci95": [
+                    -10.433440683849764,
+                    -1.1769178543989947
+                  ],
+                  "z_vs_null_set_means": -3.4590068506686897,
+                  "p_two_sided_parametric": 0.0005421711144577568,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.2207879782968734,
+                  "real_median": 0.6743543057541324,
+                  "real_mean_se_boot": 4.104453006414295,
+                  "real_mean_ci95": [
+                    -4.823939914275145,
+                    11.265515870868892
+                  ],
+                  "null_mean_of_set_means": 4.847868682980986,
+                  "null_sd_of_set_means": 3.266078587400791,
+                  "null_set_mean_ci95": [
+                    -1.5536453483245642,
+                    11.249382714286536
+                  ],
+                  "diff_real_minus_null": -1.6270807046841123,
+                  "diff_se": 5.245360218416014,
+                  "diff_ci95": [
+                    -11.907986732779499,
+                    8.653825323411276
+                  ],
+                  "z_vs_null_set_means": -0.4981756137040704,
+                  "p_two_sided_parametric": 0.6183602691364496,
+                  "p_two_sided_empirical": 0.6083916083916084,
+                  "null_sets_ge_real_abs": 608,
+                  "p_holm": 0.6083916083916084,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "next_minute_open": {
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.7199035757497362,
+                  "real_median": -0.9651578033009756,
+                  "real_mean_se_boot": 0.3897874228656311,
+                  "real_mean_ci95": [
+                    -1.4838869245663733,
+                    0.04407977306690081
+                  ],
+                  "null_mean_of_set_means": 0.13554683979569868,
+                  "null_sd_of_set_means": 0.4750295872998257,
+                  "null_set_mean_ci95": [
+                    -0.7955111513119596,
+                    1.066604830903357
+                  ],
+                  "diff_real_minus_null": -0.8554504155454349,
+                  "diff_se": 0.6144813616656514,
+                  "diff_ci95": [
+                    -2.0598338844101116,
+                    0.34893305331924174
+                  ],
+                  "z_vs_null_set_means": -1.800836070881408,
+                  "p_two_sided_parametric": 0.07172872167167776,
+                  "p_two_sided_empirical": 0.06593406593406594,
+                  "null_sets_ge_real_abs": 65,
+                  "p_holm": 0.13186813186813187,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.6541916084558563,
+                  "real_median": -1.4385384449400185,
+                  "real_mean_se_boot": 0.9790207385488109,
+                  "real_mean_ci95": [
+                    -4.573072256011526,
+                    -0.7353109609001871
+                  ],
+                  "null_mean_of_set_means": 0.5965919158661381,
+                  "null_sd_of_set_means": 1.0075431969848,
+                  "null_set_mean_ci95": [
+                    -1.37819275022407,
+                    2.571376581956346
+                  ],
+                  "diff_real_minus_null": -3.2507835243219945,
+                  "diff_se": 1.4048576085493543,
+                  "diff_ci95": [
+                    -6.004304437078728,
+                    -0.4972626115652603
+                  ],
+                  "z_vs_null_set_means": -3.226445808031232,
+                  "p_two_sided_parametric": 0.0012533796453759738,
+                  "p_two_sided_empirical": 0.001998001998001998,
+                  "null_sets_ge_real_abs": 1,
+                  "p_holm": 0.005994005994005994,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -4.213358794988487,
+                  "real_median": -1.9782393669631748,
+                  "real_mean_se_boot": 1.662617597947957,
+                  "real_mean_ci95": [
+                    -7.472089286966483,
+                    -0.9546283030104914
+                  ],
+                  "null_mean_of_set_means": 1.6229979359281417,
+                  "null_sd_of_set_means": 1.678706448022315,
+                  "null_set_mean_ci95": [
+                    -1.6672667021955958,
+                    4.913262574051879
+                  ],
+                  "diff_real_minus_null": -5.836356730916629,
+                  "diff_se": 2.362700280534527,
+                  "diff_ci95": [
+                    -10.467249280764301,
+                    -1.2054641810689564
+                  ],
+                  "z_vs_null_set_means": -3.4766988223536304,
+                  "p_two_sided_parametric": 0.0005076276962450166,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.2223855685616627,
+                  "real_median": 0.6743543057541324,
+                  "real_mean_se_boot": 4.10483337099775,
+                  "real_mean_ci95": [
+                    -4.823087838593928,
+                    11.267858975717253
+                  ],
+                  "null_mean_of_set_means": 4.880026593889743,
+                  "null_sd_of_set_means": 3.2663020953935282,
+                  "null_set_mean_ci95": [
+                    -1.5219255130815723,
+                    11.281978700861057
+                  ],
+                  "diff_real_minus_null": -1.65764102532808,
+                  "diff_se": 5.24579702066606,
+                  "diff_ci95": [
+                    -11.939403185833555,
+                    8.624121135177397
+                  ],
+                  "z_vs_null_set_means": -0.5074977687048158,
+                  "p_two_sided_parametric": 0.6118056015913784,
+                  "p_two_sided_empirical": 0.6033966033966034,
+                  "null_sets_ge_real_abs": 603,
+                  "p_holm": 0.6033966033966034,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / reference - 1) * 1e4; positive means the print was WORSE than the reference in the direction of the trade",
+            "against_15s_bucket_open_bps": -17.916961345643657,
+            "against_15s_bucket_open_bps_ci95": [
+              -27.611414875257093,
+              -8.262998905843146
+            ],
+            "against_fill_minute_open_bps": -17.68991528805901,
+            "against_fill_minute_open_bps_ci95": [
+              -27.222189705115838,
+              -7.937372242119056
+            ],
+            "post_print_path_bps": {
+              "print_bucket_start+15s": 18.323136023822123,
+              "print_bucket_start+30s": 18.64891931025881,
+              "print_bucket_start+45s": 18.03645627535207,
+              "print_bucket_start+60s": 17.544844916794197
+            },
+            "post_print_path_bps_ci95": {
+              "print_bucket_start+15s": [
+                8.565049633441516,
+                28.18849279094709
+              ],
+              "print_bucket_start+30s": [
+                9.323506414204612,
+                28.374018354061754
+              ],
+              "print_bucket_start+45s": [
+                7.638203226804977,
+                27.71940000161254
+              ],
+              "print_bucket_start+60s": [
+                8.018517035635528,
+                27.793822777017862
+              ]
+            }
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 38,
+              "from_fill_bps": {
+                "1m": -17.89162057341876,
+                "5m": -35.39097801478027,
+                "15m": -35.227421692628994,
+                "60m": -5.388759996054629
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 1.6899215518773043,
+                "5m": -15.813759661752352,
+                "15m": -15.655077854989823,
+                "60m": 14.26475684246931
+              },
+              "intra_15s_adverse_print_bps": 18.388558250626865,
+              "intra_minute_adverse_print_bps": 19.494717208852524
+            },
+            "ETHUSDT": {
+              "n_entries": 37,
+              "from_fill_bps": {
+                "1m": -13.266665608784491,
+                "5m": -15.7296895288234,
+                "15m": -29.96044500031512,
+                "60m": -42.41301280299329
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": -1.0732687123807485,
+                "5m": -3.471496311133598,
+                "15m": -18.02355435582882,
+                "60m": -29.36858352141888
+              },
+              "intra_15s_adverse_print_bps": 14.612937465520233,
+              "intra_minute_adverse_print_bps": 15.255737055605492
+            },
+            "SOLUSDT": {
+              "n_entries": 662,
+              "from_fill_bps": {
+                "1m": 21.927013222873132,
+                "5m": 22.708837999115158,
+                "15m": 21.156805626371927,
+                "60m": 26.72736926633846
+              },
+              "from_open_of_fill_minute_bps": {
+                "1m": 0.11594706179935238,
+                "5m": 0.8631604280842927,
+                "15m": -0.6235144162501892,
+                "60m": 4.908437751584772
+              },
+              "intra_15s_adverse_print_bps": -21.81910031946744,
+              "intra_minute_adverse_print_bps": -21.665753915850892
+            }
+          },
+          "control_pool_bars": 365859,
+          "control_pool_strata": 72
+        }
+      }
+    }
+  },
+  "headline": {
+    "primary_block": "primary_csv_clock_utc_plus_3 / open",
+    "indicator_family_any_significant_holm_05": true,
+    "post_print_path_bps": {
+      "print_bucket_start+15s": -0.7884175473950017,
+      "print_bucket_start+30s": -1.1216254708127653,
+      "print_bucket_start+45s": -1.4364518569463012,
+      "print_bucket_start+60s": -1.0994926841402046
+    },
+    "intra_15s_adverse_print_bps": 1.8644232552978957,
+    "intra_15s_adverse_print_bps_ci95": [
+      1.1508119502057497,
+      2.640377850066205
+    ],
+    "intra_minute_adverse_print_bps": 5.136593444209611,
+    "from_actual_fill_price_bps": {
+      "1m": -1.1374488899407655,
+      "5m": -0.40032085743859164,
+      "15m": 2.5558074786987226,
+      "60m": 5.8701531508135725
+    }
+  }
+}
