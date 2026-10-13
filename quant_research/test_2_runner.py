@@ -74,7 +74,9 @@ def prepare_features(df: pd.DataFrame, funding_series: pd.Series) -> Dict[str, A
     low = df["low"]
 
     bb_basis = close.rolling(20).mean()
-    bb_std = close.rolling(20).std()
+    # ddof=0 matches Binance's published bands (see core/indicators.py and REPORT
+    # section 17); this helper builds its own bands rather than reusing that module.
+    bb_std = close.rolling(20).std(ddof=0)
 
     delta = close.diff()
     gain = delta.clip(lower=0.0)

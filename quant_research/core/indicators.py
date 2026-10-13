@@ -21,8 +21,12 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     volume = df["volume"]
 
     # 1. Bollinger Bands (20, 2.0)
+    # ddof=0 (population standard deviation) is required to reproduce Binance's own
+    # published bands: at the validated bar (SOLUSDT 3m, 2025-05-01 12:27 UTC) ddof=0
+    # is within 0.0035 of UP/MB/DN, while ddof=1 is 0.0107 off on UP and 0.0077 off on
+    # DN. See quant_research/indicator_validation.py and REPORT section 17.
     df["bb_basis"] = close.rolling(20).mean()
-    bb_std = close.rolling(20).std()
+    bb_std = close.rolling(20).std(ddof=0)
     df["bb_upper"] = df["bb_basis"] + 2.0 * bb_std
     df["bb_lower"] = df["bb_basis"] - 2.0 * bb_std
     df["bb_width"] = (df["bb_upper"] - df["bb_lower"]) / df["bb_basis"]

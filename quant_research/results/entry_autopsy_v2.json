@@ -1,0 +1,3624 @@
+{
+  "script": "quant_research/entry_autopsy.py",
+  "inputs": {
+    "fills": "quant_research/inputs/trade_history.csv",
+    "ledger": "quant_research/inputs/transaction_history.csv",
+    "candles": [
+      "quant_research/data/processed/BTCUSDT_1m.parquet",
+      "quant_research/data/processed/ETHUSDT_1m.parquet",
+      "quant_research/data/processed/SOLUSDT_1m.parquet"
+    ],
+    "indicators": "quant_research/core/indicators.py::compute_indicators"
+  },
+  "timezone_evidence": {
+    "settlement_times_in_csv_clock": {
+      "03:00": 15,
+      "11:00": 20,
+      "19:00": 15
+    },
+    "n_funding_rows": 50,
+    "binance_settlement_hours_utc": [
+      "00:00",
+      "08:00",
+      "16:00"
+    ],
+    "candidate_utc_offsets_hours_that_map_all_settlements_onto_00_08_16_utc": [
+      -5,
+      3,
+      11
+    ],
+    "adopted_offset_hours": 3,
+    "why": "all 50 funding rows read 03:00/11:00/19:00, so the CSV clock is 00:00/08:00/16:00 UTC shifted by +3h (mod 8h the candidates are -5h, +3h and +11h; only the phase is pinned). +3h is adopted because the commit author timezone of this repository is +0300 and neither -5h nor +11h is a plausible account timezone for this ledger. Both the +3h and the +0h readings are nevertheless computed end to end and reported."
+  },
+  "counts": {
+    "fills": 1786,
+    "position_cycles": 257,
+    "entry_fills_open_plus_add": 1003,
+    "entry_opens": 257,
+    "entry_adds": 746,
+    "taker_fills": 1765,
+    "maker_fills": 21,
+    "committed_docstring_claim": "test_3_binance_replay.py calls the archive 'the user's 257 trades'; 257 is the position-cycle count",
+    "per_symbol_fills_and_cycles": {
+      "BNBUSDT": {
+        "fills": 22,
+        "cycles": 2
+      },
+      "BTCUSDT": {
+        "fills": 120,
+        "cycles": 35
+      },
+      "ETHUSDT": {
+        "fills": 101,
+        "cycles": 25
+      },
+      "SOLUSDT": {
+        "fills": 1543,
+        "cycles": 195
+      }
+    },
+    "entries_per_symbol": {
+      "SOLUSDT": 857,
+      "BTCUSDT": 73,
+      "ETHUSDT": 62,
+      "BNBUSDT": 11
+    },
+    "symbols_without_1m_data": [
+      "BNBUSDT"
+    ],
+    "entries_excluded_no_1m_data": 11
+  },
+  "definitions": {
+    "entry": "a fill that OPENS a position (previous position flat) or ADDS to it (same side, larger absolute size); reduces/closes/flips are not entries",
+    "primary_test_unit": "kind == 'open' (one per flat->flat cycle); 'add' fills are a separately labelled secondary block because an add is conditional on a position that is already working",
+    "as_of": "last 1m bar stamped floor(entry_time_utc,'1min') - 1min, i.e. the last bar that had closed strictly before the entry; no entry-bar or later data feeds any indicator",
+    "forward_references": {
+      "actual_fill_price": {
+        "reference_price": "fill",
+        "forward_endpoint": "close[a + h - 1]",
+        "note": "the trader's real traded price; the only tradable reference. Real entries only - a random control has no fill price."
+      },
+      "open_of_fill_bar": {
+        "reference_price": "open[a]",
+        "forward_endpoint": "close[a + h - 1]",
+        "note": "open of the 1m bar containing the fill. Observable for both real and control, but it is the price one minute BEFORE the print, so it credits the entry with drift that a taker could not have captured."
+      },
+      "close_of_fill_bar": {
+        "reference_price": "close[a]",
+        "forward_endpoint": "close[a + h]",
+        "note": "close of the 1m bar containing the fill; strictly at or after the fill."
+      },
+      "next_bar_open": {
+        "reference_price": "open[a+1]",
+        "forward_endpoint": "close[a + h]",
+        "note": "open of the first bar that begins after the fill bar; strictly after the fill."
+      }
+    },
+    "forward_move_bps": "side * (endpoint / reference - 1) * 1e4, before fees; side = +1 for a BUY entry, -1 for a SELL entry",
+    "indicator_metrics": [
+      "bb_pctb",
+      "rsi6",
+      "stoch_k",
+      "stoch_d",
+      "macd_hist_bps",
+      "ema20_dist_bps",
+      "ema50_dist_bps",
+      "ema80_dist_bps",
+      "ema200_dist_bps",
+      "adx14",
+      "daily_trend_ema20",
+      "daily_dist_ema20_bps",
+      "daily_trend_c2c"
+    ],
+    "bollinger_pctb": "(close - bb_lower) / (bb_upper - bb_lower), 20 / 2.0",
+    "stochrsi": "compute_indicators' stoch_k / stoch_d (RSI(14) stochastic 14, smoothed 3/3)",
+    "macd_hist_bps": "macd_hist(12,26,9) / close * 1e4",
+    "ema_dist_bps": "((close / ema_n) - 1) * 1e4",
+    "adx14": "compute_indicators' adx14",
+    "daily_trend_ema20": "+1 if the last COMPLETED daily close > its daily EMA20 else -1",
+    "daily_dist_ema20_bps": "(daily close / daily EMA20 - 1) * 1e4",
+    "daily_trend_c2c": "+1 if the last COMPLETED daily close > the previous daily close else -1",
+    "control": "1000 independent random timestamp sets; one control per real entry, matched on (symbol, side, hour-of-day UTC), drawn with replacement from 1m bars inside the symbol's own trading window +/- 1 day, requiring 300 bars of warmup and 60 bars of forward data",
+    "hypothesis_test": "two-sided; p_two_sided_empirical = (1 + #{|null set mean - null mean| >= |real - null mean|}) / (1 + N_SETS); diff_ci95 combines the bootstrap SE of the real mean with the SD of the set means",
+    "multiple_testing": "Holm step-down within each family: 13 indicator conditions, and the 4 horizons within each forward-reference block"
+  },
+  "assumptions": [
+    "A 1m bar stamped T covers [T, T+1m) and closes at T+1m, so the last closed bar before an entry at T is stamped floor(T,'1min') - 1min.",
+    "Only the single 1m bar that contained each fill is observable; 15s charts cannot be rebuilt from 1m data, so the intra-minute path is unknown and is only bracketed by the bar's open/close.",
+    "Control draws are with replacement and are not excluded from windows in which the account already held a position.",
+    "BNBUSDT has no 1m candle file, so its 2 cycles / 11 entries are excluded from every indicator and forward-return statistic; they are counted in counts.entries_excluded_no_1m_data."
+  ],
+  "results": {
+    "primary_csv_clock_utc_plus_3": {
+      "csv_clock_offset_hours": 3,
+      "units": {
+        "open": {
+          "n_entries_used": 255,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.5218833302696758,
+              "real_median": 0.49410753935481505,
+              "real_mean_se_boot": 0.02368167052799231,
+              "real_mean_ci95": [
+                0.4754672560348109,
+                0.5682994045045408
+              ],
+              "null_mean_of_set_means": 0.511587497865844,
+              "null_sd_of_set_means": 0.020205569478255636,
+              "null_set_mean_ci95": [
+                0.47198458168846297,
+                0.5511904140432251
+              ],
+              "diff_real_minus_null": 0.010295832403831806,
+              "diff_se": 0.031130155106214863,
+              "diff_ci95": [
+                -0.050719271604349324,
+                0.07131093641201294
+              ],
+              "z_vs_null_set_means": 0.5095541808367112,
+              "p_two_sided_parametric": 0.6103638309591264,
+              "p_two_sided_empirical": 0.5974025974025974,
+              "null_sets_ge_real_abs": 597,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 255,
+              "real_mean": 52.062424867454496,
+              "real_median": 52.00399516992259,
+              "real_mean_se_boot": 1.2904837728420469,
+              "real_mean_ci95": [
+                49.53307667268408,
+                54.59177306222491
+              ],
+              "null_mean_of_set_means": 50.64901748726926,
+              "null_sd_of_set_means": 1.086921062616888,
+              "null_set_mean_ci95": [
+                48.51865220454016,
+                52.779382769998364
+              ],
+              "diff_real_minus_null": 1.4134073801852338,
+              "diff_se": 1.6872302049005845,
+              "diff_ci95": [
+                -1.893563821419912,
+                4.72037858179038
+              ],
+              "z_vs_null_set_means": 1.3003772111861485,
+              "p_two_sided_parametric": 0.1934717165682196,
+              "p_two_sided_empirical": 0.1968031968031968,
+              "null_sets_ge_real_abs": 196,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 255,
+              "real_mean": 51.882625218592956,
+              "real_median": 56.31112627093603,
+              "real_mean_se_boot": 2.1930932660035967,
+              "real_mean_ci95": [
+                47.584162417225905,
+                56.18108801996001
+              ],
+              "null_mean_of_set_means": 50.20684952314385,
+              "null_sd_of_set_means": 2.020198545780441,
+              "null_set_mean_ci95": [
+                46.247260373414186,
+                54.16643867287352
+              ],
+              "diff_real_minus_null": 1.6757756954491043,
+              "diff_se": 2.981754556928476,
+              "diff_ci95": [
+                -4.168463236130708,
+                7.5200146270289165
+              ],
+              "z_vs_null_set_means": 0.8295103958713723,
+              "p_two_sided_parametric": 0.4068156566690151,
+              "p_two_sided_empirical": 0.4225774225774226,
+              "null_sets_ge_real_abs": 422,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 255,
+              "real_mean": 51.72773350811014,
+              "real_median": 52.31243559724056,
+              "real_mean_se_boot": 2.022919260308813,
+              "real_mean_ci95": [
+                47.76281175790487,
+                55.69265525831541
+              ],
+              "null_mean_of_set_means": 50.203605219477886,
+              "null_sd_of_set_means": 1.9163196158173053,
+              "null_set_mean_ci95": [
+                46.44761877247597,
+                53.9595916664798
+              ],
+              "diff_real_minus_null": 1.5241282886322551,
+              "diff_se": 2.7864822274140812,
+              "diff_ci95": [
+                -3.937376877099344,
+                6.985633454363854
+              ],
+              "z_vs_null_set_means": 0.7953413804524557,
+              "p_two_sided_parametric": 0.4264149487709763,
+              "p_two_sided_empirical": 0.4305694305694306,
+              "null_sets_ge_real_abs": 430,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.10084782925792395,
+              "real_median": 0.32341379663241826,
+              "real_mean_se_boot": 0.2902535961070244,
+              "real_mean_ci95": [
+                -0.4680492191118439,
+                0.6697448776276917
+              ],
+              "null_mean_of_set_means": 0.006932348201761201,
+              "null_sd_of_set_means": 0.2534801670518978,
+              "null_set_mean_ci95": [
+                -0.4898887792199585,
+                0.5037534756234809
+              ],
+              "diff_real_minus_null": 0.09391548105616275,
+              "diff_se": 0.38535612768154814,
+              "diff_ci95": [
+                -0.6613825291996716,
+                0.8492134913119971
+              ],
+              "z_vs_null_set_means": 0.370504257388052,
+              "p_two_sided_parametric": 0.7110068049778409,
+              "p_two_sided_empirical": 0.7272727272727273,
+              "null_sets_ge_real_abs": 727,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 1.488602426404155,
+              "real_median": 1.0822387916342713,
+              "real_mean_se_boot": 1.990573546495398,
+              "real_mean_ci95": [
+                -2.412921724726825,
+                5.390126577535135
+              ],
+              "null_mean_of_set_means": 0.9627206785266718,
+              "null_sd_of_set_means": 1.6306148137308505,
+              "null_set_mean_ci95": [
+                -2.233284356385795,
+                4.158725713439138
+              ],
+              "diff_real_minus_null": 0.5258817478774833,
+              "diff_se": 2.573186296163914,
+              "diff_ci95": [
+                -4.517563392603788,
+                5.569326888358755
+              ],
+              "z_vs_null_set_means": 0.3225051946353073,
+              "p_two_sided_parametric": 0.7470700030683761,
+              "p_two_sided_empirical": 0.7542457542457542,
+              "null_sets_ge_real_abs": 754,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 2.653261714207451,
+              "real_median": 1.3017101742018866,
+              "real_mean_se_boot": 3.264526778454737,
+              "real_mean_ci95": [
+                -3.7452107715638334,
+                9.051734199978736
+              ],
+              "null_mean_of_set_means": 2.3229402257394276,
+              "null_sd_of_set_means": 2.6507339670953427,
+              "null_set_mean_ci95": [
+                -2.872498349767444,
+                7.5183788012463
+              ],
+              "diff_real_minus_null": 0.33032148846802345,
+              "diff_se": 4.205178432785115,
+              "diff_ci95": [
+                -7.911828239790802,
+                8.572471216726848
+              ],
+              "z_vs_null_set_means": 0.12461510380462194,
+              "p_two_sided_parametric": 0.9008282705019282,
+              "p_two_sided_empirical": 0.9020979020979021,
+              "null_sets_ge_real_abs": 902,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 4.245943652212544,
+              "real_median": 4.3190849977459145,
+              "real_mean_se_boot": 4.196730041877269,
+              "real_mean_ci95": [
+                -3.979647229866904,
+                12.471534534291992
+              ],
+              "null_mean_of_set_means": 3.543030887897502,
+              "null_sd_of_set_means": 3.397634162574256,
+              "null_set_mean_ci95": [
+                -3.1163320707480393,
+                10.202393846543043
+              ],
+              "diff_real_minus_null": 0.7029127643150419,
+              "diff_se": 5.399672299972179,
+              "diff_ci95": [
+                -9.88044494363043,
+                11.286270472260512
+              ],
+              "z_vs_null_set_means": 0.20688300466771622,
+              "p_two_sided_parametric": 0.8361012296953618,
+              "p_two_sided_empirical": 0.8431568431568431,
+              "null_sets_ge_real_abs": 843,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 10.437949291369941,
+              "real_median": 10.92823157929912,
+              "real_mean_se_boot": 6.267977163650032,
+              "real_mean_ci95": [
+                -1.8472859493841227,
+                22.723184532124005
+              ],
+              "null_mean_of_set_means": 7.59876951076542,
+              "null_sd_of_set_means": 5.383627611607801,
+              "null_set_mean_ci95": [
+                -2.953140607985869,
+                18.15067962951671
+              ],
+              "diff_real_minus_null": 2.839179780604521,
+              "diff_se": 8.262625731842403,
+              "diff_ci95": [
+                -13.35556665380659,
+                19.033926215015633
+              ],
+              "z_vs_null_set_means": 0.5273729881470406,
+              "p_two_sided_parametric": 0.5979345976899864,
+              "p_two_sided_empirical": 0.6133866133866134,
+              "null_sets_ge_real_abs": 613,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 255,
+              "real_mean": 28.186486783983312,
+              "real_median": 24.488399989846453,
+              "real_mean_se_boot": 0.8248306279485199,
+              "real_mean_ci95": [
+                26.569818753204213,
+                29.80315481476241
+              ],
+              "null_mean_of_set_means": 25.278888047840113,
+              "null_sd_of_set_means": 0.6131874911864797,
+              "null_set_mean_ci95": [
+                24.07704056511461,
+                26.480735530565614
+              ],
+              "diff_real_minus_null": 2.9075987361432,
+              "diff_se": 1.027786195737965,
+              "diff_ci95": [
+                0.8931377924967885,
+                4.922059679789611
+              ],
+              "z_vs_null_set_means": 4.741777642132224,
+              "p_two_sided_parametric": 2.1185107232923883e-06,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.38823529411764707,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.05807618994301765,
+              "real_mean_ci95": [
+                0.27440596182933247,
+                0.5020646264059616
+              ],
+              "null_mean_of_set_means": 0.620486274509804,
+              "null_sd_of_set_means": 0.04741824053343735,
+              "null_set_mean_ci95": [
+                0.5275465230642667,
+                0.7134260259553412
+              ],
+              "diff_real_minus_null": -0.2322509803921569,
+              "diff_se": 0.07497555183914544,
+              "diff_ci95": [
+                -0.379203061996882,
+                -0.08529889878743185
+              ],
+              "z_vs_null_set_means": -4.897924886698048,
+              "p_two_sided_parametric": 9.685404220860505e-07,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 402.49302770234135,
+              "real_median": 272.4137039342578,
+              "real_mean_se_boot": 64.07337263536218,
+              "real_mean_ci95": [
+                276.90921733703146,
+                528.0768380676512
+              ],
+              "null_mean_of_set_means": 570.4032255903882,
+              "null_sd_of_set_means": 45.93827959061337,
+              "null_set_mean_ci95": [
+                480.36419759278596,
+                660.4422535879903
+              ],
+              "diff_real_minus_null": -167.9101978880468,
+              "diff_se": 78.83985421482807,
+              "diff_ci95": [
+                -322.4363121491098,
+                -13.384083626983795
+              ],
+              "z_vs_null_set_means": -3.6551259512634453,
+              "p_two_sided_parametric": 0.0002570557465890744,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.17647058823529413,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.060737131540649164,
+              "real_mean_ci95": [
+                0.05742581041562177,
+                0.2955153660549665
+              ],
+              "null_mean_of_set_means": 0.07854117647058824,
+              "null_sd_of_set_means": 0.06307485820837916,
+              "null_set_mean_ci95": [
+                -0.04508554561783491,
+                0.2021678985590114
+              ],
+              "diff_real_minus_null": 0.09792941176470589,
+              "diff_se": 0.08756390172778537,
+              "diff_ci95": [
+                -0.07369583562175343,
+                0.2695546591511652
+              ],
+              "z_vs_null_set_means": 1.552590279968263,
+              "p_two_sided_parametric": 0.12052104927756346,
+              "p_two_sided_empirical": 0.12887112887112886,
+              "null_sets_ge_real_abs": 128,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "note": "the trader's real traded price; the only tradable reference. Real entries only - a random control has no fill price.",
+              "horizons_bps": {
+                "1m": -1.1374488899407655,
+                "5m": -0.40032085743859164,
+                "15m": 2.5558074786987226,
+                "60m": 5.8701531508135725
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -2.2125300551778886,
+                  -0.09894910069851932
+                ],
+                "5m": [
+                  -3.439513476803456,
+                  2.9578103928805777
+                ],
+                "15m": [
+                  -3.00563574061236,
+                  8.216654133146056
+                ],
+                "60m": [
+                  -3.686319608471208,
+                  15.355680061822067
+                ]
+              }
+            },
+            "open_of_fill_bar": {
+              "note": "open of the 1m bar containing the fill. Observable for both real and control, but it is the price one minute BEFORE the print, so it credits the entry with drift that a taker could not have captured.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 4.004257402664414,
+                  "real_median": 3.829216925138601,
+                  "real_mean_se_boot": 0.8951911191865737,
+                  "real_mean_ci95": [
+                    2.2496828090587293,
+                    5.758831996270098
+                  ],
+                  "null_mean_of_set_means": 0.08586032038660013,
+                  "null_sd_of_set_means": 0.7734847816931655,
+                  "null_set_mean_ci95": [
+                    -1.430169851732004,
+                    1.6018904925052044
+                  ],
+                  "diff_real_minus_null": 3.9183970822778136,
+                  "diff_se": 1.1830662903579978,
+                  "diff_ci95": [
+                    1.599587153176138,
+                    6.237207011379489
+                  ],
+                  "z_vs_null_set_means": 5.065900680942171,
+                  "p_two_sided_parametric": 4.064738172715465e-07,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 4.741484716357877,
+                  "real_median": 3.4227820372390028,
+                  "real_mean_se_boot": 1.962281790756425,
+                  "real_mean_ci95": [
+                    0.895412406475284,
+                    8.58755702624047
+                  ],
+                  "null_mean_of_set_means": 0.4994840205342079,
+                  "null_sd_of_set_means": 1.7496008134215115,
+                  "null_set_mean_ci95": [
+                    -2.9297335737719545,
+                    3.9287016148403704
+                  ],
+                  "diff_real_minus_null": 4.242000695823669,
+                  "diff_se": 2.629002250409736,
+                  "diff_ci95": [
+                    -0.9108437149794133,
+                    9.39484510662675
+                  ],
+                  "z_vs_null_set_means": 2.424553454297973,
+                  "p_two_sided_parametric": 0.015327226699766605,
+                  "p_two_sided_empirical": 0.017982017982017984,
+                  "null_sets_ge_real_abs": 17,
+                  "p_holm": 0.05394605394605395,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.699703623161226,
+                  "real_median": 6.1008159841380305,
+                  "real_mean_se_boot": 3.0527809769019654,
+                  "real_mean_ci95": [
+                    1.7162529084333737,
+                    13.683154337889079
+                  ],
+                  "null_mean_of_set_means": 1.4088593162647731,
+                  "null_sd_of_set_means": 3.0057854804035857,
+                  "null_set_mean_ci95": [
+                    -4.482480225326255,
+                    7.3001988578558015
+                  ],
+                  "diff_real_minus_null": 6.290844306896453,
+                  "diff_se": 4.284182307878544,
+                  "diff_ci95": [
+                    -2.106153016545493,
+                    14.687841630338399
+                  ],
+                  "z_vs_null_set_means": 2.092911935302776,
+                  "p_two_sided_parametric": 0.03635701661076496,
+                  "p_two_sided_empirical": 0.029970029970029972,
+                  "null_sets_ge_real_abs": 29,
+                  "p_holm": 0.059940059940059943,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 11.01125138599189,
+                  "real_median": 12.09921355111776,
+                  "real_mean_se_boot": 5.0678965043402755,
+                  "real_mean_ci95": [
+                    1.0781742374849514,
+                    20.94432853449883
+                  ],
+                  "null_mean_of_set_means": 6.348246695554775,
+                  "null_sd_of_set_means": 5.968689221980037,
+                  "null_set_mean_ci95": [
+                    -5.350384179526098,
+                    18.046877570635647
+                  ],
+                  "diff_real_minus_null": 4.663004690437115,
+                  "diff_se": 7.829995275048705,
+                  "diff_ci95": [
+                    -10.683786048658344,
+                    20.009795429532577
+                  ],
+                  "z_vs_null_set_means": 0.7812443431072497,
+                  "p_two_sided_parametric": 0.4346587978200225,
+                  "p_two_sided_empirical": 0.42657342657342656,
+                  "null_sets_ge_real_abs": 426,
+                  "p_holm": 0.42657342657342656,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "close_of_fill_bar": {
+              "note": "close of the 1m bar containing the fill; strictly at or after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.8993551584634629,
+                  "real_median": -0.6884207627699812,
+                  "real_mean_se_boot": 0.8252982882684091,
+                  "real_mean_ci95": [
+                    -0.7182294865426189,
+                    2.516939803469545
+                  ],
+                  "null_mean_of_set_means": 0.09082518410689075,
+                  "null_sd_of_set_means": 0.8247812446221032,
+                  "null_set_mean_ci95": [
+                    -1.5257460553524316,
+                    1.7073964235662131
+                  ],
+                  "diff_real_minus_null": 0.8085299743565721,
+                  "diff_se": 1.1667824844842125,
+                  "diff_ci95": [
+                    -1.4783636952324841,
+                    3.0954236439456286
+                  ],
+                  "z_vs_null_set_means": 0.9802962659838645,
+                  "p_two_sided_parametric": 0.32693989737244356,
+                  "p_two_sided_empirical": 0.33166833166833165,
+                  "null_sets_ge_real_abs": 331,
+                  "p_holm": 0.995004995004995,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.5314371330076826,
+                  "real_median": 0.6449948400422123,
+                  "real_mean_se_boot": 1.6545730407608361,
+                  "real_mean_ci95": [
+                    -0.7115260268835559,
+                    5.774400292898921
+                  ],
+                  "null_mean_of_set_means": 0.49750331322078095,
+                  "null_sd_of_set_means": 1.760064150948947,
+                  "null_set_mean_ci95": [
+                    -2.952222422639155,
+                    3.947229049080717
+                  ],
+                  "diff_real_minus_null": 2.0339338197869017,
+                  "diff_se": 2.4156650766751993,
+                  "diff_ci95": [
+                    -2.7007697304964884,
+                    6.768637370070292
+                  ],
+                  "z_vs_null_set_means": 1.1556020947817707,
+                  "p_two_sided_parametric": 0.2478439507997865,
+                  "p_two_sided_empirical": 0.22677322677322678,
+                  "null_sets_ge_real_abs": 226,
+                  "p_holm": 0.9070929070929071,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 3.612895927418303,
+                  "real_median": 4.664252230217603,
+                  "real_mean_se_boot": 2.814642905905097,
+                  "real_mean_ci95": [
+                    -1.9038041681556868,
+                    9.129596022992292
+                  ],
+                  "null_mean_of_set_means": 1.405570355427159,
+                  "null_sd_of_set_means": 2.986982797971461,
+                  "null_set_mean_ci95": [
+                    -4.448915928596905,
+                    7.260056639451222
+                  ],
+                  "diff_real_minus_null": 2.207325571991144,
+                  "diff_se": 4.10417847116074,
+                  "diff_ci95": [
+                    -5.836864231483905,
+                    10.251515375466195
+                  ],
+                  "z_vs_null_set_means": 0.7389816819468118,
+                  "p_two_sided_parametric": 0.4599181206593115,
+                  "p_two_sided_empirical": 0.45754245754245754,
+                  "null_sets_ge_real_abs": 457,
+                  "p_holm": 0.995004995004995,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.231429691154253,
+                  "real_median": 5.516430507070957,
+                  "real_mean_se_boot": 4.995554343707303,
+                  "real_mean_ci95": [
+                    -2.559856822512061,
+                    17.02271620482057
+                  ],
+                  "null_mean_of_set_means": 6.390248434593219,
+                  "null_sd_of_set_means": 5.977660077469993,
+                  "null_set_mean_ci95": [
+                    -5.3259653172479675,
+                    18.106462186434406
+                  ],
+                  "diff_real_minus_null": 0.8411812565610344,
+                  "diff_se": 7.790249238805615,
+                  "diff_ci95": [
+                    -14.42770725149797,
+                    16.11006976462004
+                  ],
+                  "z_vs_null_set_means": 0.1407208248142907,
+                  "p_two_sided_parametric": 0.8880904929780951,
+                  "p_two_sided_empirical": 0.8901098901098901,
+                  "null_sets_ge_real_abs": 890,
+                  "p_holm": 0.995004995004995,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "next_bar_open": {
+              "note": "open of the first bar that begins after the fill bar; strictly after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.9194235076107943,
+                  "real_median": -0.6754018641086379,
+                  "real_mean_se_boot": 0.8267617644736643,
+                  "real_mean_ci95": [
+                    -0.7010295507575878,
+                    2.5398765659791764
+                  ],
+                  "null_mean_of_set_means": 0.12093189627526454,
+                  "null_sd_of_set_means": 0.8230040168131537,
+                  "null_set_mean_ci95": [
+                    -1.4921559766785166,
+                    1.7340197692290458
+                  ],
+                  "diff_real_minus_null": 0.7984916113355297,
+                  "diff_se": 1.166563597446017,
+                  "diff_ci95": [
+                    -1.4879730396586637,
+                    3.084956262329723
+                  ],
+                  "z_vs_null_set_means": 0.970215934580075,
+                  "p_two_sided_parametric": 0.3319388696624397,
+                  "p_two_sided_empirical": 0.34065934065934067,
+                  "null_sets_ge_real_abs": 340,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.5517011911381684,
+                  "real_median": 0.7257303669772064,
+                  "real_mean_se_boot": 1.655678048176292,
+                  "real_mean_ci95": [
+                    -0.6934277832873641,
+                    5.796830165563701
+                  ],
+                  "null_mean_of_set_means": 0.5276274839848134,
+                  "null_sd_of_set_means": 1.758327104101404,
+                  "null_set_mean_ci95": [
+                    -2.918693640053938,
+                    3.973948608023565
+                  ],
+                  "diff_real_minus_null": 2.024073707153355,
+                  "diff_se": 2.415157138620691,
+                  "diff_ci95": [
+                    -2.7096342845432,
+                    6.75778169884991
+                  ],
+                  "z_vs_null_set_means": 1.1511360442730372,
+                  "p_two_sided_parametric": 0.2496762714521501,
+                  "p_two_sided_empirical": 0.22777222777222778,
+                  "null_sets_ge_real_abs": 227,
+                  "p_holm": 0.9110889110889111,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 3.6331778159885753,
+                  "real_median": 4.375718825395669,
+                  "real_mean_se_boot": 2.8126211677168445,
+                  "real_mean_ci95": [
+                    -1.8795596727364394,
+                    9.14591530471359
+                  ],
+                  "null_mean_of_set_means": 1.4357119107631937,
+                  "null_sd_of_set_means": 2.9859114236445863,
+                  "null_set_mean_ci95": [
+                    -4.416674479580195,
+                    7.288098301106583
+                  ],
+                  "diff_real_minus_null": 2.1974659052253815,
+                  "diff_se": 4.102012294342876,
+                  "diff_ci95": [
+                    -5.842478191686654,
+                    10.237410002137418
+                  ],
+                  "z_vs_null_set_means": 0.7359447731182753,
+                  "p_two_sided_parametric": 0.46176430802928703,
+                  "p_two_sided_empirical": 0.45454545454545453,
+                  "null_sets_ge_real_abs": 454,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.251913814494702,
+                  "real_median": 6.154687820556504,
+                  "real_mean_se_boot": 4.998439505939309,
+                  "real_mean_ci95": [
+                    -2.545027617146345,
+                    17.048855246135748
+                  ],
+                  "null_mean_of_set_means": 6.420432995371973,
+                  "null_sd_of_set_means": 5.976447893543911,
+                  "null_set_mean_ci95": [
+                    -5.293404875974092,
+                    18.13427086671804
+                  ],
+                  "diff_real_minus_null": 0.8314808191227288,
+                  "diff_se": 7.791169804257911,
+                  "diff_ci95": [
+                    -14.439211997222777,
+                    16.102173635468233
+                  ],
+                  "z_vs_null_set_means": 0.13912625591882768,
+                  "p_two_sided_parametric": 0.8893503807658225,
+                  "p_two_sided_empirical": 0.8881118881118881,
+                  "null_sets_ge_real_abs": 888,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / open of the fill bar - 1) * 1e4; positive means the print was WORSE than that bar's open in the direction of the trade",
+            "mean_bps": 5.142411274603996,
+            "ci95": [
+              3.64674018912958,
+              6.613297127188799
+            ]
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 35,
+              "from_fill_bps": {
+                "1m": 0.5806116589094198,
+                "5m": -5.787212485942161,
+                "15m": -3.727402675354589,
+                "60m": -3.8195220477588157
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 4.0631849890474045,
+                "5m": -2.302166101154348,
+                "15m": -0.243940783989403,
+                "60m": -0.3292012038553779
+              },
+              "intra_minute_adverse_print_bps": 3.4825229587210114
+            },
+            "ETHUSDT": {
+              "n_entries": 25,
+              "from_fill_bps": {
+                "1m": -4.562834647240255,
+                "5m": -10.375254699479397,
+                "15m": -1.6024486150372215,
+                "60m": -23.012035908651157
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 1.2621564788898978,
+                "5m": -4.552023233841762,
+                "15m": 4.226878530457378,
+                "60m": -17.213019055490307
+              },
+              "intra_minute_adverse_print_bps": 5.8241732751236786
+            },
+            "SOLUSDT": {
+              "n_entries": 195,
+              "from_fill_bps": {
+                "1m": -1.0066667118754797,
+                "5m": 1.8453947992211266,
+                "15m": 4.21667290298213,
+                "60m": 11.312170373565632
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 4.345232056874455,
+                "5m": 7.197205113116436,
+                "15m": 9.570719938893884,
+                "60m": 16.665213445898093
+              },
+              "intra_minute_adverse_print_bps": 5.352934562003547
+            }
+          },
+          "control_pool_bars": 120213,
+          "control_pool_strata": 72
+        },
+        "add": {
+          "n_entries_used": 737,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.5915960313117701,
+              "real_median": 0.5933923387479166,
+              "real_mean_se_boot": 0.013818826649011118,
+              "real_mean_ci95": [
+                0.5645111310797083,
+                0.6186809315438319
+              ],
+              "null_mean_of_set_means": 0.5075758231727822,
+              "null_sd_of_set_means": 0.01198285037094754,
+              "null_set_mean_ci95": [
+                0.484089436445725,
+                0.5310622098998393
+              ],
+              "diff_real_minus_null": 0.08402020813898792,
+              "diff_se": 0.018290671747312547,
+              "diff_ci95": [
+                0.04817049151425533,
+                0.1198699247637205
+              ],
+              "z_vs_null_set_means": 7.011704689453119,
+              "p_two_sided_parametric": 2.354338946020107e-12,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 737,
+              "real_mean": 55.29920124306962,
+              "real_median": 56.40567779742252,
+              "real_mean_se_boot": 0.7368470574285462,
+              "real_mean_ci95": [
+                53.85498101050967,
+                56.74342147562957
+              ],
+              "null_mean_of_set_means": 50.444608879536375,
+              "null_sd_of_set_means": 0.6329284536911138,
+              "null_set_mean_ci95": [
+                49.204069110301795,
+                51.685148648770955
+              ],
+              "diff_real_minus_null": 4.854592363533243,
+              "diff_se": 0.9713609079703237,
+              "diff_ci95": [
+                2.9507249839114085,
+                6.758459743155077
+              ],
+              "z_vs_null_set_means": 7.670049174155812,
+              "p_two_sided_parametric": 1.7319479184152442e-14,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 737,
+              "real_mean": 57.32277900705045,
+              "real_median": 64.55181851853285,
+              "real_mean_se_boot": 1.2182941000186933,
+              "real_mean_ci95": [
+                54.934922571013814,
+                59.710635443087085
+              ],
+              "null_mean_of_set_means": 49.99381098959832,
+              "null_sd_of_set_means": 1.2271548379220802,
+              "null_set_mean_ci95": [
+                47.58858750727104,
+                52.3990344719256
+              ],
+              "diff_real_minus_null": 7.328968017452127,
+              "diff_se": 1.7292048780800744,
+              "diff_ci95": [
+                3.9397264564151806,
+                10.718209578489073
+              ],
+              "z_vs_null_set_means": 5.972325407494737,
+              "p_two_sided_parametric": 2.3389539194340614e-09,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 737,
+              "real_mean": 56.34008975542221,
+              "real_median": 59.9402905331444,
+              "real_mean_se_boot": 1.0741953433628904,
+              "real_mean_ci95": [
+                54.23466688243095,
+                58.445512628413475
+              ],
+              "null_mean_of_set_means": 49.99440994370493,
+              "null_sd_of_set_means": 1.1865716088235043,
+              "null_set_mean_ci95": [
+                47.66872959041086,
+                52.320090296999
+              ],
+              "diff_real_minus_null": 6.345679811717282,
+              "diff_se": 1.6005773391400109,
+              "diff_ci95": [
+                3.208548227002861,
+                9.482811396431703
+              ],
+              "z_vs_null_set_means": 5.347911381437044,
+              "p_two_sided_parametric": 8.897500825000293e-08,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.7093376558263461,
+              "real_median": 0.9166994434562656,
+              "real_mean_se_boot": 0.15537277415100875,
+              "real_mean_ci95": [
+                0.404807018490369,
+                1.0138682931623233
+              ],
+              "null_mean_of_set_means": -0.0312939407114338,
+              "null_sd_of_set_means": 0.15610494696093394,
+              "null_set_mean_ci95": [
+                -0.3372596367548643,
+                0.27467175533199667
+              ],
+              "diff_real_minus_null": 0.7406315965377799,
+              "diff_se": 0.22024861727842102,
+              "diff_ci95": [
+                0.3089443066720747,
+                1.172318886403485
+              ],
+              "z_vs_null_set_means": 4.744446674858592,
+              "p_two_sided_parametric": 2.0907704505468416e-06,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 4.720511891510717,
+              "real_median": 4.651372546971011,
+              "real_mean_se_boot": 1.2511929922705658,
+              "real_mean_ci95": [
+                2.268173626660408,
+                7.172850156361026
+              ],
+              "null_mean_of_set_means": 0.6150414668025315,
+              "null_sd_of_set_means": 0.9470620850571125,
+              "null_set_mean_ci95": [
+                -1.241200219909409,
+                2.471283153514472
+              ],
+              "diff_real_minus_null": 4.1054704247081855,
+              "diff_se": 1.5692069643165931,
+              "diff_ci95": [
+                1.029824774647663,
+                7.181116074768708
+              ],
+              "z_vs_null_set_means": 4.334953842504006,
+              "p_two_sided_parametric": 1.4579071001996624e-05,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 5.67818876920849,
+              "real_median": 7.6140314101169615,
+              "real_mean_se_boot": 2.1375113146535356,
+              "real_mean_ci95": [
+                1.4886665924875606,
+                9.86771094592942
+              ],
+              "null_mean_of_set_means": 1.817311576092206,
+              "null_sd_of_set_means": 1.5254594116945257,
+              "null_set_mean_ci95": [
+                -1.1725888708290642,
+                4.807212023013476
+              ],
+              "diff_real_minus_null": 3.860877193116284,
+              "diff_se": 2.6260199993524984,
+              "diff_ci95": [
+                -1.2861220056146125,
+                9.00787639184718
+              ],
+              "z_vs_null_set_means": 2.5309602887614733,
+              "p_two_sided_parametric": 0.011375072630255723,
+              "p_two_sided_empirical": 0.012987012987012988,
+              "null_sets_ge_real_abs": 12,
+              "p_holm": 0.05194805194805195,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 7.21279683866865,
+              "real_median": 11.71387271525548,
+              "real_mean_se_boot": 2.7810193387561,
+              "real_mean_ci95": [
+                1.7619989347066936,
+                12.663594742630607
+              ],
+              "null_mean_of_set_means": 3.026911383028469,
+              "null_sd_of_set_means": 1.9748139665817566,
+              "null_set_mean_ci95": [
+                -0.8437239914717738,
+                6.897546757528712
+              ],
+              "diff_real_minus_null": 4.1858854556401806,
+              "diff_se": 3.4108589482917333,
+              "diff_ci95": [
+                -2.4993980830116165,
+                10.871168994291978
+              ],
+              "z_vs_null_set_means": 2.119635330960116,
+              "p_two_sided_parametric": 0.03403681053281149,
+              "p_two_sided_empirical": 0.028971028971028972,
+              "null_sets_ge_real_abs": 28,
+              "p_holm": 0.08691308691308691,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 13.865019316393512,
+              "real_median": 20.07622609120796,
+              "real_mean_se_boot": 4.285718960555413,
+              "real_mean_ci95": [
+                5.4650101537049025,
+                22.265028479082122
+              ],
+              "null_mean_of_set_means": 7.019398561497972,
+              "null_sd_of_set_means": 3.243808775164597,
+              "null_set_mean_ci95": [
+                0.6615333621753621,
+                13.377263760820583
+              ],
+              "diff_real_minus_null": 6.84562075489554,
+              "diff_se": 5.374912313582335,
+              "diff_ci95": [
+                -3.6892073797258362,
+                17.380448889516916
+              ],
+              "z_vs_null_set_means": 2.1103650767909956,
+              "p_two_sided_parametric": 0.03482692215501437,
+              "p_two_sided_empirical": 0.03396603396603397,
+              "null_sets_ge_real_abs": 33,
+              "p_holm": 0.08691308691308691,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 737,
+              "real_mean": 28.716248344384827,
+              "real_median": 26.12078564469328,
+              "real_mean_se_boot": 0.491262914838134,
+              "real_mean_ci95": [
+                27.753373031302083,
+                29.67912365746757
+              ],
+              "null_mean_of_set_means": 25.18592787445668,
+              "null_sd_of_set_means": 0.37444066644690577,
+              "null_set_mean_ci95": [
+                24.452024168220746,
+                25.919831580692616
+              ],
+              "diff_real_minus_null": 3.530320469928146,
+              "diff_se": 0.6176933415413045,
+              "diff_ci95": [
+                2.319641520507189,
+                4.7409994193491025
+              ],
+              "z_vs_null_set_means": 9.428250685022032,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.34599728629579374,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.034665718892824084,
+              "real_mean_ci95": [
+                0.2780524772658585,
+                0.41394209532572895
+              ],
+              "null_mean_of_set_means": 0.6019402985074628,
+              "null_sd_of_set_means": 0.029500342668579312,
+              "null_set_mean_ci95": [
+                0.5441196268770473,
+                0.6597609701378783
+              ],
+              "diff_real_minus_null": -0.25594301221166904,
+              "diff_se": 0.045519032106580454,
+              "diff_ci95": [
+                -0.3451603151405667,
+                -0.16672570928277136
+              ],
+              "z_vs_null_set_means": -8.675933533622063,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 165.88877165302722,
+              "real_median": 228.5404365211341,
+              "real_mean_se_boot": 33.12225379594488,
+              "real_mean_ci95": [
+                100.96915421297525,
+                230.8083890930792
+              ],
+              "null_mean_of_set_means": 475.8726784055377,
+              "null_sd_of_set_means": 29.297557610091566,
+              "null_set_mean_ci95": [
+                418.44946548975827,
+                533.2958913213172
+              ],
+              "diff_real_minus_null": -309.9839067525105,
+              "diff_se": 44.2202507731426,
+              "diff_ci95": [
+                -396.65559826787,
+                -223.312215237151
+              ],
+              "z_vs_null_set_means": -10.580537493191457,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.09362279511533243,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.0373243238025877,
+              "real_mean_ci95": [
+                0.02046712046226054,
+                0.16677846976840432
+              ],
+              "null_mean_of_set_means": 0.05157666214382632,
+              "null_sd_of_set_means": 0.03639945155768036,
+              "null_set_mean_ci95": [
+                -0.019766262909227186,
+                0.12291958719687983
+              ],
+              "diff_real_minus_null": 0.04204613297150611,
+              "diff_se": 0.05213468347482637,
+              "diff_ci95": [
+                -0.06013784663915357,
+                0.14423011258216578
+              ],
+              "z_vs_null_set_means": 1.1551309476429266,
+              "p_two_sided_parametric": 0.2480368066834513,
+              "p_two_sided_empirical": 0.26173826173826176,
+              "null_sets_ge_real_abs": 261,
+              "p_holm": 0.26173826173826176,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "note": "the trader's real traded price; the only tradable reference. Real entries only - a random control has no fill price.",
+              "horizons_bps": {
+                "1m": 0.42146497167519065,
+                "5m": 1.7598189818656818,
+                "15m": 8.225535347796471,
+                "60m": 15.709664070425077
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -0.23812966860460577,
+                  1.0618460412699926
+                ],
+                "5m": [
+                  -0.2995658155128847,
+                  3.983267763457611
+                ],
+                "15m": [
+                  4.652523579255646,
+                  11.892942751598065
+                ],
+                "60m": [
+                  10.366795934746238,
+                  21.378675715258087
+                ]
+              }
+            },
+            "open_of_fill_bar": {
+              "note": "open of the 1m bar containing the fill. Observable for both real and control, but it is the price one minute BEFORE the print, so it credits the entry with drift that a taker could not have captured.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 6.292936241180257,
+                  "real_median": 5.708228002936355,
+                  "real_mean_se_boot": 0.5157456747665429,
+                  "real_mean_ci95": [
+                    5.282074718637833,
+                    7.303797763722681
+                  ],
+                  "null_mean_of_set_means": 0.10985467372108598,
+                  "null_sd_of_set_means": 0.4949565937656897,
+                  "null_set_mean_ci95": [
+                    -0.8602602500596657,
+                    1.0799695975018377
+                  ],
+                  "diff_real_minus_null": 6.183081567459171,
+                  "diff_se": 0.7148255946400707,
+                  "diff_ci95": [
+                    4.782023401964633,
+                    7.584139732953709
+                  ],
+                  "z_vs_null_set_means": 12.492169304014192,
+                  "p_two_sided_parametric": 0.0,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 7.62841742410419,
+                  "real_median": 3.312629399586653,
+                  "real_mean_se_boot": 1.187205413430483,
+                  "real_mean_ci95": [
+                    5.301494813780443,
+                    9.955340034427937
+                  ],
+                  "null_mean_of_set_means": 0.366610853835384,
+                  "null_sd_of_set_means": 1.09207251136414,
+                  "null_set_mean_ci95": [
+                    -1.7738512684383305,
+                    2.5070729761090984
+                  ],
+                  "diff_real_minus_null": 7.2618065702688055,
+                  "diff_se": 1.613096111134059,
+                  "diff_ci95": [
+                    4.10013819244605,
+                    10.423474948091561
+                  ],
+                  "z_vs_null_set_means": 6.649564470034933,
+                  "p_two_sided_parametric": 2.9396041156815045e-11,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 14.092079900608532,
+                  "real_median": 14.416553595657522,
+                  "real_mean_se_boot": 1.871228804196029,
+                  "real_mean_ci95": [
+                    10.424471444384315,
+                    17.759688356832747
+                  ],
+                  "null_mean_of_set_means": 1.0581757566654644,
+                  "null_sd_of_set_means": 1.7452841877809773,
+                  "null_set_mean_ci95": [
+                    -2.362581251385251,
+                    4.47893276471618
+                  ],
+                  "diff_real_minus_null": 13.033904143943067,
+                  "diff_se": 2.5588110781711113,
+                  "diff_ci95": [
+                    8.018634430727689,
+                    18.049173857158443
+                  ],
+                  "z_vs_null_set_means": 7.468069805018335,
+                  "p_two_sided_parametric": 8.126832540256146e-14,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 21.57376915831086,
+                  "real_median": 13.580805794475292,
+                  "real_mean_se_boot": 2.904199701759256,
+                  "real_mean_ci95": [
+                    15.881537742862719,
+                    27.266000573759
+                  ],
+                  "null_mean_of_set_means": 6.251432032059225,
+                  "null_sd_of_set_means": 3.56257104890461,
+                  "null_set_mean_ci95": [
+                    -0.7312072237938105,
+                    13.234071287912261
+                  ],
+                  "diff_real_minus_null": 15.322337126251636,
+                  "diff_se": 4.596334233516079,
+                  "diff_ci95": [
+                    6.31352202856012,
+                    24.33115222394315
+                  ],
+                  "z_vs_null_set_means": 4.300921136986958,
+                  "p_two_sided_parametric": 1.7008958973052657e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "close_of_fill_bar": {
+              "note": "close of the 1m bar containing the fill; strictly at or after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.7201149197667884,
+                  "real_median": -1.4181379848265951,
+                  "real_mean_se_boot": 0.5468481403755165,
+                  "real_mean_ci95": [
+                    -0.351707435369224,
+                    1.7919372749028009
+                  ],
+                  "null_mean_of_set_means": 0.057312350063955256,
+                  "null_sd_of_set_means": 0.4772411414159411,
+                  "null_set_mean_ci95": [
+                    -0.8780802871112893,
+                    0.9927049872391999
+                  ],
+                  "diff_real_minus_null": 0.6628025697028331,
+                  "diff_se": 0.725811267267291,
+                  "diff_ci95": [
+                    -0.7597875141410572,
+                    2.0853926535467235
+                  ],
+                  "z_vs_null_set_means": 1.3888211056916515,
+                  "p_two_sided_parametric": 0.16488715567386292,
+                  "p_two_sided_empirical": 0.16083916083916083,
+                  "null_sets_ge_real_abs": 160,
+                  "p_holm": 0.16083916083916083,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 2.9142650471451907,
+                  "real_median": 1.6291951775815328,
+                  "real_mean_se_boot": 1.0263195284151307,
+                  "real_mean_ci95": [
+                    0.9026787714515345,
+                    4.925851322838847
+                  ],
+                  "null_mean_of_set_means": 0.3284270077553865,
+                  "null_sd_of_set_means": 1.0646546634047651,
+                  "null_set_mean_ci95": [
+                    -1.7582961325179531,
+                    2.4151501480287263
+                  ],
+                  "diff_real_minus_null": 2.585838039389804,
+                  "diff_se": 1.4787904945311794,
+                  "diff_ci95": [
+                    -0.31259132989130745,
+                    5.484267408670916
+                  ],
+                  "z_vs_null_set_means": 2.4288045018469138,
+                  "p_two_sided_parametric": 0.015148698314297437,
+                  "p_two_sided_empirical": 0.016983016983016984,
+                  "null_sets_ge_real_abs": 16,
+                  "p_holm": 0.03396603396603397,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 7.997566246234139,
+                  "real_median": 6.767935027824912,
+                  "real_mean_se_boot": 1.7729099334059941,
+                  "real_mean_ci95": [
+                    4.5226627767583905,
+                    11.472469715709888
+                  ],
+                  "null_mean_of_set_means": 1.0344901396632507,
+                  "null_sd_of_set_means": 1.737271808970168,
+                  "null_set_mean_ci95": [
+                    -2.3705626059182787,
+                    4.43954288524478
+                  ],
+                  "diff_real_minus_null": 6.963076106570888,
+                  "diff_se": 2.482201234834139,
+                  "diff_ci95": [
+                    2.0979616862959753,
+                    11.828190526845802
+                  ],
+                  "z_vs_null_set_means": 4.008052206118805,
+                  "p_two_sided_parametric": 6.12215887589862e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 16.34159523727542,
+                  "real_median": 9.593092973059214,
+                  "real_mean_se_boot": 2.9338056608012084,
+                  "real_mean_ci95": [
+                    10.591336142105053,
+                    22.091854332445788
+                  ],
+                  "null_mean_of_set_means": 6.276146894637671,
+                  "null_sd_of_set_means": 3.601121905509944,
+                  "null_set_mean_ci95": [
+                    -0.782052040161819,
+                    13.334345829437162
+                  ],
+                  "diff_real_minus_null": 10.06544834263775,
+                  "diff_se": 4.6449213807870615,
+                  "diff_ci95": [
+                    0.9614024362951081,
+                    19.169494248980392
+                  ],
+                  "z_vs_null_set_means": 2.7950868109288325,
+                  "p_two_sided_parametric": 0.005188578035423497,
+                  "p_two_sided_empirical": 0.002997002997002997,
+                  "null_sets_ge_real_abs": 2,
+                  "p_holm": 0.008991008991008992,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "next_bar_open": {
+              "note": "open of the first bar that begins after the fill bar; strictly after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.7297653170788275,
+                  "real_median": -1.6058154017273285,
+                  "real_mean_se_boot": 0.5442398640214503,
+                  "real_mean_ci95": [
+                    -0.33694481640321505,
+                    1.79647545056087
+                  ],
+                  "null_mean_of_set_means": 0.09575276327358137,
+                  "null_sd_of_set_means": 0.47731058572134644,
+                  "null_set_mean_ci95": [
+                    -0.8397759847402576,
+                    1.0312815112874203
+                  ],
+                  "diff_real_minus_null": 0.6340125538052461,
+                  "diff_se": 0.7238939320313036,
+                  "diff_ci95": [
+                    -0.7848195529761088,
+                    2.052844660586601
+                  ],
+                  "z_vs_null_set_means": 1.3283018914132825,
+                  "p_two_sided_parametric": 0.18407839515943447,
+                  "p_two_sided_empirical": 0.18181818181818182,
+                  "null_sets_ge_real_abs": 181,
+                  "p_holm": 0.18181818181818182,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 2.924020818128692,
+                  "real_median": 2.2621022470215024,
+                  "real_mean_se_boot": 1.0239507415525475,
+                  "real_mean_ci95": [
+                    0.9170773646856989,
+                    4.9309642715716855
+                  ],
+                  "null_mean_of_set_means": 0.3668773044170404,
+                  "null_sd_of_set_means": 1.065357541837475,
+                  "null_set_mean_ci95": [
+                    -1.7212234775844106,
+                    2.4549780864184916
+                  ],
+                  "diff_real_minus_null": 2.5571435137116514,
+                  "diff_se": 1.4776541588193088,
+                  "diff_ci95": [
+                    -0.33905863757419397,
+                    5.453345664997497
+                  ],
+                  "z_vs_null_set_means": 2.400267903769864,
+                  "p_two_sided_parametric": 0.016383076547872077,
+                  "p_two_sided_empirical": 0.01898101898101898,
+                  "null_sets_ge_real_abs": 18,
+                  "p_holm": 0.03796203796203796,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 8.007456438489964,
+                  "real_median": 6.767935027824912,
+                  "real_mean_se_boot": 1.7707806338539211,
+                  "real_mean_ci95": [
+                    4.536726396136278,
+                    11.47818648084365
+                  ],
+                  "null_mean_of_set_means": 1.0729565097253562,
+                  "null_sd_of_set_means": 1.7385465396527853,
+                  "null_set_mean_ci95": [
+                    -2.334594707994103,
+                    4.480507727444815
+                  ],
+                  "diff_real_minus_null": 6.934499928764607,
+                  "diff_se": 2.4815737191892504,
+                  "diff_ci95": [
+                    2.070615439153676,
+                    11.798384418375537
+                  ],
+                  "z_vs_null_set_means": 3.988676616128743,
+                  "p_two_sided_parametric": 6.64429251537868e-05,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 16.351262601035902,
+                  "real_median": 9.588331901708713,
+                  "real_mean_se_boot": 2.933888239103326,
+                  "real_mean_ci95": [
+                    10.600841652393383,
+                    22.10168354967842
+                  ],
+                  "null_mean_of_set_means": 6.314643637859625,
+                  "null_sd_of_set_means": 3.6015368570842936,
+                  "null_set_mean_ci95": [
+                    -0.7443686020255909,
+                    13.373655877744842
+                  ],
+                  "diff_real_minus_null": 10.036618963176277,
+                  "diff_se": 4.645295247073691,
+                  "diff_ci95": [
+                    0.9318402789118423,
+                    19.141397647440712
+                  ],
+                  "z_vs_null_set_means": 2.7867600309112626,
+                  "p_two_sided_parametric": 0.005323788640215987,
+                  "p_two_sided_empirical": 0.002997002997002997,
+                  "null_sets_ge_real_abs": 2,
+                  "p_holm": 0.008991008991008992,
+                  "significant_holm_05": true
+                }
+              ],
+              "any_significant_holm_05": true
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / open of the fill bar - 1) * 1e4; positive means the print was WORSE than that bar's open in the direction of the trade",
+            "mean_bps": 5.872849333040802,
+            "ci95": [
+              5.027401608757233,
+              6.72369727699023
+            ]
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 38,
+              "from_fill_bps": {
+                "1m": 2.9079673270379782,
+                "5m": -7.597531080743483,
+                "15m": -32.37615890135162,
+                "60m": -29.88052655054711
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 5.60474881968198,
+                "5m": -4.905760275996477,
+                "15m": -29.68403060590172,
+                "60m": -27.17205880518961
+              },
+              "intra_minute_adverse_print_bps": 2.6961311471584692
+            },
+            "ETHUSDT": {
+              "n_entries": 37,
+              "from_fill_bps": {
+                "1m": -5.978226807406187,
+                "5m": -14.734888551253237,
+                "15m": 9.922666326535555,
+                "60m": -38.61614791795322
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 1.0517454002155076,
+                "5m": -7.730415582069024,
+                "15m": 16.86152277680934,
+                "60m": -31.71260916497755
+              },
+              "intra_minute_adverse_print_bps": 7.039138585311131
+            },
+            "SOLUSDT": {
+              "n_entries": 662,
+              "from_fill_bps": {
+                "1m": 0.6364219298658631,
+                "5m": 3.218857472960165,
+                "15m": 10.461291443346745,
+                "60m": 21.362960576719548
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 6.625376094854927,
+                "5m": 9.206326145905146,
+                "15m": 16.450120403369805,
+                "60m": 27.350109733197094
+              },
+              "intra_minute_adverse_print_bps": 5.990013364354285
+            }
+          },
+          "control_pool_bars": 119232,
+          "control_pool_strata": 72
+        }
+      }
+    },
+    "sensitivity_csv_clock_utc": {
+      "csv_clock_offset_hours": 0,
+      "units": {
+        "open": {
+          "n_entries_used": 255,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.5087874935848979,
+              "real_median": 0.5089724224548443,
+              "real_mean_se_boot": 0.020943288224914054,
+              "real_mean_ci95": [
+                0.4677386486640664,
+                0.5498363385057294
+              ],
+              "null_mean_of_set_means": 0.5124659320195144,
+              "null_sd_of_set_means": 0.02030679131166494,
+              "null_set_mean_ci95": [
+                0.47266462104865115,
+                0.5522672429903777
+              ],
+              "diff_real_minus_null": -0.00367843843461646,
+              "diff_se": 0.029171683102751107,
+              "diff_ci95": [
+                -0.06085493731600863,
+                0.05349806044677571
+              ],
+              "z_vs_null_set_means": -0.18114326277157508,
+              "p_two_sided_parametric": 0.8562551274751813,
+              "p_two_sided_empirical": 0.8511488511488512,
+              "null_sets_ge_real_abs": 851,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 255,
+              "real_mean": 50.37275805794189,
+              "real_median": 50.8721162307468,
+              "real_mean_se_boot": 1.0820421193855807,
+              "real_mean_ci95": [
+                48.25195550394615,
+                52.493560611937625
+              ],
+              "null_mean_of_set_means": 50.65098338827524,
+              "null_sd_of_set_means": 1.085750712134531,
+              "null_set_mean_ci95": [
+                48.522911992491565,
+                52.77905478405892
+              ],
+              "diff_real_minus_null": -0.27822533033335617,
+              "diff_se": 1.5328632545093774,
+              "diff_ci95": [
+                -3.282637309171736,
+                2.7261866485050237
+              ],
+              "z_vs_null_set_means": -0.25625157526848796,
+              "p_two_sided_parametric": 0.7977565864078848,
+              "p_two_sided_empirical": 0.7972027972027972,
+              "null_sets_ge_real_abs": 797,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 255,
+              "real_mean": 51.134347122715056,
+              "real_median": 51.67728304828573,
+              "real_mean_se_boot": 2.021298386385182,
+              "real_mean_ci95": [
+                47.1726022854001,
+                55.09609196003001
+              ],
+              "null_mean_of_set_means": 50.43540201573286,
+              "null_sd_of_set_means": 2.1274588459938277,
+              "null_set_mean_ci95": [
+                46.26558267758496,
+                54.605221353880765
+              ],
+              "diff_real_minus_null": 0.6989451069821939,
+              "diff_se": 2.934574638376187,
+              "diff_ci95": [
+                -5.052821184235133,
+                6.4507113981995206
+              ],
+              "z_vs_null_set_means": 0.32853519507480133,
+              "p_two_sided_parametric": 0.7425070378569845,
+              "p_two_sided_empirical": 0.7362637362637363,
+              "null_sets_ge_real_abs": 736,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 255,
+              "real_mean": 51.01174163395289,
+              "real_median": 52.25340378500687,
+              "real_mean_se_boot": 1.9517241711611137,
+              "real_mean_ci95": [
+                47.186362258477104,
+                54.83712100942867
+              ],
+              "null_mean_of_set_means": 50.44145905346596,
+              "null_sd_of_set_means": 2.0302440903283667,
+              "null_set_mean_ci95": [
+                46.46218063642236,
+                54.420737470509565
+              ],
+              "diff_real_minus_null": 0.5702825804869249,
+              "diff_se": 2.8162241222260334,
+              "diff_ci95": [
+                -4.9495166990761,
+                6.09008186004995
+              ],
+              "z_vs_null_set_means": 0.28089360447033185,
+              "p_two_sided_parametric": 0.7787920061472513,
+              "p_two_sided_empirical": 0.7932067932067932,
+              "null_sets_ge_real_abs": 793,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": -0.04452725987580793,
+              "real_median": 0.08396046653564065,
+              "real_mean_se_boot": 0.22188517852392842,
+              "real_mean_ci95": [
+                -0.4794222097827076,
+                0.3903676900310918
+              ],
+              "null_mean_of_set_means": 0.007866177450408001,
+              "null_sd_of_set_means": 0.24439258314489445,
+              "null_set_mean_ci95": [
+                -0.4711432855135851,
+                0.4868756404144011
+              ],
+              "diff_real_minus_null": -0.05239343732621593,
+              "diff_se": 0.3300920585909781,
+              "diff_ci95": [
+                -0.6993738721645331,
+                0.5945869975121012
+              ],
+              "z_vs_null_set_means": -0.21438227237507093,
+              "p_two_sided_parametric": 0.8302489649014668,
+              "p_two_sided_empirical": 0.8221778221778222,
+              "null_sets_ge_real_abs": 822,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.13128206624936684,
+              "real_median": 0.25461891482780885,
+              "real_mean_se_boot": 1.421390561786284,
+              "real_mean_ci95": [
+                -2.65464343485175,
+                2.917207567350484
+              ],
+              "null_mean_of_set_means": 0.9202023208374286,
+              "null_sd_of_set_means": 1.5370040050440619,
+              "null_set_mean_ci95": [
+                -2.0923255290489324,
+                3.93273017072379
+              ],
+              "diff_real_minus_null": -0.7889202545880618,
+              "diff_se": 2.093497657189187,
+              "diff_ci95": [
+                -4.892175662678868,
+                3.3143351535027445
+              ],
+              "z_vs_null_set_means": -0.513284449486809,
+              "p_two_sided_parametric": 0.607752360083526,
+              "p_two_sided_empirical": 0.6083916083916084,
+              "null_sets_ge_real_abs": 608,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.3062914285015576,
+              "real_median": 1.3574499852908595,
+              "real_mean_se_boot": 2.271600001081177,
+              "real_mean_ci95": [
+                -4.14604457361755,
+                4.758627430620665
+              ],
+              "null_mean_of_set_means": 2.3578196134192875,
+              "null_sd_of_set_means": 2.531385345967413,
+              "null_set_mean_ci95": [
+                -2.603695664676842,
+                7.3193348915154175
+              ],
+              "diff_real_minus_null": -2.05152818491773,
+              "diff_se": 3.401187782920926,
+              "diff_ci95": [
+                -8.717856239442744,
+                4.614799869607285
+              ],
+              "z_vs_null_set_means": -0.8104369365122095,
+              "p_two_sided_parametric": 0.4176890962575204,
+              "p_two_sided_empirical": 0.4225774225774226,
+              "null_sets_ge_real_abs": 422,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.8993149608651061,
+              "real_median": 2.6463285808153714,
+              "real_mean_se_boot": 2.8467315409288805,
+              "real_mean_ci95": [
+                -4.680278859355499,
+                6.478908781085711
+              ],
+              "null_mean_of_set_means": 3.8092156867895106,
+              "null_sd_of_set_means": 3.2531807372331247,
+              "null_set_mean_ci95": [
+                -2.5670185581874136,
+                10.185449931766435
+              ],
+              "diff_real_minus_null": -2.9099007259244045,
+              "diff_se": 4.322853846155798,
+              "diff_ci95": [
+                -11.38269426438977,
+                5.56289281254096
+              ],
+              "z_vs_null_set_means": -0.894478653651231,
+              "p_two_sided_parametric": 0.3710658459738603,
+              "p_two_sided_empirical": 0.3786213786213786,
+              "null_sets_ge_real_abs": 378,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 5.178635008007129,
+              "real_median": 8.857290480206448,
+              "real_mean_se_boot": 4.3901661155677365,
+              "real_mean_ci95": [
+                -3.426090578505635,
+                13.783360594519893
+              ],
+              "null_mean_of_set_means": 9.405110701924178,
+              "null_sd_of_set_means": 5.211495076476359,
+              "null_set_mean_ci95": [
+                -0.8094196479694844,
+                19.61964105181784
+              ],
+              "diff_real_minus_null": -4.226475693917049,
+              "diff_se": 6.814193969532746,
+              "diff_ci95": [
+                -17.58229587420123,
+                9.129344486367133
+              ],
+              "z_vs_null_set_means": -0.8109910173367544,
+              "p_two_sided_parametric": 0.4173708292631122,
+              "p_two_sided_empirical": 0.4255744255744256,
+              "null_sets_ge_real_abs": 425,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 255,
+              "real_mean": 24.819263508530952,
+              "real_median": 23.097333839290716,
+              "real_mean_se_boot": 0.6301704027876035,
+              "real_mean_ci95": [
+                23.58412951906725,
+                26.054397497994653
+              ],
+              "null_mean_of_set_means": 24.645541902024526,
+              "null_sd_of_set_means": 0.6240479906216131,
+              "null_set_mean_ci95": [
+                23.422407840406166,
+                25.868675963642886
+              ],
+              "diff_real_minus_null": 0.17372160650642599,
+              "diff_se": 0.886876897403672,
+              "diff_ci95": [
+                -1.5645571124047712,
+                1.9120003254176232
+              ],
+              "z_vs_null_set_means": 0.27837860087231786,
+              "p_two_sided_parametric": 0.7807217445741477,
+              "p_two_sided_empirical": 0.7772227772227772,
+              "null_sets_ge_real_abs": 777,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.38823529411764707,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.05860596896355696,
+              "real_mean_ci95": [
+                0.2733675949490754,
+                0.5031029932862187
+              ],
+              "null_mean_of_set_means": 0.6195843137254902,
+              "null_sd_of_set_means": 0.05114935591305556,
+              "null_set_mean_ci95": [
+                0.5193315761359013,
+                0.719837051315079
+              ],
+              "diff_real_minus_null": -0.2313490196078431,
+              "diff_se": 0.07778763531871781,
+              "diff_ci95": [
+                -0.38381278483253,
+                -0.07888525438315619
+              ],
+              "z_vs_null_set_means": -4.52300943928001,
+              "p_two_sided_parametric": 6.096652016118753e-06,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 255,
+              "real_mean": 402.49302770234135,
+              "real_median": 272.4137039342578,
+              "real_mean_se_boot": 64.45860681154691,
+              "real_mean_ci95": [
+                276.1541583517094,
+                528.8318970529733
+              ],
+              "null_mean_of_set_means": 569.9767080981388,
+              "null_sd_of_set_means": 49.16752080640914,
+              "null_set_mean_ci95": [
+                473.60836731757695,
+                666.3450488787007
+              ],
+              "diff_real_minus_null": -167.48368039579748,
+              "diff_se": 81.07007520863834,
+              "diff_ci95": [
+                -326.38102780472866,
+                -8.586332986866324
+              ],
+              "z_vs_null_set_means": -3.4063885599447485,
+              "p_two_sided_parametric": 0.0006582841841638043,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 255,
+              "real_mean": 0.17647058823529413,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.06147997430704214,
+              "real_mean_ci95": [
+                0.05596983859349153,
+                0.29697133787709673
+              ],
+              "null_mean_of_set_means": 0.07456470588235294,
+              "null_sd_of_set_means": 0.06317296606768323,
+              "null_set_mean_ci95": [
+                -0.04925430761030619,
+                0.19838371937501206
+              ],
+              "diff_real_minus_null": 0.1019058823529412,
+              "diff_se": 0.08815106852774514,
+              "diff_ci95": [
+                -0.07087021196143926,
+                0.27468197666732164
+              ],
+              "z_vs_null_set_means": 1.6131248648948933,
+              "p_two_sided_parametric": 0.10671738279041554,
+              "p_two_sided_empirical": 0.11588411588411589,
+              "null_sets_ge_real_abs": 115,
+              "p_holm": 1.0,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "note": "the trader's real traded price; the only tradable reference. Real entries only - a random control has no fill price.",
+              "horizons_bps": {
+                "1m": -1.842037097948369,
+                "5m": -1.0184478197984408,
+                "15m": 0.01210876860048159,
+                "60m": 5.823721148474998
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  -17.7233624925314,
+                  13.991919501771685
+                ],
+                "5m": [
+                  -16.35095045489169,
+                  14.547924478847317
+                ],
+                "15m": [
+                  -18.22703782901507,
+                  16.559964394594097
+                ],
+                "60m": [
+                  -14.01503552401249,
+                  26.872349053038757
+                ]
+              }
+            },
+            "open_of_fill_bar": {
+              "note": "open of the 1m bar containing the fill. Observable for both real and control, but it is the price one minute BEFORE the print, so it credits the entry with drift that a taker could not have captured.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.4368069087596514,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6169650277006904,
+                  "real_mean_ci95": [
+                    -0.7724445455337019,
+                    1.6460583630530046
+                  ],
+                  "null_mean_of_set_means": 0.15909115241781652,
+                  "null_sd_of_set_means": 0.8110495479357098,
+                  "null_set_mean_ci95": [
+                    -1.4305659615361748,
+                    1.7487482663718077
+                  ],
+                  "diff_real_minus_null": 0.2777157563418349,
+                  "diff_se": 1.0190423026609017,
+                  "diff_ci95": [
+                    -1.7196071568735323,
+                    2.275038669557202
+                  ],
+                  "z_vs_null_set_means": 0.34241527789353854,
+                  "p_two_sided_parametric": 0.7320383925534095,
+                  "p_two_sided_empirical": 0.7392607392607392,
+                  "null_sets_ge_real_abs": 739,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.2398022481713615,
+                  "real_median": 1.8902468020343122,
+                  "real_mean_se_boot": 1.6959055819246245,
+                  "real_mean_ci95": [
+                    -2.0841726924009025,
+                    4.563777188743625
+                  ],
+                  "null_mean_of_set_means": 0.5164692231112116,
+                  "null_sd_of_set_means": 1.702349654518422,
+                  "null_set_mean_ci95": [
+                    -2.8201360997448957,
+                    3.853074545967319
+                  ],
+                  "diff_real_minus_null": 0.72333302506015,
+                  "diff_se": 2.4029336422469285,
+                  "diff_ci95": [
+                    -3.98641691374383,
+                    5.43308296386413
+                  ],
+                  "z_vs_null_set_means": 0.42490273554569713,
+                  "p_two_sided_parametric": 0.6709075804113482,
+                  "p_two_sided_empirical": 0.6693306693306693,
+                  "null_sets_ge_real_abs": 669,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 2.2717171864590173,
+                  "real_median": 1.7192479890737467,
+                  "real_mean_se_boot": 2.762687849200499,
+                  "real_mean_ci95": [
+                    -3.1431509979739602,
+                    7.686585370891995
+                  ],
+                  "null_mean_of_set_means": 1.5214899563137856,
+                  "null_sd_of_set_means": 2.9485201391114453,
+                  "null_set_mean_ci95": [
+                    -4.2576095163446475,
+                    7.300589428972218
+                  ],
+                  "diff_real_minus_null": 0.7502272301452317,
+                  "diff_se": 4.040571143151158,
+                  "diff_ci95": [
+                    -7.169292210431038,
+                    8.669746670721501
+                  ],
+                  "z_vs_null_set_means": 0.254441955540218,
+                  "p_two_sided_parametric": 0.7991541413821204,
+                  "p_two_sided_empirical": 0.8101898101898102,
+                  "null_sets_ge_real_abs": 810,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 8.061540642001129,
+                  "real_median": -0.2629122793185168,
+                  "real_mean_se_boot": 6.142295518405181,
+                  "real_mean_ci95": [
+                    -3.977358574073026,
+                    20.100439858075283
+                  ],
+                  "null_mean_of_set_means": 6.26479668840768,
+                  "null_sd_of_set_means": 5.734586371795521,
+                  "null_set_mean_ci95": [
+                    -4.974992600311541,
+                    17.5045859771269
+                  ],
+                  "diff_real_minus_null": 1.7967439535934489,
+                  "diff_se": 8.40317053801738,
+                  "diff_ci95": [
+                    -14.673470300920613,
+                    18.26695820810751
+                  ],
+                  "z_vs_null_set_means": 0.31331709684074066,
+                  "p_two_sided_parametric": 0.7540397621945956,
+                  "p_two_sided_empirical": 0.7642357642357642,
+                  "null_sets_ge_real_abs": 764,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "close_of_fill_bar": {
+              "note": "close of the 1m bar containing the fill; strictly at or after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.1989637040057528,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6425577295947844,
+                  "real_mean_ci95": [
+                    -0.060449446000024665,
+                    2.4583768540115303
+                  ],
+                  "null_mean_of_set_means": 0.08710643484489404,
+                  "null_sd_of_set_means": 0.8000632146071299,
+                  "null_set_mean_ci95": [
+                    -1.4810174657850805,
+                    1.6552303354748685
+                  ],
+                  "diff_real_minus_null": 1.1118572691608588,
+                  "diff_se": 1.0261489088965101,
+                  "diff_ci95": [
+                    -0.8993945922763011,
+                    3.123109130598019
+                  ],
+                  "z_vs_null_set_means": 1.389711773846314,
+                  "p_two_sided_parametric": 0.16461641810410987,
+                  "p_two_sided_empirical": 0.16583416583416583,
+                  "null_sets_ge_real_abs": 165,
+                  "p_holm": 0.6633366633366633,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.2824168510353524,
+                  "real_median": 0.8765778401131907,
+                  "real_mean_se_boot": 1.7326916105773973,
+                  "real_mean_ci95": [
+                    -3.1136587056963463,
+                    3.678492407767051
+                  ],
+                  "null_mean_of_set_means": 0.41960676601981156,
+                  "null_sd_of_set_means": 1.710329904088389,
+                  "null_set_mean_ci95": [
+                    -2.932639845993431,
+                    3.771853378033054
+                  ],
+                  "diff_real_minus_null": -0.13718991498445915,
+                  "diff_se": 2.4346352084417684,
+                  "diff_ci95": [
+                    -4.9090749235303255,
+                    4.634695093561407
+                  ],
+                  "z_vs_null_set_means": -0.08021254534374862,
+                  "p_two_sided_parametric": 0.9360682125721462,
+                  "p_two_sided_empirical": 0.9410589410589411,
+                  "null_sets_ge_real_abs": 941,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.521988469227978,
+                  "real_median": 3.401939105289742,
+                  "real_mean_se_boot": 2.5007554701835577,
+                  "real_mean_ci95": [
+                    -3.3794922523317954,
+                    6.423469190787751
+                  ],
+                  "null_mean_of_set_means": 1.4919506348496112,
+                  "null_sd_of_set_means": 2.923179806385567,
+                  "null_set_mean_ci95": [
+                    -4.2374817856661,
+                    7.221383055365322
+                  ],
+                  "diff_real_minus_null": 0.030037834378366712,
+                  "diff_se": 3.846915400956115,
+                  "diff_ci95": [
+                    -7.509916351495619,
+                    7.569992020252352
+                  ],
+                  "z_vs_null_set_means": 0.010275739560306994,
+                  "p_two_sided_parametric": 0.9918012903390045,
+                  "p_two_sided_empirical": 0.99000999000999,
+                  "null_sets_ge_real_abs": 990,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.573826730552316,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 6.3740749183289855,
+                  "real_mean_ci95": [
+                    -4.919360109372496,
+                    20.06701357047713
+                  ],
+                  "null_mean_of_set_means": 6.2583813223556355,
+                  "null_sd_of_set_means": 5.732173209680992,
+                  "null_set_mean_ci95": [
+                    -4.9766781686191095,
+                    17.49344081333038
+                  ],
+                  "diff_real_minus_null": 1.3154454081966804,
+                  "diff_se": 8.57243493823401,
+                  "diff_ci95": [
+                    -15.486527070741982,
+                    18.117417887135343
+                  ],
+                  "z_vs_null_set_means": 0.22948458814451766,
+                  "p_two_sided_parametric": 0.8184922979161706,
+                  "p_two_sided_empirical": 0.8411588411588412,
+                  "null_sets_ge_real_abs": 841,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "next_bar_open": {
+              "note": "open of the first bar that begins after the fill bar; strictly after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.2066596454610483,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.6441753482383387,
+                  "real_mean_ci95": [
+                    -0.05592403708609539,
+                    2.469243328008192
+                  ],
+                  "null_mean_of_set_means": 0.11863878323378166,
+                  "null_sd_of_set_means": 0.7982696480148013,
+                  "null_set_mean_ci95": [
+                    -1.4459697268752287,
+                    1.683247293342792
+                  ],
+                  "diff_real_minus_null": 1.0880208622272667,
+                  "diff_se": 1.025766206413362,
+                  "diff_ci95": [
+                    -0.9224809023429228,
+                    3.098522626797456
+                  ],
+                  "z_vs_null_set_means": 1.3629741089781393,
+                  "p_two_sided_parametric": 0.17289067056196838,
+                  "p_two_sided_empirical": 0.16883116883116883,
+                  "null_sets_ge_real_abs": 168,
+                  "p_holm": 0.6753246753246753,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 0.290057773053946,
+                  "real_median": 1.3524479307558401,
+                  "real_mean_se_boot": 1.732036396169185,
+                  "real_mean_ci95": [
+                    -3.104733563437656,
+                    3.6848491095455485
+                  ],
+                  "null_mean_of_set_means": 0.4511415591572842,
+                  "null_sd_of_set_means": 1.7087521567184105,
+                  "null_set_mean_ci95": [
+                    -2.8980126680108005,
+                    3.800295786325369
+                  ],
+                  "diff_real_minus_null": -0.16108378610333823,
+                  "diff_se": 2.433060626195853,
+                  "diff_ci95": [
+                    -4.9298826134472105,
+                    4.607715041240533
+                  ],
+                  "z_vs_null_set_means": -0.09426983630715242,
+                  "p_two_sided_parametric": 0.9248948103244596,
+                  "p_two_sided_empirical": 0.9300699300699301,
+                  "null_sets_ge_real_abs": 930,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 1.5296838281618215,
+                  "real_median": 3.3955857385414845,
+                  "real_mean_se_boot": 2.504266387473858,
+                  "real_mean_ci95": [
+                    -3.378678291286941,
+                    6.438045947610584
+                  ],
+                  "null_mean_of_set_means": 1.523489763239274,
+                  "null_sd_of_set_means": 2.922841583962664,
+                  "null_set_mean_ci95": [
+                    -4.205279741327547,
+                    7.252259267806095
+                  ],
+                  "diff_real_minus_null": 0.006194064922547371,
+                  "diff_se": 3.8489418109881504,
+                  "diff_ci95": [
+                    -7.537731884614227,
+                    7.5501200144593215
+                  ],
+                  "z_vs_null_set_means": 0.002119192828148326,
+                  "p_two_sided_parametric": 0.9983091300266664,
+                  "p_two_sided_empirical": 0.997002997002997,
+                  "null_sets_ge_real_abs": 997,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 255,
+                  "real_mean": 7.5819161102800425,
+                  "real_median": 0.2150869130368438,
+                  "real_mean_se_boot": 6.376070323060102,
+                  "real_mean_ci95": [
+                    -4.915181722917756,
+                    20.07901394347784
+                  ],
+                  "null_mean_of_set_means": 6.289954923709487,
+                  "null_sd_of_set_means": 5.733669128211596,
+                  "null_set_mean_ci95": [
+                    -4.948036567585241,
+                    17.527946415004216
+                  ],
+                  "diff_real_minus_null": 1.2919611865705551,
+                  "diff_se": 8.57491891719184,
+                  "diff_ci95": [
+                    -15.514879891125448,
+                    18.09880226426656
+                  ],
+                  "z_vs_null_set_means": 0.22532887016686542,
+                  "p_two_sided_parametric": 0.8217234419565909,
+                  "p_two_sided_empirical": 0.8441558441558441,
+                  "null_sets_ge_real_abs": 844,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / open of the fill bar - 1) * 1e4; positive means the print was WORSE than that bar's open in the direction of the trade",
+            "mean_bps": 2.422486847544358,
+            "ci95": [
+              -12.235399164829584,
+              17.768721267795517
+            ]
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 35,
+              "from_fill_bps": {
+                "1m": -3.690384273064133,
+                "5m": -6.386709447612787,
+                "15m": -6.057566886745968,
+                "60m": 3.4062881871112447
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 3.108190990917224,
+                "5m": 0.3785049220021351,
+                "15m": 0.7127157349798376,
+                "60m": 10.214720935938256
+              },
+              "intra_minute_adverse_print_bps": 6.244658349816324
+            },
+            "ETHUSDT": {
+              "n_entries": 25,
+              "from_fill_bps": {
+                "1m": -47.88882342126248,
+                "5m": -49.49091213951919,
+                "15m": -51.53007214409051,
+                "60m": -57.937073473100625
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 0.5965675729357577,
+                "5m": -0.9864247449622452,
+                "15m": -3.1344853443614262,
+                "60m": -9.653434025129128
+              },
+              "intra_minute_adverse_print_bps": 50.144022685894235
+            },
+            "SOLUSDT": {
+              "n_entries": 195,
+              "from_fill_bps": {
+                "1m": 4.393151667240884,
+                "5m": 6.159504821055511,
+                "15m": 7.709509644264073,
+                "60m": 14.432080221229464
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": -0.06315442190659352,
+                "5m": 1.6798077930137363,
+                "15m": 3.2446408483681575,
+                "60m": 9.94622298246501
+              },
+              "intra_minute_adverse_print_bps": -4.381689555215977
+            }
+          },
+          "control_pool_bars": 120213,
+          "control_pool_strata": 72
+        },
+        "add": {
+          "n_entries_used": 737,
+          "n_entries_dropped": 0,
+          "null_sets": 1000,
+          "indicators": [
+            {
+              "metric": "bb_pctb",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.5450881425647066,
+              "real_median": 0.614320170387028,
+              "real_mean_se_boot": 0.013303527545672912,
+              "real_mean_ci95": [
+                0.5190132285751877,
+                0.5711630565542255
+              ],
+              "null_mean_of_set_means": 0.5152840717442628,
+              "null_sd_of_set_means": 0.011771828630368521,
+              "null_set_mean_ci95": [
+                0.4922112876287405,
+                0.5383568558597851
+              ],
+              "diff_real_minus_null": 0.029804070820443784,
+              "diff_se": 0.017764002771370028,
+              "diff_ci95": [
+                -0.005013374611441468,
+                0.06462151625232904
+              ],
+              "z_vs_null_set_means": 2.5318131750199253,
+              "p_two_sided_parametric": 0.011347443363138199,
+              "p_two_sided_empirical": 0.012987012987012988,
+              "null_sets_ge_real_abs": 12,
+              "p_holm": 0.1038961038961039,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "rsi6",
+              "unit": "",
+              "n": 737,
+              "real_mean": 52.71483330415296,
+              "real_median": 52.143900009283016,
+              "real_mean_se_boot": 0.7057845129800654,
+              "real_mean_ci95": [
+                51.331495658712036,
+                54.098170949593886
+              ],
+              "null_mean_of_set_means": 50.79404669345852,
+              "null_sd_of_set_means": 0.6341096202633518,
+              "null_set_mean_ci95": [
+                49.55119183774235,
+                52.03690154917469
+              ],
+              "diff_real_minus_null": 1.9207866106944422,
+              "diff_se": 0.948802818963477,
+              "diff_ci95": [
+                0.061133085526027475,
+                3.780440135862857
+              ],
+              "z_vs_null_set_means": 3.0291081373228828,
+              "p_two_sided_parametric": 0.002452768711307174,
+              "p_two_sided_empirical": 0.004995004995004995,
+              "null_sets_ge_real_abs": 4,
+              "p_holm": 0.04495504495504495,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_k",
+              "unit": "",
+              "n": 737,
+              "real_mean": 56.104491821521314,
+              "real_median": 60.980365863800635,
+              "real_mean_se_boot": 1.2928029134483796,
+              "real_mean_ci95": [
+                53.57059811116249,
+                58.63838553188014
+              ],
+              "null_mean_of_set_means": 50.438960161015956,
+              "null_sd_of_set_means": 1.1823184602163448,
+              "null_set_mean_ci95": [
+                48.12161597899192,
+                52.75630434303999
+              ],
+              "diff_real_minus_null": 5.6655316605053585,
+              "diff_se": 1.7519178960182373,
+              "diff_ci95": [
+                2.2317725843096134,
+                9.099290736701104
+              ],
+              "z_vs_null_set_means": 4.791882941139783,
+              "p_two_sided_parametric": 1.652232986870672e-06,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "stoch_d",
+              "unit": "",
+              "n": 737,
+              "real_mean": 56.46721842143476,
+              "real_median": 64.45503385100743,
+              "real_mean_se_boot": 1.2319102761408982,
+              "real_mean_ci95": [
+                54.052674280198595,
+                58.88176256267092
+              ],
+              "null_mean_of_set_means": 50.43813075989399,
+              "null_sd_of_set_means": 1.1222906620402318,
+              "null_set_mean_ci95": [
+                48.23844106229513,
+                52.63782045749284
+              ],
+              "diff_real_minus_null": 6.029087661540771,
+              "diff_se": 1.6664750998932585,
+              "diff_ci95": [
+                2.7627964657499846,
+                9.295378857331558
+              ],
+              "z_vs_null_set_means": 5.372126727473957,
+              "p_two_sided_parametric": 7.78133890655397e-08,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "macd_hist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.37635737528082625,
+              "real_median": 0.42697588770766204,
+              "real_mean_se_boot": 0.14037044986090935,
+              "real_mean_ci95": [
+                0.1012312935534439,
+                0.6514834570082086
+              ],
+              "null_mean_of_set_means": 0.030767340824032544,
+              "null_sd_of_set_means": 0.14642182585601088,
+              "null_set_mean_ci95": [
+                -0.2562194378537488,
+                0.31775411950181387
+              ],
+              "diff_real_minus_null": 0.3455900344567937,
+              "diff_se": 0.20283790149072742,
+              "diff_ci95": [
+                -0.05197225246503201,
+                0.7431523213786194
+              ],
+              "z_vs_null_set_means": 2.3602357943319325,
+              "p_two_sided_parametric": 0.018263322465228438,
+              "p_two_sided_empirical": 0.028971028971028972,
+              "null_sets_ge_real_abs": 28,
+              "p_holm": 0.1958041958041958,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema20_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 3.187091727675278,
+              "real_median": 4.1583794869271,
+              "real_mean_se_boot": 0.8993637525852715,
+              "real_mean_ci95": [
+                1.424338772608146,
+                4.94984468274241
+              ],
+              "null_mean_of_set_means": 1.1671200000403181,
+              "null_sd_of_set_means": 0.951976947703153,
+              "null_set_mean_ci95": [
+                -0.6987548174578617,
+                3.0329948175384978
+              ],
+              "diff_real_minus_null": 2.01997172763496,
+              "diff_se": 1.3096240943196156,
+              "diff_ci95": [
+                -0.5468914972314867,
+                4.586834952501406
+              ],
+              "z_vs_null_set_means": 2.121870421871634,
+              "p_two_sided_parametric": 0.033848620893061954,
+              "p_two_sided_empirical": 0.03596403596403597,
+              "null_sets_ge_real_abs": 35,
+              "p_holm": 0.1958041958041958,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema50_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 5.543142884240166,
+              "real_median": 6.920080887280466,
+              "real_mean_se_boot": 1.3966094505277935,
+              "real_mean_ci95": [
+                2.805788361205691,
+                8.280497407274641
+              ],
+              "null_mean_of_set_means": 2.749006351679235,
+              "null_sd_of_set_means": 1.5389155767446892,
+              "null_set_mean_ci95": [
+                -0.26726817874035547,
+                5.765280882098826
+              ],
+              "diff_real_minus_null": 2.794136532560931,
+              "diff_se": 2.0781672477572597,
+              "diff_ci95": [
+                -1.2790712730432978,
+                6.867344338165159
+              ],
+              "z_vs_null_set_means": 1.8156529018124863,
+              "p_two_sided_parametric": 0.06942363308557642,
+              "p_two_sided_empirical": 0.06793206793206794,
+              "null_sets_ge_real_abs": 67,
+              "p_holm": 0.23976023976023977,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema80_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 7.983732969935523,
+              "real_median": 10.841718715579596,
+              "real_mean_se_boot": 1.7956391795980131,
+              "real_mean_ci95": [
+                4.464280177923417,
+                11.503185761947629
+              ],
+              "null_mean_of_set_means": 4.258929035849045,
+              "null_sd_of_set_means": 1.9664931123413054,
+              "null_set_mean_ci95": [
+                0.4046025356600862,
+                8.113255536038004
+              ],
+              "diff_real_minus_null": 3.724803934086478,
+              "diff_se": 2.6629711271797936,
+              "diff_ci95": [
+                -1.4946194751859174,
+                8.944227343358873
+              ],
+              "z_vs_null_set_means": 1.8941352556540252,
+              "p_two_sided_parametric": 0.058207059166674124,
+              "p_two_sided_empirical": 0.059940059940059943,
+              "null_sets_ge_real_abs": 59,
+              "p_holm": 0.23976023976023977,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "ema200_dist_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 16.81793976925546,
+              "real_median": 18.639367030481857,
+              "real_mean_se_boot": 2.933431062979805,
+              "real_mean_ci95": [
+                11.068414885815042,
+                22.56746465269588
+              ],
+              "null_mean_of_set_means": 9.76602952318922,
+              "null_sd_of_set_means": 3.1843533047302883,
+              "null_set_mean_ci95": [
+                3.524697045917854,
+                16.007362000460585
+              ],
+              "diff_real_minus_null": 7.051910246066241,
+              "diff_se": 4.3295639238382355,
+              "diff_ci95": [
+                -1.4340350446567012,
+                15.537855536789182
+              ],
+              "z_vs_null_set_means": 2.214550199436344,
+              "p_two_sided_parametric": 0.026790953474481682,
+              "p_two_sided_empirical": 0.027972027972027972,
+              "null_sets_ge_real_abs": 27,
+              "p_holm": 0.1958041958041958,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "adx14",
+              "unit": "",
+              "n": 737,
+              "real_mean": 25.00251961666931,
+              "real_median": 23.637602425659203,
+              "real_mean_se_boot": 0.3742625028714075,
+              "real_mean_ci95": [
+                24.268965111041354,
+                25.736074122297268
+              ],
+              "null_mean_of_set_means": 24.604838781566723,
+              "null_sd_of_set_means": 0.37059981396089153,
+              "null_set_mean_ci95": [
+                23.878463146203377,
+                25.33121441693007
+              ],
+              "diff_real_minus_null": 0.39768083510258734,
+              "diff_se": 0.526703562892276,
+              "diff_ci95": [
+                -0.6346581481662736,
+                1.4300198183714483
+              ],
+              "z_vs_null_set_means": 1.073073488225101,
+              "p_two_sided_parametric": 0.283238145080591,
+              "p_two_sided_empirical": 0.27372627372627373,
+              "null_sets_ge_real_abs": 273,
+              "p_holm": 0.4675324675324675,
+              "significant_holm_05": false
+            },
+            {
+              "metric": "daily_trend_ema20",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.34599728629579374,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.035190128419096904,
+              "real_mean_ci95": [
+                0.2770246345943638,
+                0.41496993799722365
+              ],
+              "null_mean_of_set_means": 0.602550881953867,
+              "null_sd_of_set_means": 0.029428617843102606,
+              "null_set_mean_ci95": [
+                0.5448707909813859,
+                0.660230972926348
+              ],
+              "diff_real_minus_null": -0.25655359565807323,
+              "diff_se": 0.045873616451157506,
+              "diff_ci95": [
+                -0.34646588390234195,
+                -0.1666413074138045
+              ],
+              "z_vs_null_set_means": -8.717826879463981,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_dist_ema20_bps",
+              "unit": "",
+              "n": 737,
+              "real_mean": 166.6434979811235,
+              "real_median": 228.5404365211341,
+              "real_mean_se_boot": 33.59375539085417,
+              "real_mean_ci95": [
+                100.79973741504932,
+                232.48725854719765
+              ],
+              "null_mean_of_set_means": 477.6701603897416,
+              "null_sd_of_set_means": 28.537055480913732,
+              "null_set_mean_ci95": [
+                421.7375316471507,
+                533.6027891323325
+              ],
+              "diff_real_minus_null": -311.0266624086181,
+              "diff_se": 44.078384008278846,
+              "diff_ci95": [
+                -397.42029506484465,
+                -224.63302975239156
+              ],
+              "z_vs_null_set_means": -10.899045369857454,
+              "p_two_sided_parametric": 0.0,
+              "p_two_sided_empirical": 0.000999000999000999,
+              "null_sets_ge_real_abs": 0,
+              "p_holm": 0.012987012987012988,
+              "significant_holm_05": true
+            },
+            {
+              "metric": "daily_trend_c2c",
+              "unit": "",
+              "n": 737,
+              "real_mean": 0.09362279511533243,
+              "real_median": 1.0,
+              "real_mean_se_boot": 0.035830256222994884,
+              "real_mean_ci95": [
+                0.023395492918262456,
+                0.1638500973124024
+              ],
+              "null_mean_of_set_means": 0.05135142469470828,
+              "null_sd_of_set_means": 0.03570756404870667,
+              "null_set_mean_ci95": [
+                -0.018635400840756787,
+                0.12133825023017333
+              ],
+              "diff_real_minus_null": 0.042271370420624156,
+              "diff_se": 0.05058495222195977,
+              "diff_ci95": [
+                -0.056875135934417,
+                0.1414178767756653
+              ],
+              "z_vs_null_set_means": 1.1838211747786596,
+              "p_two_sided_parametric": 0.23648385831687957,
+              "p_two_sided_empirical": 0.23376623376623376,
+              "null_sets_ge_real_abs": 233,
+              "p_holm": 0.4675324675324675,
+              "significant_holm_05": false
+            }
+          ],
+          "indicator_family_size": 13,
+          "indicator_holm_any_significant": true,
+          "forward_by_reference": {
+            "actual_fill_price": {
+              "note": "the trader's real traded price; the only tradable reference. Real entries only - a random control has no fill price.",
+              "horizons_bps": {
+                "1m": 18.107102502343384,
+                "5m": 17.783439726304096,
+                "15m": 15.683347130701025,
+                "60m": 21.600358345665175
+              },
+              "horizons_bps_ci95": {
+                "1m": [
+                  8.4223705341316,
+                  28.169459053623104
+                ],
+                "5m": [
+                  8.179665742785287,
+                  27.778605762836964
+                ],
+                "15m": [
+                  4.792906373563649,
+                  26.74270595749896
+                ],
+                "60m": [
+                  8.259404014514404,
+                  34.91737495150272
+                ]
+              }
+            },
+            "open_of_fill_bar": {
+              "note": "open of the 1m bar containing the fill. Observable for both real and control, but it is the price one minute BEFORE the print, so it credits the entry with drift that a taker could not have captured.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 0.12380934912476532,
+                  "real_median": 0.0,
+                  "real_mean_se_boot": 0.37675455809277475,
+                  "real_mean_ci95": [
+                    -0.6146295847370731,
+                    0.8622482829866038
+                  ],
+                  "null_mean_of_set_means": 0.14088537588755673,
+                  "null_sd_of_set_means": 0.4694867407923284,
+                  "null_set_mean_ci95": [
+                    -0.7793086360654069,
+                    1.0610793878405202
+                  ],
+                  "diff_real_minus_null": -0.017076026762791408,
+                  "diff_se": 0.6019649465072571,
+                  "diff_ci95": [
+                    -1.1969273219170153,
+                    1.1627752683914325
+                  ],
+                  "z_vs_null_set_means": -0.03637169120894252,
+                  "p_two_sided_parametric": 0.9709859863811481,
+                  "p_two_sided_empirical": 0.9660339660339661,
+                  "null_sets_ge_real_abs": 966,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.22792569686417485,
+                  "real_median": -0.9099181073701779,
+                  "real_mean_se_boot": 0.9443901973619151,
+                  "real_mean_ci95": [
+                    -2.0789304836935285,
+                    1.6230790899651786
+                  ],
+                  "null_mean_of_set_means": 0.6077550526490456,
+                  "null_sd_of_set_means": 1.0234370867825786,
+                  "null_set_mean_ci95": [
+                    -1.3981816374448086,
+                    2.6136917427429
+                  ],
+                  "diff_real_minus_null": -0.8356807495132205,
+                  "diff_se": 1.3925861967847046,
+                  "diff_ci95": [
+                    -3.5651496952112414,
+                    1.8937881961848007
+                  ],
+                  "z_vs_null_set_means": -0.8165433521081247,
+                  "p_two_sided_parametric": 0.4141894392356953,
+                  "p_two_sided_empirical": 0.42157842157842157,
+                  "null_sets_ge_real_abs": 421,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.285710190199833,
+                  "real_median": -2.0839121978333264,
+                  "real_mean_se_boot": 1.7330460827965832,
+                  "real_mean_ci95": [
+                    -5.682480512481137,
+                    1.11106013208147
+                  ],
+                  "null_mean_of_set_means": 1.6801817207692626,
+                  "null_sd_of_set_means": 1.6983923019591858,
+                  "null_set_mean_ci95": [
+                    -1.6486671910707416,
+                    5.009030632609267
+                  ],
+                  "diff_real_minus_null": -3.9658919109690958,
+                  "diff_se": 2.4265170793651554,
+                  "diff_ci95": [
+                    -8.7218653865248,
+                    0.7900815645866084
+                  ],
+                  "z_vs_null_set_means": -2.3350858964646912,
+                  "p_two_sided_parametric": 0.01953893394270878,
+                  "p_two_sided_empirical": 0.017982017982017984,
+                  "null_sets_ge_real_abs": 17,
+                  "p_holm": 0.07192807192807193,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.6564149567705595,
+                  "real_median": -2.6676605009723353,
+                  "real_mean_se_boot": 4.018819362247479,
+                  "real_mean_ci95": [
+                    -4.220470993234499,
+                    11.533300906775619
+                  ],
+                  "null_mean_of_set_means": 5.106675203773532,
+                  "null_sd_of_set_means": 3.27493814864765,
+                  "null_set_mean_ci95": [
+                    -1.3122035675758612,
+                    11.525553975122925
+                  ],
+                  "diff_real_minus_null": -1.4502602470029728,
+                  "diff_se": 5.184219222201443,
+                  "diff_ci95": [
+                    -11.6113299225178,
+                    8.710809428511855
+                  ],
+                  "z_vs_null_set_means": -0.4428359196957176,
+                  "p_two_sided_parametric": 0.657884420125068,
+                  "p_two_sided_empirical": 0.6343656343656343,
+                  "null_sets_ge_real_abs": 634,
+                  "p_holm": 1.0,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": false
+            },
+            "close_of_fill_bar": {
+              "note": "close of the 1m bar containing the fill; strictly at or after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.7207701319915362,
+                  "real_median": -0.9651578033009756,
+                  "real_mean_se_boot": 0.3906575788159239,
+                  "real_mean_ci95": [
+                    -1.486458986470747,
+                    0.04491872248767459
+                  ],
+                  "null_mean_of_set_means": 0.11912013656121552,
+                  "null_sd_of_set_means": 0.45306445435471543,
+                  "null_set_mean_ci95": [
+                    -0.7688861939740267,
+                    1.0071264670964577
+                  ],
+                  "diff_real_minus_null": -0.8398902685527517,
+                  "diff_se": 0.5982313462917634,
+                  "diff_ci95": [
+                    -2.012423707284608,
+                    0.3326431701791045
+                  ],
+                  "z_vs_null_set_means": -1.8537986383173215,
+                  "p_two_sided_parametric": 0.06376797337813556,
+                  "p_two_sided_empirical": 0.06393606393606394,
+                  "null_sets_ge_real_abs": 63,
+                  "p_holm": 0.12787212787212787,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.654940697543325,
+                  "real_median": -1.4385384449400185,
+                  "real_mean_se_boot": 0.9808784422398407,
+                  "real_mean_ci95": [
+                    -4.577462444333413,
+                    -0.7324189507532375
+                  ],
+                  "null_mean_of_set_means": 0.5897521994969208,
+                  "null_sd_of_set_means": 1.0015454839897917,
+                  "null_set_mean_ci95": [
+                    -1.373276949123071,
+                    2.5527813481169126
+                  ],
+                  "diff_real_minus_null": -3.244692897040246,
+                  "diff_se": 1.401861574818,
+                  "diff_ci95": [
+                    -5.992341583683526,
+                    -0.49704421039696633
+                  ],
+                  "z_vs_null_set_means": -3.239686014173389,
+                  "p_two_sided_parametric": 0.0011966138757046885,
+                  "p_two_sided_empirical": 0.001998001998001998,
+                  "null_sets_ge_real_abs": 1,
+                  "p_holm": 0.005994005994005994,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -4.214295721210056,
+                  "real_median": -1.442585112519934,
+                  "real_mean_se_boot": 1.6611411359038766,
+                  "real_mean_ci95": [
+                    -7.470132347581654,
+                    -0.9584590948384579
+                  ],
+                  "null_mean_of_set_means": 1.6495275270683947,
+                  "null_sd_of_set_means": 1.6724223600676442,
+                  "null_set_mean_ci95": [
+                    -1.6284202986641878,
+                    4.927475352800977
+                  ],
+                  "diff_real_minus_null": -5.86382324827845,
+                  "diff_se": 2.3571988511464728,
+                  "diff_ci95": [
+                    -10.483932996525537,
+                    -1.2437135000313635
+                  ],
+                  "z_vs_null_set_means": -3.5061856312667796,
+                  "p_two_sided_parametric": 0.00045457806739879203,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.2207879782968734,
+                  "real_median": 0.6743543057541324,
+                  "real_mean_se_boot": 4.104453006414295,
+                  "real_mean_ci95": [
+                    -4.823939914275145,
+                    11.265515870868892
+                  ],
+                  "null_mean_of_set_means": 5.045714469750657,
+                  "null_sd_of_set_means": 3.290595975588943,
+                  "null_set_mean_ci95": [
+                    -1.4038536424036714,
+                    11.495282581904986
+                  ],
+                  "diff_real_minus_null": -1.824926491453784,
+                  "diff_se": 5.2606612090521,
+                  "diff_ci95": [
+                    -12.1358224611959,
+                    8.485969478288332
+                  ],
+                  "z_vs_null_set_means": -0.5545884408149386,
+                  "p_two_sided_parametric": 0.5791761972445293,
+                  "p_two_sided_empirical": 0.5544455544455544,
+                  "null_sets_ge_real_abs": 554,
+                  "p_holm": 0.5544455544455544,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            },
+            "next_bar_open": {
+              "note": "open of the first bar that begins after the fill bar; strictly after the fill.",
+              "horizons": [
+                {
+                  "metric": "forward_1m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -0.7212290320157657,
+                  "real_median": -0.9651578033009756,
+                  "real_mean_se_boot": 0.39060799590076595,
+                  "real_mean_ci95": [
+                    -1.4868207039812669,
+                    0.04436263994973555
+                  ],
+                  "null_mean_of_set_means": 0.15348402365956032,
+                  "null_sd_of_set_means": 0.4536993145927194,
+                  "null_set_mean_ci95": [
+                    -0.7357666329421697,
+                    1.0427346802612902
+                  ],
+                  "diff_real_minus_null": -0.874713055675326,
+                  "diff_se": 0.5986799433115462,
+                  "diff_ci95": [
+                    -2.048125744565956,
+                    0.29869963321530446
+                  ],
+                  "z_vs_null_set_means": -1.9279576308387103,
+                  "p_two_sided_parametric": 0.0538603964280564,
+                  "p_two_sided_empirical": 0.054945054945054944,
+                  "null_sets_ge_real_abs": 54,
+                  "p_holm": 0.10989010989010989,
+                  "significant_holm_05": false
+                },
+                {
+                  "metric": "forward_5m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -2.6555292597423588,
+                  "real_median": -1.4385384449400185,
+                  "real_mean_se_boot": 0.9796360957581415,
+                  "real_mean_ci95": [
+                    -4.575616007428316,
+                    -0.7354425120564014
+                  ],
+                  "null_mean_of_set_means": 0.624125041805571,
+                  "null_sd_of_set_means": 1.0029340428579645,
+                  "null_set_mean_ci95": [
+                    -1.3416256821960393,
+                    2.5898757658071814
+                  ],
+                  "diff_real_minus_null": -3.2796543015479296,
+                  "diff_se": 1.4019855828201928,
+                  "diff_ci95": [
+                    -6.027546043875507,
+                    -0.5317625592203519
+                  ],
+                  "z_vs_null_set_means": -3.2700598059292263,
+                  "p_two_sided_parametric": 0.001075247486777009,
+                  "p_two_sided_empirical": 0.001998001998001998,
+                  "null_sets_ge_real_abs": 1,
+                  "p_holm": 0.005994005994005994,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_15m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": -4.214685650433339,
+                  "real_median": -1.9782393669631748,
+                  "real_mean_se_boot": 1.663031385347218,
+                  "real_mean_ci95": [
+                    -7.474227165713886,
+                    -0.9551441351527923
+                  ],
+                  "null_mean_of_set_means": 1.6839211385550317,
+                  "null_sd_of_set_means": 1.6730717036735294,
+                  "null_set_mean_ci95": [
+                    -1.5952994006450858,
+                    4.963141677755149
+                  ],
+                  "diff_real_minus_null": -5.898606788988371,
+                  "diff_se": 2.358991800384845,
+                  "diff_ci95": [
+                    -10.522230717742666,
+                    -1.2749828602340747
+                  ],
+                  "z_vs_null_set_means": -3.5256150564479216,
+                  "p_two_sided_parametric": 0.0004225006045910362,
+                  "p_two_sided_empirical": 0.000999000999000999,
+                  "null_sets_ge_real_abs": 0,
+                  "p_holm": 0.003996003996003996,
+                  "significant_holm_05": true
+                },
+                {
+                  "metric": "forward_60m",
+                  "unit": "bps",
+                  "n": 737,
+                  "real_mean": 3.2210656828240185,
+                  "real_median": 0.6743543057541324,
+                  "real_mean_se_boot": 4.105049733381574,
+                  "real_mean_ci95": [
+                    -4.824831794603867,
+                    11.266963160251905
+                  ],
+                  "null_mean_of_set_means": 5.080144484426191,
+                  "null_sd_of_set_means": 3.2908227198355684,
+                  "null_set_mean_ci95": [
+                    -1.369868046451523,
+                    11.530157015303907
+                  ],
+                  "diff_real_minus_null": -1.8590788016021729,
+                  "diff_se": 5.261268619536747,
+                  "diff_ci95": [
+                    -12.171165295894196,
+                    8.45300769268985
+                  ],
+                  "z_vs_null_set_means": -0.564928274743121,
+                  "p_two_sided_parametric": 0.5721225509588712,
+                  "p_two_sided_empirical": 0.5494505494505495,
+                  "null_sets_ge_real_abs": 549,
+                  "p_holm": 0.5494505494505495,
+                  "significant_holm_05": false
+                }
+              ],
+              "any_significant_holm_05": true
+            }
+          },
+          "execution": {
+            "definition": "side * (actual fill price / open of the fill bar - 1) * 1e4; positive means the print was WORSE than that bar's open in the direction of the trade",
+            "mean_bps": -17.703525778525687,
+            "ci95": [
+              -27.454294450043843,
+              -7.832360283682466
+            ]
+          },
+          "per_symbol": {
+            "BTCUSDT": {
+              "n_entries": 38,
+              "from_fill_bps": {
+                "1m": -17.89162057341876,
+                "5m": -35.39097801478027,
+                "15m": -35.227421692628994,
+                "60m": -5.388759996054629
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 1.689576645222255,
+                "5m": -15.814106249637002,
+                "15m": -15.655424230186066,
+                "60m": 14.26440981749202
+              },
+              "intra_minute_adverse_print_bps": 19.494367562220585
+            },
+            "ETHUSDT": {
+              "n_entries": 37,
+              "from_fill_bps": {
+                "1m": -13.266665608784491,
+                "5m": -15.7296895288234,
+                "15m": -29.96044500031512,
+                "60m": -42.41301280299329
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": -1.0731982876427852,
+                "5m": -3.471418885532532,
+                "15m": -18.023468442681477,
+                "60m": -29.3684961465465
+              },
+              "intra_minute_adverse_print_bps": 15.255857958396636
+            },
+            "SOLUSDT": {
+              "n_entries": 662,
+              "from_fill_bps": {
+                "1m": 21.927013222873132,
+                "5m": 22.708837999115158,
+                "15m": 21.156805626371927,
+                "60m": 26.72736926633846
+              },
+              "from_open_of_fill_bar_bps": {
+                "1m": 0.1008337075971139,
+                "5m": 0.8480321716948832,
+                "15m": -0.6386615665422837,
+                "60m": 4.893300011325417
+              },
+              "intra_minute_adverse_print_bps": -21.680893067369322
+            }
+          },
+          "control_pool_bars": 119232,
+          "control_pool_strata": 72
+        }
+      }
+    }
+  },
+  "headline": {
+    "primary_block": "primary_csv_clock_utc_plus_3 / open",
+    "indicator_family_any_significant_holm_05": true,
+    "from_actual_fill_price_bps": {
+      "1m": -1.1374488899407655,
+      "5m": -0.40032085743859164,
+      "15m": 2.5558074786987226,
+      "60m": 5.8701531508135725
+    },
+    "intra_minute_adverse_print_bps": 5.142411274603996,
+    "intra_minute_adverse_print_bps_ci95": [
+      3.64674018912958,
+      6.613297127188799
+    ],
+    "n_indicators_tested": 13,
+    "n_horizons_tested_per_reference": 4
+  }
+}

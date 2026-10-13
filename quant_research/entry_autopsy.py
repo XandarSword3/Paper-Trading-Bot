@@ -61,8 +61,12 @@ from quant_research.core.indicators import compute_indicators  # noqa: E402
 FILLS = "quant_research/inputs/trade_history.csv"
 LEDGER = "quant_research/inputs/transaction_history.csv"
 DATA_DIR = "quant_research/data/processed"
-OUT_JSON = "quant_research/results/entry_autopsy.json"
-OUT_ENTRIES = "quant_research/results/entry_autopsy_entries.csv"
+# Set ENTRY_AUTOPSY_SUFFIX=_v2 to write a NEW artifact instead of overwriting the
+# committed one (the committed entry_autopsy.json predates the BOLL ddof fix of
+# REPORT section 17 and is left untouched).
+_SUFFIX = os.environ.get("ENTRY_AUTOPSY_SUFFIX", "")
+OUT_JSON = f"quant_research/results/entry_autopsy{_SUFFIX}.json"
+OUT_ENTRIES = f"quant_research/results/entry_autopsy_entries{_SUFFIX}.csv"
 
 N_SETS = 1000
 N_BOOT = 2000

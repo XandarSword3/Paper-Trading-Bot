@@ -1,0 +1,1077 @@
+{
+  "candidates": [
+    {
+      "bucket_open_utc": "2025-05-01 12:27:00+00:00",
+      "vol_ma5_residual": 0.02000000001862645,
+      "vol_ma10_residual": 0.03999999992083758,
+      "prev4_sum": 166573.21000000002,
+      "prev9_sum": 323956.37999999995
+    }
+  ],
+  "ground_truth": {
+    "last_price": 151.34,
+    "chart_high": 152.38,
+    "chart_low": 150.25,
+    "boll_up": 152.12,
+    "boll_mb": 151.69,
+    "boll_dn": 151.26,
+    "rsi6": 36.8,
+    "stochrsi_k": 28.3,
+    "stochrsi_d": 21.83,
+    "macd_dif": -0.08,
+    "macd_dea": -0.03,
+    "macd_hist": -0.05,
+    "volume": 5048.36,
+    "vol_ma5": 34324.31,
+    "vol_ma10": 32900.47
+  },
+  "tolerances": {
+    "boll": 0.02,
+    "rsi": 1.0,
+    "stochrsi": 2.0,
+    "macd": 0.01,
+    "volume_ma_rel": 0.001
+  },
+  "anchor_bucket_open_utc": "2025-05-01 12:27:00+00:00",
+  "sub_steps": {
+    "sub_1": {
+      "partial_volume": 4751.74,
+      "close": 151.35,
+      "repo_indicators": {
+        "bb_up": 152.13065109498308,
+        "bb_mb": 151.6915,
+        "bb_dn": 151.2523489050169,
+        "rsi6": 37.19548931332825,
+        "stoch_k": 28.68715328830898,
+        "stoch_d": 21.954836484513184,
+        "macd_dif": -0.08059058391904728,
+        "macd_dea": -0.02674246222423526,
+        "macd_hist": -0.05384812169481201
+      },
+      "checks": {
+        "bb_up": {
+          "computed": 152.13065109498308,
+          "ground": 152.12,
+          "delta": 0.010651094983074927,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_mb": {
+          "computed": 151.6915,
+          "ground": 151.69,
+          "delta": 0.0014999999999929514,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_dn": {
+          "computed": 151.2523489050169,
+          "ground": 151.26,
+          "delta": -0.007651094983089024,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "rsi6": {
+          "computed": 37.19548931332825,
+          "ground": 36.8,
+          "delta": 0.3954893133282553,
+          "tolerance": 1.0,
+          "pass": true
+        },
+        "stoch_k": {
+          "computed": 28.68715328830898,
+          "ground": 28.3,
+          "delta": 0.3871532883089799,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "stoch_d": {
+          "computed": 21.954836484513184,
+          "ground": 21.83,
+          "delta": 0.1248364845131853,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "macd_dif": {
+          "computed": -0.08059058391904728,
+          "ground": -0.08,
+          "delta": -0.0005905839190472745,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_dea": {
+          "computed": -0.02674246222423526,
+          "ground": -0.03,
+          "delta": 0.0032575377757647385,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_hist": {
+          "computed": -0.05384812169481201,
+          "ground": -0.05,
+          "delta": -0.0038481216948120095,
+          "tolerance": 0.01,
+          "pass": true
+        }
+      },
+      "all_within_tolerance": true,
+      "alternatives": {
+        "boll_ddof0": {
+          "bb_up": 152.11953154090978,
+          "bb_mb": 151.6915,
+          "bb_dn": 151.2634684590902
+        },
+        "boll_ddof1": {
+          "bb_up": 152.13065109498308,
+          "bb_mb": 151.6915,
+          "bb_dn": 151.2523489050169
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": 37.19548931332825
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": 37.19548931332825
+        },
+        "rsi6_sma_6": {
+          "rsi6": 24.778761061947094
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": 28.58597857888343,
+          "stoch_d": 39.616513590332836
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": 39.616513590332836,
+          "stoch_d": 29.395736181222663
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": 18.20779394090169,
+          "stoch_d": 28.68715328830902
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": 28.68715328830902,
+          "stoch_d": 21.95483648451318
+        },
+        "macd_adjust_False": {
+          "macd_dif": -0.08059058391904728,
+          "macd_dea": -0.02674246222423526,
+          "macd_hist": -0.05384812169481201
+        },
+        "macd_adjust_True": {
+          "macd_dif": -0.08059058391901885,
+          "macd_dea": -0.026742462224172495,
+          "macd_hist": -0.05384812169484636
+        }
+      },
+      "alternative_checks": {
+        "boll_ddof0": {
+          "bb_up": {
+            "computed": 152.11953154090978,
+            "ground": 152.12,
+            "delta": -0.0004684590902286345,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.6915,
+            "ground": 151.69,
+            "delta": 0.0014999999999929514,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.2634684590902,
+            "ground": 151.26,
+            "delta": 0.0034684590902145374,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "boll_ddof1": {
+          "bb_up": {
+            "computed": 152.13065109498308,
+            "ground": 152.12,
+            "delta": 0.010651094983074927,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.6915,
+            "ground": 151.69,
+            "delta": 0.0014999999999929514,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.2523489050169,
+            "ground": 151.26,
+            "delta": -0.007651094983089024,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": {
+            "computed": 37.19548931332825,
+            "ground": 36.8,
+            "delta": 0.3954893133282553,
+            "tolerance": 1.0,
+            "pass": true
+          }
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": {
+            "computed": 37.19548931332825,
+            "ground": 36.8,
+            "delta": 0.3954893133282553,
+            "tolerance": 1.0,
+            "pass": true
+          }
+        },
+        "rsi6_sma_6": {
+          "rsi6": {
+            "computed": 24.778761061947094,
+            "ground": 36.8,
+            "delta": -12.021238938052903,
+            "tolerance": 1.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 28.58597857888343,
+            "ground": 28.3,
+            "delta": 0.28597857888343015,
+            "tolerance": 2.0,
+            "pass": true
+          },
+          "stoch_d": {
+            "computed": 39.616513590332836,
+            "ground": 21.83,
+            "delta": 17.786513590332838,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 39.616513590332836,
+            "ground": 28.3,
+            "delta": 11.316513590332836,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 29.395736181222663,
+            "ground": 21.83,
+            "delta": 7.565736181222665,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 18.20779394090169,
+            "ground": 28.3,
+            "delta": -10.09220605909831,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 28.68715328830902,
+            "ground": 21.83,
+            "delta": 6.857153288309021,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 28.68715328830902,
+            "ground": 28.3,
+            "delta": 0.38715328830901896,
+            "tolerance": 2.0,
+            "pass": true
+          },
+          "stoch_d": {
+            "computed": 21.95483648451318,
+            "ground": 21.83,
+            "delta": 0.12483648451318174,
+            "tolerance": 2.0,
+            "pass": true
+          }
+        },
+        "macd_adjust_False": {
+          "macd_dif": {
+            "computed": -0.08059058391904728,
+            "ground": -0.08,
+            "delta": -0.0005905839190472745,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.02674246222423526,
+            "ground": -0.03,
+            "delta": 0.0032575377757647385,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.05384812169481201,
+            "ground": -0.05,
+            "delta": -0.0038481216948120095,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        },
+        "macd_adjust_True": {
+          "macd_dif": {
+            "computed": -0.08059058391901885,
+            "ground": -0.08,
+            "delta": -0.0005905839190188528,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.026742462224172495,
+            "ground": -0.03,
+            "delta": 0.0032575377758275043,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.05384812169484636,
+            "ground": -0.05,
+            "delta": -0.003848121694846357,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        }
+      }
+    },
+    "sub_2": {
+      "partial_volume": 39265.72,
+      "close": 151.39,
+      "repo_indicators": {
+        "bb_up": 152.1264227474706,
+        "bb_mb": 151.6935,
+        "bb_dn": 151.2605772525294,
+        "rsi6": 38.84793272749766,
+        "stoch_k": 30.271064828207955,
+        "stoch_d": 22.482806997812844,
+        "macd_dif": -0.07739970072816504,
+        "macd_dea": -0.026104285586058814,
+        "macd_hist": -0.05129541514210623
+      },
+      "checks": {
+        "bb_up": {
+          "computed": 152.1264227474706,
+          "ground": 152.12,
+          "delta": 0.006422747470594459,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_mb": {
+          "computed": 151.6935,
+          "ground": 151.69,
+          "delta": 0.003500000000002501,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_dn": {
+          "computed": 151.2605772525294,
+          "ground": 151.26,
+          "delta": 0.0005772525294105435,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "rsi6": {
+          "computed": 38.84793272749766,
+          "ground": 36.8,
+          "delta": 2.0479327274976598,
+          "tolerance": 1.0,
+          "pass": false
+        },
+        "stoch_k": {
+          "computed": 30.271064828207955,
+          "ground": 28.3,
+          "delta": 1.971064828207954,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "stoch_d": {
+          "computed": 22.482806997812844,
+          "ground": 21.83,
+          "delta": 0.6528069978128457,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "macd_dif": {
+          "computed": -0.07739970072816504,
+          "ground": -0.08,
+          "delta": 0.0026002992718349577,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_dea": {
+          "computed": -0.026104285586058814,
+          "ground": -0.03,
+          "delta": 0.003895714413941185,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_hist": {
+          "computed": -0.05129541514210623,
+          "ground": -0.05,
+          "delta": -0.0012954151421062238,
+          "tolerance": 0.01,
+          "pass": true
+        }
+      },
+      "all_within_tolerance": false,
+      "alternatives": {
+        "boll_ddof0": {
+          "bb_up": 152.11546089867855,
+          "bb_mb": 151.6935,
+          "bb_dn": 151.27153910132145
+        },
+        "boll_ddof1": {
+          "bb_up": 152.1264227474706,
+          "bb_mb": 151.6935,
+          "bb_dn": 151.2605772525294
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": 38.84793272749766
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": 38.84793272749765
+        },
+        "rsi6_sma_6": {
+          "rsi6": 25.688073394495433
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": 33.513880996522374,
+          "stoch_d": 41.259147729545816
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": 41.259147729545816,
+          "stoch_d": 29.94328089429366
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": 22.959528560598624,
+          "stoch_d": 30.271064828207997
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": 30.271064828207997,
+          "stoch_d": 22.48280699781284
+        },
+        "macd_adjust_False": {
+          "macd_dif": -0.07739970072816504,
+          "macd_dea": -0.026104285586058814,
+          "macd_hist": -0.05129541514210623
+        },
+        "macd_adjust_True": {
+          "macd_dif": -0.07739970072813662,
+          "macd_dea": -0.026104285585996048,
+          "macd_hist": -0.051295415142140574
+        }
+      },
+      "alternative_checks": {
+        "boll_ddof0": {
+          "bb_up": {
+            "computed": 152.11546089867855,
+            "ground": 152.12,
+            "delta": -0.004539101321455519,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.6935,
+            "ground": 151.69,
+            "delta": 0.003500000000002501,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.27153910132145,
+            "ground": 151.26,
+            "delta": 0.011539101321460521,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "boll_ddof1": {
+          "bb_up": {
+            "computed": 152.1264227474706,
+            "ground": 152.12,
+            "delta": 0.006422747470594459,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.6935,
+            "ground": 151.69,
+            "delta": 0.003500000000002501,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.2605772525294,
+            "ground": 151.26,
+            "delta": 0.0005772525294105435,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": {
+            "computed": 38.84793272749766,
+            "ground": 36.8,
+            "delta": 2.0479327274976598,
+            "tolerance": 1.0,
+            "pass": false
+          }
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": {
+            "computed": 38.84793272749765,
+            "ground": 36.8,
+            "delta": 2.0479327274976526,
+            "tolerance": 1.0,
+            "pass": false
+          }
+        },
+        "rsi6_sma_6": {
+          "rsi6": {
+            "computed": 25.688073394495433,
+            "ground": 36.8,
+            "delta": -11.111926605504564,
+            "tolerance": 1.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 33.513880996522374,
+            "ground": 28.3,
+            "delta": 5.213880996522374,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 41.259147729545816,
+            "ground": 21.83,
+            "delta": 19.429147729545818,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 41.259147729545816,
+            "ground": 28.3,
+            "delta": 12.959147729545816,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 29.94328089429366,
+            "ground": 21.83,
+            "delta": 8.113280894293663,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 22.959528560598624,
+            "ground": 28.3,
+            "delta": -5.340471439401377,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 30.271064828207997,
+            "ground": 21.83,
+            "delta": 8.441064828207999,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 30.271064828207997,
+            "ground": 28.3,
+            "delta": 1.9710648282079966,
+            "tolerance": 2.0,
+            "pass": true
+          },
+          "stoch_d": {
+            "computed": 22.48280699781284,
+            "ground": 21.83,
+            "delta": 0.6528069978128421,
+            "tolerance": 2.0,
+            "pass": true
+          }
+        },
+        "macd_adjust_False": {
+          "macd_dif": {
+            "computed": -0.07739970072816504,
+            "ground": -0.08,
+            "delta": 0.0026002992718349577,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.026104285586058814,
+            "ground": -0.03,
+            "delta": 0.003895714413941185,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.05129541514210623,
+            "ground": -0.05,
+            "delta": -0.0012954151421062238,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        },
+        "macd_adjust_True": {
+          "macd_dif": {
+            "computed": -0.07739970072813662,
+            "ground": -0.08,
+            "delta": 0.0026002992718633794,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.026104285585996048,
+            "ground": -0.03,
+            "delta": 0.0038957144140039507,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.051295415142140574,
+            "ground": -0.05,
+            "delta": -0.0012954151421405713,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        }
+      }
+    },
+    "sub_3": {
+      "partial_volume": 58170.04,
+      "close": 151.32,
+      "repo_indicators": {
+        "bb_up": 152.13423796374843,
+        "bb_mb": 151.69,
+        "bb_dn": 151.24576203625156,
+        "rsi6": 36.045558514029516,
+        "stoch_k": 27.536736420138862,
+        "stoch_d": 21.57136419512315,
+        "macd_dif": -0.08298374631220895,
+        "macd_dea": -0.027221094702867595,
+        "macd_hist": -0.05576265160934135
+      },
+      "checks": {
+        "bb_up": {
+          "computed": 152.13423796374843,
+          "ground": 152.12,
+          "delta": 0.014237963748428228,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_mb": {
+          "computed": 151.69,
+          "ground": 151.69,
+          "delta": 0.0,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "bb_dn": {
+          "computed": 151.24576203625156,
+          "ground": 151.26,
+          "delta": -0.014237963748428228,
+          "tolerance": 0.02,
+          "pass": true
+        },
+        "rsi6": {
+          "computed": 36.045558514029516,
+          "ground": 36.8,
+          "delta": -0.7544414859704816,
+          "tolerance": 1.0,
+          "pass": true
+        },
+        "stoch_k": {
+          "computed": 27.536736420138862,
+          "ground": 28.3,
+          "delta": -0.7632635798611389,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "stoch_d": {
+          "computed": 21.57136419512315,
+          "ground": 21.83,
+          "delta": -0.25863580487684956,
+          "tolerance": 2.0,
+          "pass": true
+        },
+        "macd_dif": {
+          "computed": -0.08298374631220895,
+          "ground": -0.08,
+          "delta": -0.0029837463122089486,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_dea": {
+          "computed": -0.027221094702867595,
+          "ground": -0.03,
+          "delta": 0.0027789052971324037,
+          "tolerance": 0.01,
+          "pass": true
+        },
+        "macd_hist": {
+          "computed": -0.05576265160934135,
+          "ground": -0.05,
+          "delta": -0.005762651609341349,
+          "tolerance": 0.01,
+          "pass": true
+        }
+      },
+      "all_within_tolerance": true,
+      "alternatives": {
+        "boll_ddof0": {
+          "bb_up": 152.12298960728128,
+          "bb_mb": 151.69,
+          "bb_dn": 151.2570103927187
+        },
+        "boll_ddof1": {
+          "bb_up": 152.13423796374843,
+          "bb_mb": 151.69,
+          "bb_dn": 151.24576203625156
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": 36.045558514029516
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": 36.045558514029516
+        },
+        "rsi6_sma_6": {
+          "rsi6": 24.137931034482918
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": 25.156664922881415,
+          "stoch_d": 38.473409038332164
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": 38.473409038332164,
+          "stoch_d": 29.014701330555777
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": 14.756543336391342,
+          "stoch_d": 27.536736420138904
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": 27.536736420138904,
+          "stoch_d": 21.57136419512314
+        },
+        "macd_adjust_False": {
+          "macd_dif": -0.08298374631220895,
+          "macd_dea": -0.027221094702867595,
+          "macd_hist": -0.05576265160934135
+        },
+        "macd_adjust_True": {
+          "macd_dif": -0.0829837463121521,
+          "macd_dea": -0.027221094702799147,
+          "macd_hist": -0.05576265160935296
+        }
+      },
+      "alternative_checks": {
+        "boll_ddof0": {
+          "bb_up": {
+            "computed": 152.12298960728128,
+            "ground": 152.12,
+            "delta": 0.00298960728127895,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.69,
+            "ground": 151.69,
+            "delta": 0.0,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.2570103927187,
+            "ground": 151.26,
+            "delta": -0.00298960728127895,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "boll_ddof1": {
+          "bb_up": {
+            "computed": 152.13423796374843,
+            "ground": 152.12,
+            "delta": 0.014237963748428228,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_mb": {
+            "computed": 151.69,
+            "ground": 151.69,
+            "delta": 0.0,
+            "tolerance": 0.02,
+            "pass": true
+          },
+          "bb_dn": {
+            "computed": 151.24576203625156,
+            "ground": 151.26,
+            "delta": -0.014237963748428228,
+            "tolerance": 0.02,
+            "pass": true
+          }
+        },
+        "rsi6_wilder_rma": {
+          "rsi6": {
+            "computed": 36.045558514029516,
+            "ground": 36.8,
+            "delta": -0.7544414859704816,
+            "tolerance": 1.0,
+            "pass": true
+          }
+        },
+        "rsi6_ewm_adjust_true": {
+          "rsi6": {
+            "computed": 36.045558514029516,
+            "ground": 36.8,
+            "delta": -0.7544414859704816,
+            "tolerance": 1.0,
+            "pass": true
+          }
+        },
+        "rsi6_sma_6": {
+          "rsi6": {
+            "computed": 24.137931034482918,
+            "ground": 36.8,
+            "delta": -12.66206896551708,
+            "tolerance": 1.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 25.156664922881415,
+            "ground": 28.3,
+            "delta": -3.1433350771185857,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 38.473409038332164,
+            "ground": 21.83,
+            "delta": 16.643409038332166,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base6_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 38.473409038332164,
+            "ground": 28.3,
+            "delta": 10.173409038332164,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 29.014701330555777,
+            "ground": 21.83,
+            "delta": 7.184701330555779,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_raw_k1_d1": {
+          "stoch_k": {
+            "computed": 14.756543336391342,
+            "ground": 28.3,
+            "delta": -13.543456663608659,
+            "tolerance": 2.0,
+            "pass": false
+          },
+          "stoch_d": {
+            "computed": 27.536736420138904,
+            "ground": 21.83,
+            "delta": 5.706736420138906,
+            "tolerance": 2.0,
+            "pass": false
+          }
+        },
+        "stochrsi_base14_sma3_k3_d3": {
+          "stoch_k": {
+            "computed": 27.536736420138904,
+            "ground": 28.3,
+            "delta": -0.7632635798610963,
+            "tolerance": 2.0,
+            "pass": true
+          },
+          "stoch_d": {
+            "computed": 21.57136419512314,
+            "ground": 21.83,
+            "delta": -0.25863580487685667,
+            "tolerance": 2.0,
+            "pass": true
+          }
+        },
+        "macd_adjust_False": {
+          "macd_dif": {
+            "computed": -0.08298374631220895,
+            "ground": -0.08,
+            "delta": -0.0029837463122089486,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.027221094702867595,
+            "ground": -0.03,
+            "delta": 0.0027789052971324037,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.05576265160934135,
+            "ground": -0.05,
+            "delta": -0.005762651609341349,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        },
+        "macd_adjust_True": {
+          "macd_dif": {
+            "computed": -0.0829837463121521,
+            "ground": -0.08,
+            "delta": -0.002983746312152105,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_dea": {
+            "computed": -0.027221094702799147,
+            "ground": -0.03,
+            "delta": 0.0027789052972008524,
+            "tolerance": 0.01,
+            "pass": true
+          },
+          "macd_hist": {
+            "computed": -0.05576265160935296,
+            "ground": -0.05,
+            "delta": -0.0057626516093529576,
+            "tolerance": 0.01,
+            "pass": true
+          }
+        }
+      }
+    }
+  },
+  "convention_ranking_by_family_at_sub_1": {
+    "boll": [
+      {
+        "variant": "boll_ddof0",
+        "sum_abs_delta": 0.005436918180436123,
+        "max_abs_delta": 0.0034684590902145374,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "repo (current code)",
+        "sum_abs_delta": 0.019802189966156902,
+        "max_abs_delta": 0.010651094983074927,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "boll_ddof1",
+        "sum_abs_delta": 0.019802189966156902,
+        "max_abs_delta": 0.010651094983074927,
+        "all_within_tolerance": true
+      }
+    ],
+    "rsi6": [
+      {
+        "variant": "repo (current code)",
+        "sum_abs_delta": 0.3954893133282553,
+        "max_abs_delta": 0.3954893133282553,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "rsi6_wilder_rma",
+        "sum_abs_delta": 0.3954893133282553,
+        "max_abs_delta": 0.3954893133282553,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "rsi6_ewm_adjust_true",
+        "sum_abs_delta": 0.3954893133282553,
+        "max_abs_delta": 0.3954893133282553,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "rsi6_sma_6",
+        "sum_abs_delta": 12.021238938052903,
+        "max_abs_delta": 12.021238938052903,
+        "all_within_tolerance": false
+      }
+    ],
+    "stochrsi": [
+      {
+        "variant": "repo (current code)",
+        "sum_abs_delta": 0.5119897728221652,
+        "max_abs_delta": 0.3871532883089799,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "stochrsi_base14_sma3_k3_d3",
+        "sum_abs_delta": 0.5119897728222007,
+        "max_abs_delta": 0.38715328830901896,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "stochrsi_base14_raw_k1_d1",
+        "sum_abs_delta": 16.94935934740733,
+        "max_abs_delta": 10.09220605909831,
+        "all_within_tolerance": false
+      },
+      {
+        "variant": "stochrsi_base6_raw_k1_d1",
+        "sum_abs_delta": 18.072492169216268,
+        "max_abs_delta": 17.786513590332838,
+        "all_within_tolerance": false
+      },
+      {
+        "variant": "stochrsi_base6_sma3_k3_d3",
+        "sum_abs_delta": 18.8822497715555,
+        "max_abs_delta": 11.316513590332836,
+        "all_within_tolerance": false
+      }
+    ],
+    "macd": [
+      {
+        "variant": "repo (current code)",
+        "sum_abs_delta": 0.0076962433896240225,
+        "max_abs_delta": 0.0038481216948120095,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "macd_adjust_False",
+        "sum_abs_delta": 0.0076962433896240225,
+        "max_abs_delta": 0.0038481216948120095,
+        "all_within_tolerance": true
+      },
+      {
+        "variant": "macd_adjust_True",
+        "sum_abs_delta": 0.007696243389692714,
+        "max_abs_delta": 0.003848121694846357,
+        "all_within_tolerance": true
+      }
+    ]
+  }
+}
