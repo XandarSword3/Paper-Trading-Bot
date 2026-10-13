@@ -249,3 +249,89 @@ Section A.2 fixed the limitation "15s charts cannot be rebuilt from 1m data". Th
 * **Gap policy.** The downloaded tape has holes (not every day was archived for every symbol). An indicator may never be read across one: an entry is dropped unless `run_len`, the number of contiguous bars ending at its as-of bucket, is at least the warmup plus one. A forward window may never cross one either: `run_len_fwd` must cover the whole 60-minute endpoint, for real entries and control draws alike. Dropped entries are counted in the artifact.
 * **Decision rule.** Identical to A.2.
 * **Honest statement of timing.** A pilot run of `quant_research/entry_autopsy_15s.py` on SOLUSDT only was executed and its output inspected before this amendment was written. What changed afterwards: three defect fixes (index arithmetic when computing minute anchors for the 2-D control draws, an out-of-range index in the control mask, and switching the as-of lookup to `searchsorted` so that a gappy file cannot be silently mis-indexed), the addition of the two gap guards, and the switch of the forward references from bucket-anchored to minute-anchored so the blocks are comparable. No indicator, control construction, statistic, threshold or hypothesis was altered in response to the pilot's numbers. The three-symbol run reported in REPORT section 18 is the run this amendment registers.
+
+## 10. Amendment C - dated, appended (2026-10-13); committed BEFORE running any simulation
+
+**Status.** Appended and committed strictly BEFORE any simulation of the candidate set named
+below. Every number quoted as a design basis is taken from an artifact that was already
+committed at the time of writing (`entry_autopsy.json`, `entry_autopsy_15s.json`,
+`test_3_proper_results.json`, `turtle_results_v2.json`); the candidate design is therefore
+derived from measured facts, not from the candidate's own output.
+
+### C.1 Why this candidate, in terms of what the audit measured
+
+1. **Intraday indicators are provably uninformative here.** All 13 intraday conditions are
+   indistinguishable from matched random at 1m (REPORT 15) AND at 15s (REPORT 18). The only
+   conditions that survive Holm are daily-context ones: `adx14` (real 28.19 vs random 25.28),
+   `daily_trend_ema20` (real 0.388 vs random 0.620) and `daily_dist_ema20_bps`
+   (real 402.5 vs random 570.4), each at Holm p = 0.0130, in the primary open block of
+   `entry_autopsy.json`. The only measured signal lives on the DAILY timeframe, so the
+   candidate's only discretionary filter is a daily one - no intraday oscillator is admitted.
+2. **The edge is at long holding horizons, if it exists at all.** Direction-adjusted forward
+   moves from the actual fill price are -1.14 bps at 1m, -0.40 at 5m, +2.56 at 15m and +5.87
+   at 60m (primary open block, `entry_autopsy.json`). A 14 bps round-trip base cost and the
+   +5 bps section 6/7.5 net-expectancy hurdle therefore demand multi-hour to multi-day holds:
+   gross edge per trade must approach or exceed ~20 bps, which intraday scalping horizons
+   cannot reach at these costs. The candidate is therefore a higher-timeframe trend system
+   with few trades, not a scalper.
+3. **Execution is a measured cost, and adds are measured to be worse.** The taker print
+   crosses +5.14 bps against the fill-minute open (95% CI 3.75 to 6.61) and +1.86 bps inside
+   its own 15s bucket; the ADD fills measure +2.54 bps inside their own bucket against
+   +1.86 for opens (`entry_autopsy_15s.json`). Pyramid adds are exposure taken while a
+   position is already working, with no measured edge of their own - so the candidate runs
+   at **strictly 1 unit** (no pyramiding).
+4. **The real account was destroyed by overtrading, not by one bad bet.** The ledger
+   reconciliation puts the true max drawdown at 100.0% (`test_3_proper_results.json`) across
+   1,003 entries in 39 days. A survivable risk layer is not optional: 1% risk per trade,
+   2.0 x ATR(N) stop and the 2.0x leverage cap of section 7.2 are retained unchanged.
+
+### C.2 Exactly what is registered
+
+* **Base system (unchanged from section 7).** Classical Donchian breakout: entry on a close
+  beyond the prior N-bar high/low, exit on the prior M-bar channel, 2.0 x ATR(N) intrabar
+  stop, N in {20, 55}, M in {10, 20}, assets SOL/BTC/ETH, timeframes 5m/15m/1h = 36
+  configurations per arm. Signals on closed bar t, fills at open[t+1], 1m sub-bar intrabar
+  resolution with the stop-first pessimistic fallback, 14 bps RT base / 18 bps RT stress,
+  empirical funding settlements at their exact timestamps.
+* **C1 (primary, "DT-Filter 1-unit"):** the base system PLUS a daily-trend directional
+  filter, at 1 unit (pyramiding disabled). The filter is the audited condition verbatim:
+  the previous COMPLETED daily close versus its own EMA(20), computed by resampling the 1m
+  close series to 1D and seeding the EMA at the archive start (the identical construction
+  used by `entry_autopsy.py`). Long entries are allowed only when that daily trend is +1,
+  short entries only when it is -1. Bars with no completed prior daily day (archive start
+  warmup) admit no signal.
+* **C0 ("1-unit" yardstick):** the base system at 1 unit WITHOUT the daily filter. Two
+  attributions come out of this design: (a) C1 versus C0 isolates the daily filter at equal
+  risk layering; (b) C0 versus the committed 4-unit `turtle_results_v2.json` isolates
+  pyramiding at equal signals.
+* **72 new configurations total are registered: 36 x C1 + 36 x C0. Nothing is searched
+  beyond this grid; no parameter may be re-tuned; no configuration may be dropped for its
+  result; all 72 are reported regardless of outcome.**
+* **Trials and DSR:** all 72 are appended to `trials.csv` (section 7.7). The Deflated Sharpe
+  Ratio hurdle uses N_trials = 1,354 historical + 72 new = **1,426**, computed on the pooled
+  OOS per-trade Sharpe at T = pooled OOS trade count (the same canonical computation the
+  committed runner documented).
+
+### C.3 Decision rule (fixed before running)
+
+A C1 or C0 configuration carries a viable edge if and only if it clears section 7.5's six
+hurdles: (1) pooled OOS net expectancy >= +5.0 bps after 14 bps RT base and funding;
+(2) pooled OOS expectancy > 0.0 bps after 18 bps RT stress; (3) pooled OOS trades >= 150;
+(4) DSR p-value < 0.05 at N_trials = 1,426; (5) max drawdown < 30% on stitched equity -
+defined here as the continuous 2024-01-01 to 2026-03-31 equity per asset, verdict taken as
+the MAXIMUM of the three assets' max drawdowns; (6) pooled OOS profit factor >= 1.25 after
+all friction - defined as pooled gross profit over pooled gross loss across the three assets.
+
+Consequences, fixed now: if no configuration clears all six hurdles the verdict is
+**NO EDGE** and no hold-out is touched; if one or more clear all six, the ETH 2026-04-01 +
+frozen veto hold-out is accessed exactly once, at frozen parameters, per section 7.4, and
+its trade count and metrics are recorded without alteration. A NO EDGE result is accepted as
+a successful scientific conclusion, consistent with section 6.
+
+### C.4 Anti-garden-of-forking-paths clause
+
+The section 15/17/18 autopsy already established that intraday indicator conditions carry no
+measured edge at 1m or 15s resolution; this amendment therefore admits no intraday filter,
+no maker-entry variant, no cost-model change and no exit-rule change. Any future variant of
+that kind must be separately pre-registered BEFORE it runs, and previously touched windows
+remain burned per section 7.4.

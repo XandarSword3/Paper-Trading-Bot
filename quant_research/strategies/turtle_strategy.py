@@ -65,6 +65,7 @@ def run_turtle_simulation(
     cost_model: CostModel,
     initial_capital: float = 100_000.0,
     risk_percent: float = 1.0,
+    max_units: int = 4,
     bars_per_year: float = 105120.0,
     df_1m: Optional[pd.DataFrame] = None,
     return_trades: bool = False,
@@ -292,8 +293,10 @@ def run_turtle_simulation(
                     })
                     last_action_bar = i + 1
 
-            # CASE B: Open position -> Check Pyramid additions (up to 4 units max)
-            elif direction != 0 and len(units) < 4 and viable_order and i > last_action_bar:
+            # CASE B: Open position -> Check Pyramid additions (up to max_units units;
+            # max_units=1 disables pyramiding entirely. The default 4 preserves the
+            # committed section-7 behaviour so existing runners are untouched.)
+            elif direction != 0 and len(units) < max_units and viable_order and i > last_action_bar:
                 last_unit = units[-1]
                 last_price = last_unit["entry_price"]
                 pyramid_step = 0.5 * atr
