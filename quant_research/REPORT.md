@@ -1485,3 +1485,130 @@ The 15s bars answer the question section 15 left open. In summary:
 * the forward move measured from the fill price still turns positive only well after the print, which is what scaling into a working position looks like rather than what entry timing looks like.
 
 Limitations of this section: the rebuilt tape starts on the first day of the window, so the earliest entries have hours of 15s history before them where section 15's 1m bars go back to 2024 - enough for the 300-bar warmup, but EMA(200) and ADX(14) on a 15s grid are still warming up for the first entries on 2025-04-04; BNBUSDT has no candles at any resolution and stays excluded; and the daily context is shared with section 15 by design, so this section neither re-validates nor changes it.
+
+## 19. Candidate Strategy Test (Amendment C)
+
+The audit up to section 18 destroyed every idea that was on the table, so the question
+becomes: is anything left to trade? This section registers (PREREG section 10, Amendment
+C, committed strictly before running) a 72-configuration candidate set whose design is
+derived only from what the audit actually measured, runs it on the committed engine, and
+applies the section-7.5 hurdles verbatim. New artifact:
+`results/amendment_c_results.json`; 72 trials appended to `trials.csv`.
+
+### 19.1 What the design is a consequence of
+
+| Measured fact (committed artifact) | Design consequence |
+|---|---|
+| Intraday conditions random at 1m and 15s; only daily context survives Holm | the only
+ discretionary filter is the daily one the audit measured (trend_EMA20 real
+ 0.3882 vs random
+ 0.6205) |
+| Forward moves from the fill turn positive only at 15m/60m | higher-timeframe system,
+ few trades, multi-hour holds |
+| Taker print costs 5.14 bps against the fill-minute open; adds
+ measure 2.54 vs 1.86 bps inside their own bucket | 1 unit; no pyramiding |
+| True ledger max drawdown 100.0% on 1003 entries in 39 days |
+ keep the 1%-risk / 2x-ATR(N) stop / 2x leverage cap of section 7.2 unchanged |
+
+Concretely: arm **C1** is the section-7 Donchian grid (N in 20/55, M in 10/20 x
+SOL/BTC/ETH x 5m/15m/1h) plus the daily-trend directional filter and pyramiding off; arm
+**C0** is the same grid at 1 unit WITHOUT the filter. Two attributions fall out: C1
+minus C0 isolates the daily filter at equal risk layering, and C0 minus the committed
+4-unit `turtle_results_v2.json` isolates pyramiding at equal signals. The Deflated
+Sharpe hurdle is evaluated at N_trials = 1,426 (the section-7.5 count plus these 72).
+
+### 19.2 The pooled section-7.5 verdict on all 24 pooled configurations
+
+| Arm | TF | N | M | OOS trades | OOS net bps | OOS stress bps | Pooled PF | Worst stitched DD % | DSR p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| C0 | 5m | 20 | 10 | 14922 | -12.51 | -15.90 | 1.10 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 20 | 20 | 13699 | -11.92 | -15.95 | 1.10 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 55 | 10 | 9967 | -11.36 | -15.83 | 1.08 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 55 | 20 | 9599 | -11.20 | -15.53 | 1.07 | 100.0 | 1.0000 | FAIL |
+| C0 | 15m | 20 | 10 | 6683 | -12.08 | -15.68 | 1.01 | 100.0 | 1.0000 | FAIL |
+| C0 | 15m | 20 | 20 | 5826 | -10.12 | -14.11 | 1.06 | 99.8 | 1.0000 | FAIL |
+| C0 | 15m | 55 | 10 | 3859 | -13.45 | -17.45 | 1.01 | 99.5 | 1.0000 | FAIL |
+| C0 | 15m | 55 | 20 | 3629 | -11.81 | -15.81 | 1.08 | 99.2 | 1.0000 | FAIL |
+| C0 | 1h | 20 | 10 | 1815 | -5.74 | -9.74 | 1.15 | 76.0 | 1.0000 | FAIL |
+| C0 | 1h | 20 | 20 | 1613 | +0.04 | -3.95 | 1.20 | 76.0 | 1.0000 | FAIL |
+| C0 | 1h | 55 | 10 | 1103 | -26.24 | -30.25 | 1.03 | 74.7 | 1.0000 | FAIL |
+| C0 | 1h | 55 | 20 | 1061 | -31.02 | -35.03 | 0.98 | 67.3 | 1.0000 | FAIL |
+| C1 | 5m | 20 | 10 | 9401 | -11.37 | -15.65 | 1.18 | 100.0 | 1.0000 | FAIL |
+| C1 | 5m | 20 | 20 | 8955 | -10.17 | -13.80 | 1.16 | 100.0 | 1.0000 | FAIL |
+| C1 | 5m | 55 | 10 | 5506 | -10.20 | -14.09 | 1.13 | 99.9 | 1.0000 | FAIL |
+| C1 | 5m | 55 | 20 | 5280 | -9.73 | -13.70 | 1.11 | 99.9 | 1.0000 | FAIL |
+| C1 | 15m | 20 | 10 | 3563 | -10.05 | -14.05 | 1.06 | 98.3 | 1.0000 | FAIL |
+| C1 | 15m | 20 | 20 | 3306 | -6.40 | -10.40 | 1.15 | 97.6 | 1.0000 | FAIL |
+| C1 | 15m | 55 | 10 | 2068 | -15.35 | -19.35 | 1.01 | 95.1 | 1.0000 | FAIL |
+| C1 | 15m | 55 | 20 | 1941 | -10.04 | -14.04 | 1.15 | 95.1 | 1.0000 | FAIL |
+| C1 | 1h | 20 | 10 | 983 | +10.26 | +6.26 | 1.35 | 58.0 | 1.0000 | FAIL |
+| C1 | 1h | 20 | 20 | 909 | +28.98 | +24.97 | 1.51 | 62.9 | 0.9730 | FAIL |
+| C1 | 1h | 55 | 10 | 689 | -12.52 | -16.52 | 1.12 | 61.1 | 1.0000 | FAIL |
+| C1 | 1h | 55 | 20 | 665 | -15.96 | -19.96 | 1.11 | 63.6 | 1.0000 | FAIL |
+
+**0 of 24 pooled configurations clear all six section-7.5 hurdles, so the
+registered verdict is NO_EDGE and the frozen ETH hold-out is never opened**
+(`holdout_touched` is false in the artifact, exactly as
+the amendment's consequence clause requires). Order execution is not the problem this
+time: hurdle 1 (>= 5 bps net) fails on 20 of 24 rows, hurdle 2 (stress > 0) on 22,
+hurdle 5 (drawdown < 30% on stitched equity) on all 24.
+
+### 19.3 What the daily filter bought - and what it did not
+
+| TF | N | M | C0 OOS bps | C1 OOS bps | Filter delta | OOS trades C0 -> C1 |
+|---|---|---|---|---|---|---|
+| 1h | 20 | 20 | +0.04 | +28.98 | +28.93 | 1613 -> 909 |
+| 1h | 20 | 10 | -5.74 | +10.26 | +16.00 | 1815 -> 983 |
+| 1h | 55 | 20 | -31.02 | -15.96 | +15.07 | 1061 -> 665 |
+| 1h | 55 | 10 | -26.24 | -12.52 | +13.73 | 1103 -> 689 |
+| 15m | 20 | 20 | -10.12 | -6.40 | +3.72 | 5826 -> 3306 |
+| 15m | 20 | 10 | -12.08 | -10.05 | +2.02 | 6683 -> 3563 |
+| 15m | 55 | 20 | -11.81 | -10.04 | +1.77 | 3629 -> 1941 |
+| 5m | 20 | 20 | -11.92 | -10.17 | +1.75 | 13699 -> 8955 |
+| 5m | 55 | 20 | -11.20 | -9.73 | +1.47 | 9599 -> 5280 |
+| 5m | 55 | 10 | -11.36 | -10.20 | +1.15 | 9967 -> 5506 |
+| 5m | 20 | 10 | -12.51 | -11.37 | +1.14 | 14922 -> 9401 |
+| 15m | 55 | 10 | -13.45 | -15.35 | -1.90 | 3859 -> 2068 |
+
+The filter's median effect on pooled OOS expectancy is positive: it improves 11
+of the 12 pooled channel pairings and roughly halves the losses in the 1h band.
+Nowhere does it turn a failing configuration into a passing one: at 5m and 15m the C1
+rows still carry drawdowns of 95-100% and negative expectancies, and on the only band
+where money was made (1h), two configurations clear every return hurdle and still fail
+the significance and drawdown gates.
+
+### 19.4 The two near-misses, and why the verdict is still right
+
+| Config | OOS net bps | OOS stress bps | Pooled PF | DSR p | Worst stitched DD % | Verdict |
+|---|---|---|---|---|---|---|
+| C1 1h N=20 M=10 | +10.26 | +6.26 | 1.35 | 1.0000 | 58.0 | FAIL |
+| C1 1h N=20 M=20 | +28.98 | +24.97 | 1.51 | 0.9730 | 62.9 | FAIL |
+
+| Asset | IS net bps | OOS net bps | Stitched DD % |
+|---|---|---|---|
+| C1 1h 20/20 SOLUSDT | -26.60 | +33.53 | 45.9 |
+| C1 1h 20/20 BTCUSDT | -1.55 | -16.62 | 62.9 |
+| C1 1h 20/20 ETHUSDT | -24.86 | +73.85 | 51.1 |
+| C1 1h 20/10 SOLUSDT | -35.15 | +4.53 | 53.2 |
+| C1 1h 20/10 BTCUSDT | +9.73 | -24.90 | 58.0 |
+| C1 1h 20/10 ETHUSDT | -15.06 | +56.31 | 42.0 |
+
+Both near-misses are driven entirely by ETH and SOL; BTC loses in OOS on both of them
+ and the whole 1h band is negative in-sample. An edge that does not exist in 15 months
+ of in-sample data and then shows up OOS in two of three assets, with the third asset
+ losing across both channel pairings, is exactly the instability the deflated Sharpe
+ test at 1,426 trials exists to catch - and p = 0.9730 and 1.0000 catch it.
+
+### 19.5 Where that leaves the research
+
+* The registered candidate set is spent: all 72 configurations logged, none re-tuned,
+ none dropped for its result, hold-out untouched.
+* The one measured direction worth keeping alive is the daily filter, because it
+ improves 11 of the 12 pooled channel pairings at equal risk at a median +2.0 bps;
+ that is a cost-reducing overlay, not a source of edge on its own.
+* Per section 10's consequence clause, any further idea (maker entries, new exit rules,
+ new cost models) must be pre-registered BEFORE it runs in a future amendment; the
+ frozen windows stay frozen.
+
+The test does not support the claim that a profitable system was found under the
+ pre-registered hurdles: the honest output of this round is **NO EDGE**.
