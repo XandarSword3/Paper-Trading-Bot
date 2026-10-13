@@ -37,7 +37,8 @@ from quant_research.turtle_runner import slice_features, per_trade_sharpe
 
 DATA_DIR = "quant_research/data/processed"
 TRIALS_FILE = "quant_research/trials.csv"
-RESULTS_FILE = "quant_research/results/amendment_c_results.json"
+DEFECTIVE_RESULTS_FILE = "quant_research/results/amendment_c_results.json"   # v1: 4-unit (defect, preserved)
+RESULTS_FILE = "quant_research/results/amendment_c_results_v2.json"          # corrected 1-unit re-run
 
 ASSETS = ["SOLUSDT", "BTCUSDT", "ETHUSDT"]
 TIMEFRAMES = ["5m", "15m", "1h"]
@@ -117,11 +118,20 @@ def evaluate_job(job):
     oos_f = slice_features(features, *WINDOWS["oos"])
     stitched_f = slice_features(features, *WINDOWS["stitched"])
 
-    m_is_base, trades_is = run_turtle_simulation(is_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=True)
-    m_is_stress = run_turtle_simulation(is_f, funding, params, STRESS_COSTS, bars_per_year=bpy, return_trades=False)
-    m_oos_base, trades_oos = run_turtle_simulation(oos_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=True)
-    m_oos_stress = run_turtle_simulation(oos_f, funding, params, STRESS_COSTS, bars_per_year=bpy, return_trades=False)
-    m_stitched = run_turtle_simulation(stitched_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=False)
+    # max_units=1 is passed EXPLICITLY (the params dict is not read by the engine).
+    # Defect history: the original Amendment C run (results/amendment_c_results.json)
+    # omitted this argument, so all 72 configurations silently ran at the engine
+    # default max_units=4; the artifact below is the corrected 1-unit re-run.
+    m_is_base, trades_is = run_turtle_simulation(is_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=True,
+                                                 max_units=1)
+    m_is_stress = run_turtle_simulation(is_f, funding, params, STRESS_COSTS, bars_per_year=bpy, return_trades=False,
+                                        max_units=1)
+    m_oos_base, trades_oos = run_turtle_simulation(oos_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=True,
+                                                   max_units=1)
+    m_oos_stress = run_turtle_simulation(oos_f, funding, params, STRESS_COSTS, bars_per_year=bpy, return_trades=False,
+                                         max_units=1)
+    m_stitched = run_turtle_simulation(stitched_f, funding, params, BASE_COSTS, bars_per_year=bpy, return_trades=False,
+                                       max_units=1)
 
     def _gross(trades):
         win = sum(t.gross_pnl for t in trades if t.gross_pnl > 0)
@@ -234,6 +244,11 @@ def run_and_write(out_path: str = RESULTS_FILE, log_trials: bool = True):
     payload = {
         "registered_by": "quant_research/PREREG.md section 10 (Amendment C)",
         "runner": "quant_research/candidate_runner.py",
+        "correction_note": "v1 of this artifact (amendment_c_results.json) was generated "
+                           "before the max_units=1 argument was passed to the engine, so "
+                           "its 72 rows silently ran at the 4-unit default. This is the "
+                           "corrected 1-unit re-run of the same 72 registered configurations; "
+                           "v1 is preserved untouched.",
         "n_trials_dsr": N_TRIALS_DSR,
         "arms": {"C1_daily_filter_1unit": "Donchian + daily-trend filter + 1 unit (primary)",
                  "C0_no_filter_1unit": "Donchian, 1 unit, no daily filter (yardstick)"},
@@ -256,7 +271,7 @@ def run_and_write(out_path: str = RESULTS_FILE, log_trials: bool = True):
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         trial_rows = [{
             "trial_id": f"{r['arm']}-{r['asset']}-{r['timeframe']}-N{r['N']}-M{r['M']}",
-            "timestamp_utc": now, "test_name": "AmendmentC_DTDonchian",
+            "timestamp_utc": now,            "test_name": "AmendmentC_DTDonchian_1unit_fix",
             "asset": r["asset"], "timeframe": r["timeframe"],
             "strategy_name": f"{r['arm']}_N{r['N']}_M{r['M']}",
             "params_json": json.dumps({"N": r["N"], "M": r["M"], "max_units": 1,

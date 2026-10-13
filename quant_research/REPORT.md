@@ -1488,12 +1488,29 @@ Limitations of this section: the rebuilt tape starts on the first day of the win
 
 ## 19. Candidate Strategy Test (Amendment C)
 
-The audit up to section 18 destroyed every idea that was on the table, so the question
-becomes: is anything left to trade? This section registers (PREREG section 10, Amendment
-C, committed strictly before running) a 72-configuration candidate set whose design is
-derived only from what the audit actually measured, runs it on the committed engine, and
-applies the section-7.5 hurdles verbatim. New artifact:
-`results/amendment_c_results.json`; 72 trials appended to `trials.csv`.
+*(This section was rewritten after a defect was found and corrected, documented in
+19.0 below. The tables cite `results/amendment_c_results_v2.json`; the original
+defective run remains in git history and as `results/amendment_c_results.json`.)*
+
+**Registered source:** [PREREG section 10](quant_research/PREREG.md), Amendment C,
+committed before any simulation. **Runner:** `quant_research/candidate_runner.py`.
+Artifact: `results/amendment_c_results_v2.json`; 72 trials appended to
+`trials.csv` (v1's 72 rows also remain, logged as re-runs governs section 7.7).
+
+### 19.0 Defect found and corrected (1-unit registration violated by the runner)
+
+The Amendment C registration requires strictly 1 unit (pyramiding disabled), but
+`candidate_runner.py` communicated `max_units=1` only inside its `params` dict,
+which the engine never reads, so all 72 original configurations silently ran at
+the engine default of 4 units. Found during the pre-run verification of Amendment
+D: the committed ETHUSDT C1 1h 20/20 row (273 OOS trades, +73.85 bps) reproduces
+exactly under a 4-unit run and not at all under a 1-unit run (104 trades,
++55.51 bps). The fix passes `max_units=1` explicitly; all 72 configurations were
+re-run under the registered spec and only the re-run is quoted below as evidence.
+The pooled verdict happens to be preserved - 0 survivors of 24 in both runs - but
+every number in 19.2 to 19.4 moved, and the near-miss structure changed
+materially: under the registered 1 unit, three 1h configurations clear FIVE of
+the six hurdles and fail only the deflated-Sharpe gate.
 
 ### 19.1 What the design is a consequence of
 
@@ -1501,114 +1518,133 @@ applies the section-7.5 hurdles verbatim. New artifact:
 |---|---|
 | Intraday conditions random at 1m and 15s; only daily context survives Holm | the only
  discretionary filter is the daily one the audit measured (trend_EMA20 real
- 0.3882 vs random
- 0.6205) |
+ 0.388 vs random 0.620) |
 | Forward moves from the fill turn positive only at 15m/60m | higher-timeframe system,
  few trades, multi-hour holds |
-| Taker print costs 5.14 bps against the fill-minute open; adds
- measure 2.54 vs 1.86 bps inside their own bucket | 1 unit; no pyramiding |
+| Taker print costs 5.14 bps against the fill-minute open; adds measure worse inside
+ their own bucket | 1 unit; no pyramiding; Amendment D then converts the entry, registered separately |
 | True ledger max drawdown 100.0% on 1003 entries in 39 days |
  keep the 1%-risk / 2x-ATR(N) stop / 2x leverage cap of section 7.2 unchanged |
 
 Concretely: arm **C1** is the section-7 Donchian grid (N in 20/55, M in 10/20 x
-SOL/BTC/ETH x 5m/15m/1h) plus the daily-trend directional filter and pyramiding off; arm
-**C0** is the same grid at 1 unit WITHOUT the filter. Two attributions fall out: C1
-minus C0 isolates the daily filter at equal risk layering, and C0 minus the committed
-4-unit `turtle_results_v2.json` isolates pyramiding at equal signals. The Deflated
-Sharpe hurdle is evaluated at N_trials = 1,426 (the section-7.5 count plus these 72).
+SOL/BTC/ETH x 5m/15m/1h) plus the daily-trend directional filter and pyramiding
+off; arm **C0** is the same grid at 1 unit WITHOUT the filter. Two attributions
+fall out: C1 minus C0 isolates the daily filter at equal risk layering, and C0
+minus the committed 4-unit `turtle_results_v2.json` isolates pyramiding at equal
+signals - **this second attribution is void under the corrected run**: C0 ran at
+1 unit, so the comparison to the 4-unit committed artifact now measures the
+pyramiding effect jointly with the unit count as designed (that is what C0 was
+for), but the v1 tables' implied comparison between two 4-unit systems is invalid
+and is withdrawn. The deflated Sharpe hurdle is evaluated at N_trials = 1,426.
 
-### 19.2 The pooled section-7.5 verdict on all 24 pooled configurations
+### 19.2 The corrected verdict on all 24 pooled configurations (1 unit)
 
 | Arm | TF | N | M | OOS trades | OOS net bps | OOS stress bps | Pooled PF | Worst stitched DD % | DSR p | Verdict |
 |---|---|---|---|---|---|---|---|---|---|---|
-| C0 | 5m | 20 | 10 | 14922 | -12.51 | -15.90 | 1.10 | 100.0 | 1.0000 | FAIL |
-| C0 | 5m | 20 | 20 | 13699 | -11.92 | -15.95 | 1.10 | 100.0 | 1.0000 | FAIL |
-| C0 | 5m | 55 | 10 | 9967 | -11.36 | -15.83 | 1.08 | 100.0 | 1.0000 | FAIL |
-| C0 | 5m | 55 | 20 | 9599 | -11.20 | -15.53 | 1.07 | 100.0 | 1.0000 | FAIL |
-| C0 | 15m | 20 | 10 | 6683 | -12.08 | -15.68 | 1.01 | 100.0 | 1.0000 | FAIL |
-| C0 | 15m | 20 | 20 | 5826 | -10.12 | -14.11 | 1.06 | 99.8 | 1.0000 | FAIL |
-| C0 | 15m | 55 | 10 | 3859 | -13.45 | -17.45 | 1.01 | 99.5 | 1.0000 | FAIL |
-| C0 | 15m | 55 | 20 | 3629 | -11.81 | -15.81 | 1.08 | 99.2 | 1.0000 | FAIL |
-| C0 | 1h | 20 | 10 | 1815 | -5.74 | -9.74 | 1.15 | 76.0 | 1.0000 | FAIL |
-| C0 | 1h | 20 | 20 | 1613 | +0.04 | -3.95 | 1.20 | 76.0 | 1.0000 | FAIL |
-| C0 | 1h | 55 | 10 | 1103 | -26.24 | -30.25 | 1.03 | 74.7 | 1.0000 | FAIL |
-| C0 | 1h | 55 | 20 | 1061 | -31.02 | -35.03 | 0.98 | 67.3 | 1.0000 | FAIL |
-| C1 | 5m | 20 | 10 | 9401 | -11.37 | -15.65 | 1.18 | 100.0 | 1.0000 | FAIL |
-| C1 | 5m | 20 | 20 | 8955 | -10.17 | -13.80 | 1.16 | 100.0 | 1.0000 | FAIL |
-| C1 | 5m | 55 | 10 | 5506 | -10.20 | -14.09 | 1.13 | 99.9 | 1.0000 | FAIL |
-| C1 | 5m | 55 | 20 | 5280 | -9.73 | -13.70 | 1.11 | 99.9 | 1.0000 | FAIL |
-| C1 | 15m | 20 | 10 | 3563 | -10.05 | -14.05 | 1.06 | 98.3 | 1.0000 | FAIL |
-| C1 | 15m | 20 | 20 | 3306 | -6.40 | -10.40 | 1.15 | 97.6 | 1.0000 | FAIL |
-| C1 | 15m | 55 | 10 | 2068 | -15.35 | -19.35 | 1.01 | 95.1 | 1.0000 | FAIL |
-| C1 | 15m | 55 | 20 | 1941 | -10.04 | -14.04 | 1.15 | 95.1 | 1.0000 | FAIL |
-| C1 | 1h | 20 | 10 | 983 | +10.26 | +6.26 | 1.35 | 58.0 | 1.0000 | FAIL |
-| C1 | 1h | 20 | 20 | 909 | +28.98 | +24.97 | 1.51 | 62.9 | 0.9730 | FAIL |
-| C1 | 1h | 55 | 10 | 689 | -12.52 | -16.52 | 1.12 | 61.1 | 1.0000 | FAIL |
-| C1 | 1h | 55 | 20 | 665 | -15.96 | -19.96 | 1.11 | 63.6 | 1.0000 | FAIL |
+| C0 | 5m | 20 | 10 | 9739 | -14.63 | -18.50 | 1.07 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 20 | 20 | 7846 | -14.55 | -18.29 | 1.07 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 55 | 10 | 5862 | -14.75 | -18.74 | 1.00 | 100.0 | 1.0000 | FAIL |
+| C0 | 5m | 55 | 20 | 5227 | -14.00 | -18.00 | 1.05 | 100.0 | 1.0000 | FAIL |
+| C0 | 15m | 20 | 10 | 3200 | -13.27 | -17.27 | 1.03 | 99.5 | 1.0000 | FAIL |
+| C0 | 15m | 20 | 20 | 2447 | -9.13 | -13.13 | 1.09 | 97.4 | 1.0000 | FAIL |
+| C0 | 15m | 55 | 10 | 1922 | -12.70 | -16.70 | 1.05 | 97.2 | 1.0000 | FAIL |
+| C0 | 15m | 55 | 20 | 1677 | -8.80 | -12.80 | 1.10 | 93.9 | 1.0000 | FAIL |
+| C0 | 1h | 20 | 10 | 782 | -7.67 | -11.67 | 1.14 | 34.1 | 1.0000 | FAIL |
+| C0 | 1h | 20 | 20 | 570 | +5.76 | +1.76 | 1.34 | 40.3 | 0.9994 | FAIL |
+| C0 | 1h | 55 | 10 | 475 | -13.52 | -17.52 | 1.16 | 34.5 | 1.0000 | FAIL |
+| C0 | 1h | 55 | 20 | 399 | -10.92 | -14.92 | 1.26 | 29.6 | 1.0000 | FAIL |
+| C1 | 5m | 20 | 10 | 5247 | -13.87 | -17.87 | 1.15 | 100.0 | 1.0000 | FAIL |
+| C1 | 5m | 20 | 20 | 4453 | -12.50 | -16.50 | 1.15 | 100.0 | 1.0000 | FAIL |
+| C1 | 5m | 55 | 10 | 2978 | -13.02 | -17.02 | 1.07 | 99.9 | 1.0000 | FAIL |
+| C1 | 5m | 55 | 20 | 2682 | -11.98 | -15.97 | 1.10 | 99.7 | 1.0000 | FAIL |
+| C1 | 15m | 20 | 10 | 1716 | -12.60 | -16.60 | 1.06 | 95.0 | 1.0000 | FAIL |
+| C1 | 15m | 20 | 20 | 1464 | -8.98 | -12.98 | 1.11 | 89.4 | 1.0000 | FAIL |
+| C1 | 15m | 55 | 10 | 1024 | -13.50 | -17.50 | 1.09 | 88.1 | 1.0000 | FAIL |
+| C1 | 15m | 55 | 20 | 899 | -6.17 | -10.17 | 1.19 | 81.5 | 1.0000 | FAIL |
+| C1 | 1h | 20 | 10 | 419 | +11.58 | +7.58 | 1.39 | 22.7 | 0.9974 | FAIL |
+| C1 | 1h | 20 | 20 | 341 | +25.69 | +21.68 | 1.52 | 30.2 | 0.9935 | FAIL |
+| C1 | 1h | 55 | 10 | 288 | +6.31 | +2.31 | 1.33 | 26.4 | 1.0000 | FAIL |
+| C1 | 1h | 55 | 20 | 243 | +21.93 | +17.93 | 1.53 | 24.6 | 0.9969 | FAIL |
 
 **0 of 24 pooled configurations clear all six section-7.5 hurdles, so the
-registered verdict is NO_EDGE and the frozen ETH hold-out is never opened**
-(`holdout_touched` is false in the artifact, exactly as
-the amendment's consequence clause requires). Order execution is not the problem this
-time: hurdle 1 (>= 5 bps net) fails on 20 of 24 rows, hurdle 2 (stress > 0) on 22,
-hurdle 5 (drawdown < 30% on stitched equity) on all 24.
+registered verdict is NO_EDGE and the frozen ETH hold-out is again never opened**
+(`holdout_touched` is false in the artifact). Under
+ the corrected 1 unit the binding gate INVERTS relative to the v1 report: hurdle
+ 1 (>= 5 bps net) fails on 19 rows and hurdle 2 (stress > 0) on 19,
+ but the deflated Sharpe gate (hurdle 4) fails on all 24 rows that
+ otherwise survive, and hurdle 5 (drawdown < 30%) - which v1 failed on every row -
+ now fails on only 20 rows.
 
-### 19.3 What the daily filter bought - and what it did not
+### 19.3 What the daily filter bought - corrected
 
 | TF | N | M | C0 OOS bps | C1 OOS bps | Filter delta | OOS trades C0 -> C1 |
 |---|---|---|---|---|---|---|
-| 1h | 20 | 20 | +0.04 | +28.98 | +28.93 | 1613 -> 909 |
-| 1h | 20 | 10 | -5.74 | +10.26 | +16.00 | 1815 -> 983 |
-| 1h | 55 | 20 | -31.02 | -15.96 | +15.07 | 1061 -> 665 |
-| 1h | 55 | 10 | -26.24 | -12.52 | +13.73 | 1103 -> 689 |
-| 15m | 20 | 20 | -10.12 | -6.40 | +3.72 | 5826 -> 3306 |
-| 15m | 20 | 10 | -12.08 | -10.05 | +2.02 | 6683 -> 3563 |
-| 15m | 55 | 20 | -11.81 | -10.04 | +1.77 | 3629 -> 1941 |
-| 5m | 20 | 20 | -11.92 | -10.17 | +1.75 | 13699 -> 8955 |
-| 5m | 55 | 20 | -11.20 | -9.73 | +1.47 | 9599 -> 5280 |
-| 5m | 55 | 10 | -11.36 | -10.20 | +1.15 | 9967 -> 5506 |
-| 5m | 20 | 10 | -12.51 | -11.37 | +1.14 | 14922 -> 9401 |
-| 15m | 55 | 10 | -13.45 | -15.35 | -1.90 | 3859 -> 2068 |
+| 1h | 55 | 20 | -10.92 | +21.93 | +32.85 | 399 -> 243 |
+| 1h | 20 | 20 | +5.76 | +25.69 | +19.93 | 570 -> 341 |
+| 1h | 55 | 10 | -13.52 | +6.31 | +19.83 | 475 -> 288 |
+| 1h | 20 | 10 | -7.67 | +11.58 | +19.25 | 782 -> 419 |
+| 15m | 55 | 20 | -8.80 | -6.17 | +2.63 | 1677 -> 899 |
+| 5m | 20 | 20 | -14.55 | -12.50 | +2.05 | 7846 -> 4453 |
+| 5m | 55 | 20 | -14.00 | -11.98 | +2.02 | 5227 -> 2682 |
+| 5m | 55 | 10 | -14.75 | -13.02 | +1.72 | 5862 -> 2978 |
+| 5m | 20 | 10 | -14.63 | -13.87 | +0.76 | 9739 -> 5247 |
+| 15m | 20 | 10 | -13.27 | -12.60 | +0.67 | 3200 -> 1716 |
+| 15m | 20 | 20 | -9.13 | -8.98 | +0.15 | 2447 -> 1464 |
+| 15m | 55 | 10 | -12.70 | -13.50 | -0.80 | 1922 -> 1024 |
 
 The filter's median effect on pooled OOS expectancy is positive: it improves 11
-of the 12 pooled channel pairings and roughly halves the losses in the 1h band.
-Nowhere does it turn a failing configuration into a passing one: at 5m and 15m the C1
-rows still carry drawdowns of 95-100% and negative expectancies, and on the only band
-where money was made (1h), two configurations clear every return hurdle and still fail
-the significance and drawdown gates.
+of the 12 pooled channel pairings, and at 1 unit the improvement concentrates in
+the 1h band (+19 to +33 bps) while halving trade counts everywhere. Nowhere does
+it turn a failing configuration into a passing one: the 5m and 15m bands remain
+negative and drawdown-bound in both arms, and every 1h configuration that clears
+the return hurdles fails the deflated Sharpe gate.
 
-### 19.4 The two near-misses, and why the verdict is still right
+### 19.4 The corrected near-misses: five of six hurdles, the DSR gate short
 
 | Config | OOS net bps | OOS stress bps | Pooled PF | DSR p | Worst stitched DD % | Verdict |
 |---|---|---|---|---|---|---|
-| C1 1h N=20 M=10 | +10.26 | +6.26 | 1.35 | 1.0000 | 58.0 | FAIL |
-| C1 1h N=20 M=20 | +28.98 | +24.97 | 1.51 | 0.9730 | 62.9 | FAIL |
+| C1 1h N=55 M=10 | +6.31 | +2.31 | 1.33 | 1.0000 | 26.4 | FAIL |
+| C1 1h N=20 M=10 | +11.58 | +7.58 | 1.39 | 0.9974 | 22.7 | FAIL |
+| C1 1h N=55 M=20 | +21.93 | +17.93 | 1.53 | 0.9969 | 24.6 | FAIL |
 
 | Asset | IS net bps | OOS net bps | Stitched DD % |
 |---|---|---|---|
-| C1 1h 20/20 SOLUSDT | -26.60 | +33.53 | 45.9 |
-| C1 1h 20/20 BTCUSDT | -1.55 | -16.62 | 62.9 |
-| C1 1h 20/20 ETHUSDT | -24.86 | +73.85 | 51.1 |
-| C1 1h 20/10 SOLUSDT | -35.15 | +4.53 | 53.2 |
-| C1 1h 20/10 BTCUSDT | +9.73 | -24.90 | 58.0 |
-| C1 1h 20/10 ETHUSDT | -15.06 | +56.31 | 42.0 |
+| C1 1h 20/10 SOLUSDT | -24.80 | +6.49 | 22.7 |
+| C1 1h 20/10 BTCUSDT | -8.83 | +0.23 | 20.9 |
+| C1 1h 20/10 ETHUSDT | -17.29 | +29.88 | 19.5 |
+| C1 1h 55/20 SOLUSDT | -57.41 | +17.94 | 24.6 |
+| C1 1h 55/20 BTCUSDT | +0.25 | -5.64 | 20.8 |
+| C1 1h 55/20 ETHUSDT | -30.59 | +56.25 | 22.3 |
+| C1 1h 55/10 SOLUSDT | -55.95 | -12.33 | 26.3 |
+| C1 1h 55/10 BTCUSDT | +4.10 | -11.75 | 26.4 |
+| C1 1h 55/10 ETHUSDT | -5.14 | +48.71 | 16.4 |
 
-Both near-misses are driven entirely by ETH and SOL; BTC loses in OOS on both of them
- and the whole 1h band is negative in-sample. An edge that does not exist in 15 months
- of in-sample data and then shows up OOS in two of three assets, with the third asset
- losing across both channel pairings, is exactly the instability the deflated Sharpe
- test at 1,426 trials exists to catch - and p = 0.9730 and 1.0000 catch it.
+All candidates that pass every other hurdle fail only hurdle 4: their pooled
+per-trade Sharpe is statistically indistinguishable from the best of 1,426
+trials' expected maximum. The pattern of per-asset expectancies (positive OOS
+concentrated in single assets after negative or flat in-samples) is exactly the
+exists to catch - and p 0.9935 to 1.0000 catch it. Notably, the corrected run
+STRENGTHENS rather than weakens the case that the registered hurdle set is the
+right referee: under v1's erroneous 4-unit run nothing cleared even the return
+hurdles; at the registered 1 unit, three configurations do - and still fail the
+single gate designed for exactly this situation.
 
 ### 19.5 Where that leaves the research
 
-* The registered candidate set is spent: all 72 configurations logged, none re-tuned,
- none dropped for its result, hold-out untouched.
+* The registered candidate set is spent, now with the correct risk layer: all 72
+  configurations logged twice (v1 runs and corrected re-runs, none deleted, none
+  modified), none re-tuned, none dropped for its result, hold-out untouched.
 * The one measured direction worth keeping alive is the daily filter, because it
- improves 11 of the 12 pooled channel pairings at equal risk at a median +2.0 bps;
- that is a cost-reducing overlay, not a source of edge on its own.
-* Per section 10's consequence clause, any further idea (maker entries, new exit rules,
- new cost models) must be pre-registered BEFORE it runs in a future amendment; the
- frozen windows stay frozen.
+  improves 11 of the 12 pooled channel pairings at equal risk in the corrected
+  run; that is an overlay, not a source of edge on its own under the registered
+  costs.
+* Amendment D (maker entries, 1h only) was pre-registered BEFORE the defect was
+  discovered; its registered rules depend only on the autopsy evidence, not on
+  the v1 rows it cited, and its DSR count 1450 is unchanged. Section 20 documents
+  this explicitly.
+* Per section 10's consequence clause, any further idea (maker entries, new exit
+  rules, new cost models) must be pre-registered BEFORE it runs; the frozen
+  windows stay frozen.
 
 The test does not support the claim that a profitable system was found under the
- pre-registered hurdles: the honest output of this round is **NO EDGE**.
+pre-registered hurdles: the honest output of this round remains **NO EDGE**.

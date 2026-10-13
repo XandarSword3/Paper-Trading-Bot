@@ -28,9 +28,10 @@ SECTION_SOURCES = {
                                    "entry_autopsy_v2.json"],
     "## 18. Fifteen-Second Bars From the Binance Tape": ["entry_autopsy_15s.json",
                                                           "aggtrades_15s_provenance.json"],
-    "## 19. Candidate Strategy Test (Amendment C)": ["amendment_c_results.json",
+    "## 19. Candidate Strategy Test (Amendment C)": ["amendment_c_results_v2.json",
                                                      "entry_autopsy.json",
-                                                     "entry_autopsy_15s.json"],
+                                                     "entry_autopsy_15s.json",
+                                                     "test_3_proper_results.json"],
 }
 
 
