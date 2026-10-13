@@ -335,3 +335,94 @@ measured edge at 1m or 15s resolution; this amendment therefore admits no intrad
 no maker-entry variant, no cost-model change and no exit-rule change. Any future variant of
 that kind must be separately pre-registered BEFORE it runs, and previously touched windows
 remain burned per section 7.4.
+## 11. Amendment D - dated, appended (2026-10-13); committed BEFORE running any simulation
+
+**Status.** Appended and committed strictly BEFORE any maker-fill simulation runs. The
+candidate design below is derived only from artifacts already committed at the time of
+writing (`entry_autopsy.json`, `entry_autopsy_15s.json`, `amendment_c_results.json`),
+per section C.4's clause that a maker-entry variant "must be separately pre-registered
+BEFORE it runs".
+
+### D.1 Why the maker entry is the one measured lever left
+
+1. **Execution is the dominant measured per-trade leak.** The taker print crosses
+   +5.14 bps against its own fill-minute open (95% CI 3.75 to 6.61) and +1.86 bps inside
+   its own 15s bucket (`entry_autopsy.json`, `entry_autopsy_15s.json`). A taker entry
+   therefore pays roughly the 5 bps break-out premium ON TOP of the 14 bps published
+   round-trip cost. The only measured condition that survives Holm (daily trend) and the
+   only band with positive OOS expectancy (1h, C1 20/10 +10.26 and 20/20 +28.98 bps, both
+   DSR-failing at N=1,426) are unchanged inputs here; nothing else about the skeleton is
+   reconsidered.
+2. **The 15s tape quantifies the chase.** The post-print 15s path stays adverse
+   (-0.79 / -1.12 / -1.44 / -1.10 bps at 15/30/45/60 s), i.e. the taker consistently
+   fills after the cross has extended. A resting limit order at the pre-cross price
+   converts that chase into a better entry or into no fill - both outcomes are priced
+   by this design rather than assumed away.
+3. **No maker fill exists in the archive.** 99% of the user's 1,786 archived fills are
+   taker prints, so the maker FEE is not measurable from this account's data. It is
+   taken from Binance USDT-M's published VIP0 schedule (maker 0.02% = 2 bps; the same
+   schedule whose 5 bps taker leg the ledger confirms). This is declared as an input,
+   not a searched quantity.
+
+### D.2 Exactly what is registered
+
+* **Base system (unchanged from section 7 / C.2).** Donchian N in {20, 55}, M in
+  {10, 20}; signals on closed 1h bar t, 1h only (the band whose forward horizons the
+  autopsy measured as the only reachable ones, and the only band positive OOS under
+  Amendment C); daily-trend directional filter ON in BOTH arms (it is the only signal
+  with measured value, and holding it fixed makes the R1 versus R0 subtraction a pure
+  execution attribution); 1 unit; 1%-risk sizing, 2.0 x ATR(N) intrabar stop with the
+  stop-first pessimistic fallback, close-based M-bar channel exit filling at next open,
+  2.0x leverage cap, empirical funding at exact timestamps - all verbatim section 7.2/7.3
+  machinery.
+* **R1 (primary, "maker 1h"):** on each qualifying signal bar, place a LIMIT order at
+  open[t+1] moved 5 bps passively (limit = open[t+1] x (1 - 5e-4) for a long,
+  x (1 + 5e-4) for a short). The offset is FIXED at 5 bps, anchored to the measured
+  +5.14 bps cross; it is not searched. The order is live for K = 3 closed 1h bars
+  (3 hours) and is then cancelled; an unfilled signal produces no trade and no re-arm
+  until the next qualifying signal bar. A fill is registered only when the 1m tape
+  trades STRICTLY THROUGH the limit (low < limit for a long, high > limit for a short -
+  strict inequality, so a mere touch does not fill, modeling queue priority), at the
+  limit price, with a 2 bps maker fee and ZERO entry slippage. Exits are unchanged and
+  remain taker.
+* **R0 (taker yardstick):** the identical system with the taker entry of section 7.3
+  (fill at open[t+1], 5 bps + 2 bps), run by the same runner so the comparison is
+  code-identical. R1 minus R0 isolates the maker conversion (fee saving + entry-price
+  improvement) net of adverse selection and missed fills.
+* **Cost schedule.** Base: entry maker 2 bps fee + 0 slippage, exit taker 5 bps + 2 bps
+  slippage = 9 bps RT. Stress: the entry additionally requires the 1m tape to trade
+  through the limit by a further 1 bps (strictly worse fill probability, harsher adverse
+  selection) and exits at 5 bps + 4 bps slippage = 11 bps RT.
+* **24 new configurations total: 12 x R1 + 12 x R0 (3 assets x 4 channel pairs, 1h).
+  Nothing is searched beyond this grid; no parameter may be re-tuned; no configuration
+  may be dropped for its result; all 24 are reported regardless of outcome.**
+* **Trials and DSR:** all 24 are appended to `trials.csv` (section 7.7). The deflated
+  Sharpe hurdle uses N_trials = 1,426 (section C.2) + 24 = **1,450**, computed on the
+  pooled OOS per-trade Sharpe at T = pooled OOS trade count, the same canonical
+  computation as C.2.
+
+### D.3 Decision rule (fixed before running)
+
+A configuration carries a viable edge if and only if it clears the same six hurdles as
+C.3, verbatim: (1) pooled OOS net expectancy >= +5.0 bps after the base schedule and
+funding; (2) pooled OOS expectancy > 0.0 bps under the stress schedule; (3) pooled OOS
+trades >= 150; (4) DSR p-value < 0.05 at N_trials = 1,450; (5) max drawdown < 30% on
+stitched equity, defined as the continuous 2024-01-01 to 2026-03-31 equity per asset,
+verdict taken as the MAXIMUM of the three assets' max drawdowns; (6) pooled OOS profit
+factor >= 1.25, defined as pooled gross profit over pooled gross loss.
+
+Consequences, fixed now: if R1 and R0 both fail every configuration, the verdict is
+**NO EDGE (maker variant)** and no hold-out is touched; if one or more configurations
+clear all six hurdles, the ETH 2026-04-01+ frozen veto hold-out is accessed exactly
+once, at frozen parameters, per section 7.4, and its trade count and metrics recorded
+without alteration. Diagnostics that do not enter the verdict (fill rate, missed-signal
+count, R1-minus-R0 expectancy delta per channel pair) are reported alongside every
+configuration to make the adverse-selection trade-off auditable.
+
+### D.4 Anti-garden-of-forking-paths clause
+
+The entry offset (5 bps), the order lifetime (3 bars), the strict-through fill rule and
+the stress trade-through (1 bps) are fixed HERE and may not be re-chosen after seeing
+results. A failed round does not license a second round with a different offset or
+lifetime: any such variant is a new amendment, committed before it runs, with its own
+DSR penalty. Previously touched windows remain burned per section 7.4.
