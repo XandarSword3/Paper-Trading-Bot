@@ -217,7 +217,7 @@ def run_and_write(out_path: str = RESULTS_FILE, log_trials: bool = True):
 
     # attribution: C1 - C0 pooled OOS expectancy at equal risk layering
     attr = []
-    pmap = {(p["timeframe"], p["N"], p["M"]): p for p in pooled}
+    pmap = {(p["arm"], p["timeframe"], p["N"], p["M"]): p for p in pooled}
     for tf in TIMEFRAMES:
         for N, M, cid in CHANNELS:
             c0, c1 = pmap[("C0_no_filter_1unit", tf, N, M)], pmap[("C1_daily_filter_1unit", tf, N, M)]
