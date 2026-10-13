@@ -1173,3 +1173,292 @@ trade are all published:
   (`liq_20x_count` = 1,
   `liq_50x_count` = 45 of
   257 trades).
+
+## 17. Indicator Validation Against Binance's Own Numbers, and the BOLL Convention Fix
+
+New artifact: `results/indicator_validation.json`, produced by
+`quant_research/indicator_validation.py`. It validates the indicator module against the values
+published on a SOLUSDT-perp 3m chart showing the forming candle, and the regression test
+`tests/test_indicator_binance_ground_truth.py` now pins those values.
+
+### 17.1 The reported axis label does not identify the bar; the data does
+
+The ground truth was reported with an axis label of `2025-05-01 15:06` and an unknown timezone,
+which is consistent with neither clock reading: at 15:06 UTC the chart shows RSI(6) 62.32 and
+MACD DIF +0.295, and at 12:06 UTC (15:06 on a UTC+3 clock) it shows RSI(6) 54.18 and DIF +0.012,
+against published values of 36.80 and -0.08. The bar is therefore identified from the data.
+
+The two volume moving averages are exact identities in the bucket's partial volume `F`, so they
+pin both the bucket and the sub-minute offset without reference to the indicators:
+
+| Quantity | Identity | Value |
+|---|---|---|
+| Published forming volume | F | 4751.74 reported as 5048.36 |
+| Published MA(5) | (vol[B-4..B-1] + F) / 5 | 34324.31 |
+| Published MA(10) | (vol[B-9..B-1] + F) / 10 | 32900.47 |
+| Identified bucket | - | 2025-05-01 12:27:00+00:00 |
+| MA(5) residual | - | 0.02 |
+| MA(10) residual | - | 0.04 |
+
+Exactly **one** bucket in the whole 2025-04-24..2025-05-08 search window satisfies both
+identities, and the residuals are inside the 0.005-per-term rounding of a 2-decimal published
+average. That bucket is **2025-05-01 12:27 UTC = 15:27 on a UTC+3 clock**, 21 minutes after the
+reported label. The screenshot is taken a few seconds into the next minute: the published
+forming volume 5048.36 exceeds the completed 12:27 one-minute bar's
+4751.74 by 296.62, and the
+published last price 151.34 is within a tick of that bar's close
+151.35. So the label should read 15:27, and the timezone is UTC+3 - the same clock the
+funding settlements pinned in section 16.
+
+### 17.2 Tolerance check: every published value is reproduced
+
+Forming bucket at 12:27 UTC with one completed 1-minute bar inside it (`sub-step 1`):
+
+| Indicator | Computed | Binance | Delta | Tolerance | Result |
+|---|---|---|---|---|---|
+| bb_up | 152.1307 | 152.12 | +0.0107 | +-0.02 | pass |
+| bb_mb | 151.6915 | 151.69 | +0.0015 | +-0.02 | pass |
+| bb_dn | 151.2523 | 151.26 | -0.0077 | +-0.02 | pass |
+| rsi6 | 37.1955 | 36.80 | +0.3955 | +-1.00 | pass |
+| stoch_k | 28.6872 | 28.30 | +0.3872 | +-2.00 | pass |
+| stoch_d | 21.9548 | 21.83 | +0.1248 | +-2.00 | pass |
+| macd_dif | -0.0806 | -0.08 | -0.0006 | +-0.01 | pass |
+| macd_dea | -0.0267 | -0.03 | +0.0033 | +-0.01 | pass |
+| macd_hist | -0.0538 | -0.05 | -0.0038 | +-0.01 | pass |
+
+**All nine values pass.** For completeness the other sub-steps are also checked: with two 1-minute
+bars inside the bucket RSI(6) is out of tolerance
+(38.8479 vs 36.80,
+delta +2.0479 against +-1.0) and with the bucket complete all
+nine pass again with slightly different values
+(36.0456, 152.1342),
+which is why the volume identity - not the indicators - is what pins the bar.
+
+### 17.3 Which smoothing convention Binance uses
+
+Each family is compared with the same keys in every variant, so the sums are comparable:
+
+| Family | Variant | sum abs delta | max abs delta | All within tolerance |
+|---|---|---|---|---|
+| boll | boll_ddof0 | 0.0054 | 0.0035 | True |
+| boll | repo (current code) | 0.0198 | 0.0107 | True |
+| boll | boll_ddof1 | 0.0198 | 0.0107 | True |
+| rsi6 | repo (current code) | 0.3955 | 0.3955 | True |
+| rsi6 | rsi6_wilder_rma | 0.3955 | 0.3955 | True |
+| rsi6 | rsi6_ewm_adjust_true | 0.3955 | 0.3955 | True |
+| rsi6 | rsi6_sma_6 | 12.0212 | 12.0212 | False |
+| stochrsi | repo (current code) | 0.5120 | 0.3872 | True |
+| stochrsi | stochrsi_base14_sma3_k3_d3 | 0.5120 | 0.3872 | True |
+| stochrsi | stochrsi_base14_raw_k1_d1 | 16.9494 | 10.0922 | False |
+| stochrsi | stochrsi_base6_raw_k1_d1 | 18.0725 | 17.7865 | False |
+| stochrsi | stochrsi_base6_sma3_k3_d3 | 18.8822 | 11.3165 | False |
+| macd | repo (current code) | 0.0077 | 0.0038 | True |
+| macd | macd_adjust_False | 0.0077 | 0.0038 | True |
+| macd | macd_adjust_True | 0.0077 | 0.0038 | True |
+
+* **Bollinger:** `ddof=0` (population) reproduces UP/MB/DN with a total absolute error of
+  0.0054 against
+  0.0198 for the sample
+  standard deviation the repository was using. **This was a real defect and is now fixed.**
+* **RSI(6):** Wilder/RMA and `ewm(adjust=True)` are indistinguishable here and both reproduce the
+  published value; SMA smoothing is **ruled out** (error 12.02).
+* **StochRSI:** an RSI(14) base with 3/3 smoothing reproduces both %K and %D; using RSI(6) as the
+  base, or skipping the smoothing, is **ruled out** (errors 16.9-18.9).
+* **MACD:** the `adjust` flag is irrelevant at this depth; EMA(12,26,9) reproduces DIF and DEA.
+
+One label in that table is historical rather than literal: the artifact records the
+pre-fix repository as `repo (current code)` because that is what it was when the
+artifact was generated, and it is the `boll_ddof1` row beside it. Since section 17.4 the
+repository's own code is the `boll_ddof0` row. The artifact is deliberately not
+generated again, because re-running it after the fix would erase the evidence of the
+fix.
+
+### 17.4 The fix, and the entry autopsy before and after
+
+`compute_indicators` now builds its bands from `close.rolling(20).std(ddof=0)`. The same
+convention error existed a second time, in `test_2_runner.py` (which builds its own bands rather
+than reusing the module) and is fixed there too. The regression test asserts both the published
+values and that the population standard deviation is the closer of the two.
+
+Re-running the entry autopsy with the corrected bands writes a NEW artifact
+(`results/entry_autopsy_v2.json`, `results/entry_autopsy_entries_v2.csv`); the committed
+`entry_autopsy.json` of section 15 is deliberately left untouched as the pre-fix record.
+Comparing the two artifacts leaf by leaf:
+
+* **59 values differ, and every one of them is inside the `bb_pctb` row**, asserted by
+  `tests/test_entry_autopsy_artifact.py::test_bollinger_fix_moved_only_the_pctb_row_of_the_entry_autopsy`:
+  every differing leaf path matches
+  `/results/<clock>/units/<open|add>/indicators/0/...`, and no other leaf in either artifact moves.
+* `counts`, `timezone_evidence` and `headline` are **byte-identical** between the two runs.
+* The set of conditions surviving Holm is **unchanged** in all four blocks:
+
+| Block | Unit | Bollinger %B real, v1 | v1 -> v2 | real-random v1 | v1 -> v2 | Holm p | significant |
+|---|---|---|---|---|---|---|---|
+| primary_csv_clock_utc_plus_3 | open | 0.521329 | 0.521883 | +0.010035 | +0.010296 | 1.0000 | False -> False |
+| primary_csv_clock_utc_plus_3 | add | 0.589277 | 0.591596 | +0.081893 | +0.084020 | 0.0130 | True -> True |
+| sensitivity_csv_clock_utc | open | 0.508565 | 0.508787 | -0.003585 | -0.003678 | 1.0000 | False -> False |
+| sensitivity_csv_clock_utc | add | 0.543946 | 0.545088 | +0.029049 | +0.029804 | 0.1039 | False -> False |
+
+| Block | Unit | Significant set unchanged | Surviving conditions (v2) |
+|---|---|---|---|
+| primary_csv_clock_utc_plus_3 | open | True | adx14, daily_dist_ema20_bps, daily_trend_ema20 |
+| primary_csv_clock_utc_plus_3 | add | True | adx14, bb_pctb, daily_dist_ema20_bps, daily_trend_ema20, ema20_dist_bps, macd_hist_bps, rsi6, stoch_d, stoch_k |
+| sensitivity_csv_clock_utc | open | True | daily_dist_ema20_bps, daily_trend_ema20 |
+| sensitivity_csv_clock_utc | add | True | daily_dist_ema20_bps, daily_trend_ema20, rsi6, stoch_d, stoch_k |
+
+Bollinger %B was never a significant difference in the primary block and still is not
+(Holm p 1.0000),
+and it remains significant for the secondary adds block
+(Holm p 0.0130).
+**No conclusion in section 15 changes.** The forward moves, the adverse print and the
+daily-context findings are computed from prices and from other indicators, so they are identical
+to the digit.
+
+### 17.5 What this fix makes stale, and what was not re-run
+
+The band definition is shared, so the fix has a blast radius beyond the autopsy:
+`strategies/indicator_stack.py` consumes `bb_upper` / `bb_lower` / `bb_basis` (Test 1 and the
+calibration), and `test_2_runner.py` builds its own `bb_std` (Test 2). The committed
+`test_1_results.json`, `calibration_results.json` and `test_2_results.json` /
+`test_2_results_v2.json` were produced **before** the fix and are therefore stale with respect to
+the code. **Test 1, Test 2 and the calibration were not re-run here** - only the autopsy was, as
+requested - so no number in those artifacts has been updated, and none of their results should be
+quoted as if it reflected the corrected bands. Test 2's `bb_mult` grid is the one to re-run first:
+it is the only place where the band width is a searched parameter rather than a fixed 2.0.
+
+## 18. Fifteen-Second Bars From the Binance Tape
+
+Section 15 ends with the honest limitation that "15s charts cannot be rebuilt from 1m
+data, so the intra-minute path is unknown". This section removes it: the 15-second
+candles are rebuilt from Binance's own trade-by-trade tape and the autopsy is re-run on
+them with the method, the controls and the correction unchanged.
+
+New artifacts: `results/aggtrades_15s_provenance.json` (what was downloaded and how it
+was checked) and `results/entry_autopsy_15s.json` (the re-run). New scripts:
+`quant_research/build_15s_bars.py` (tape -> 15s candles) and
+`quant_research/entry_autopsy_15s.py` (the autopsy, which imports its entry definition,
+clock pinning, indicator set, control construction and Holm correction from
+`entry_autopsy.py` rather than reimplementing them).
+
+### 18.1 What was downloaded, and the gap policy
+
+| Symbol | Source files | Bars | Trades aggregated | Gap boundaries in the tape |
+|---|---|---|---|---|
+| BTCUSDT | 22 | 126720 | 36492653 | 3 |
+| ETHUSDT | 7 | 40320 | 20128925 | 1 |
+| SOLUSDT | 40 | 230400 | 19145449 | 0 |
+
+SOLUSDT is complete over the window: 40 consecutive daily archives spanning 2025-04-03 to 2025-05-12 UTC, 2 empty 15s buckets were carried forward at the previous close with volume 0 (counted, not hidden), and the grid step is 15 seconds with no other step anywhere in the file.
+
+BTCUSDT and ETHUSDT were downloaded for the days that actually contain entries plus one day of padding on each side, so their files have holes. Two guards follow from that, and both are enforced in code rather than by assumption:
+
+* an indicator may never be read across a hole: `run_len` counts the contiguous bars ending at each index and an entry is dropped unless the full warmup precedes it contiguously, so no EMA, RSI or ADX is ever blended across a gap;
+* a forward window may never cross one either: `run_len_fwd` counts contiguous bars ahead of each index and both real entries and control draws are rejected unless the whole 60-minute endpoint lies inside one run.
+
+Across the three symbols there are 4 gap boundaries in total (3 of them longer than a day), and the NaN audit in the artifact reports 0 non-finite null means.
+
+### 18.2 The rebuild is checked against Binance's own 1-minute klines
+
+Aggregating the 15s bars back to 1 minute and comparing with the committed Binance 1m kline file for the same minutes is an independent check of the whole rebuild: the two come from different Binance endpoints, so a timezone, alignment or aggregation error would show up immediately.
+
+| Field | Minutes compared | Exact matches | Largest absolute difference | Largest relative difference |
+|---|---|---|---|---|
+| BTCUSDT close | 31680 | 31680 | 0.0000 | 0.000000 |
+| BTCUSDT high | 31680 | 31615 | 2.7000 | 0.000035 |
+| BTCUSDT low | 31680 | 31610 | 2.8000 | 0.000036 |
+| BTCUSDT open | 31680 | 29775 | 4.0000 | 0.000054 |
+| ETHUSDT close | 10080 | 10080 | 0.0000 | 0.000000 |
+| ETHUSDT high | 10080 | 10053 | 0.0700 | 0.000028 |
+| ETHUSDT low | 10080 | 10045 | 0.0800 | 0.000033 |
+| ETHUSDT open | 10080 | 9012 | 1.3400 | 0.000533 |
+| SOLUSDT close | 57600 | 57600 | 0.0000 | 0.000000 |
+| SOLUSDT high | 57600 | 57541 | 0.0100 | 0.000095 |
+| SOLUSDT low | 57600 | 57547 | 0.0100 | 0.000098 |
+| SOLUSDT open | 57600 | 55524 | 0.0400 | 0.000378 |
+
+Volume is the one field that does not match exactly, and the reason is visible in its pattern rather than hidden in a mean:
+
+| Symbol | Minutes with a volume difference | Adjacent-minute pairs that exactly offset |
+|---|---|---|
+| BTCUSDT | 5310 | 2069 |
+| ETHUSDT | 2659 | 956 |
+| SOLUSDT | 6791 | 2857 |
+
+A pair means minute i carries +x and minute i+1 carries -x: a block of trades was assigned to the other side of the minute boundary, the day total is unchanged, and prices are untouched. Binance builds its klines from the raw trade stream while this rebuild uses aggTrade rows, each of which carries one timestamp for a block of trades. No indicator in the autopsy uses volume - every condition in the 13-condition family is a function of close, high and low - so this difference cannot move any number below.
+
+### 18.3 Inside the minute: where the print actually sat, and what happened after it
+
+This is what 1m bars could only bracket. The two execution rows use the same formula as section 15, `side * (fill / reference - 1) * 1e4`, with a different reference:
+
+| Unit | Print vs the open of its own 15s bucket (95% CI) | Print vs the open of its minute (95% CI) |
+|---|---|---|
+| open | 1.864 [1.151, 2.640] | 5.137 [3.742, 6.575] |
+| add | 2.545 [2.100, 3.019] | 5.896 [5.065, 6.710] |
+
+Section 15 measures 5.142 bps of adverse print across the fill minute from the 1m bar's open; the 15s re-run measures 5.137 bps from the same minute's first 15s bucket - a difference of 0.006 bps, which is the kline-versus-tape attribution of 18.2 seen at the level that matters. Of that 5.137 bps, 1.864 bps [CI 1.151, 2.640] happened inside the 15s bucket the print landed in and 3.272 bps earlier in that minute. The path after the print, in direction-adjusted bps from the fill:
+
+| Step | print_bucket_start+15s | print_bucket_start+30s | print_bucket_start+45s | print_bucket_start+60s |
+|---|---|---|---|---|
+| bps | -0.788 | -1.122 | -1.436 | -1.099 |
+| 95% CI | [-1.342, -0.218] | [-2.210, -0.142] | [-2.732, -0.260] | [-2.655, 0.561] |
+
+Each column is the close of a later 15s bucket than the one the print landed in; the key `print_bucket_start+60s` is the close of the print's own minute, so the elapsed time since the print is 0 to 15 seconds less than the key says. The path stays negative out to the end of that minute: the price kept drifting against the entry after the print, then recovered over the following horizons (18.5).
+
+### 18.4 The same 13 conditions, now measured at 15 seconds
+
+Primary block (CSV clock read as UTC+3), unit = open fills, 1000 matched random sets. **255 open fills are used and 0 are dropped**, against **255 and 0** in section 15 - the same set of entries, so the two blocks are the same trades viewed at two bar sizes:
+
+| Condition | Real | Random | Real-random | 95% CI | Holm p | Significant |
+|---|---|---|---|---|---|---|
+| bb_pctb | 0.5433 | 0.5068 | +0.0365 | [-0.0268, +0.0998] | 0.6923 | no |
+| rsi6 | 52.6209 | 50.3792 | +2.2417 | [-1.3465, +5.8299] | 0.5295 | no |
+| stoch_k | 52.4369 | 50.1156 | +2.3213 | [-3.4713, +8.1139] | 1.0000 | no |
+| stoch_d | 52.0971 | 50.1044 | +1.9927 | [-3.4786, +7.4639] | 1.0000 | no |
+| macd_hist_bps | 0.1504 | 0.0054 | +0.1450 | [-0.2813, +0.5712] | 1.0000 | no |
+| ema20_dist_bps | 1.3766 | 0.2558 | +1.1208 | [-1.6031, +3.8447] | 1.0000 | no |
+| ema50_dist_bps | 1.9052 | 0.6003 | +1.3049 | [-2.8995, +5.5092] | 1.0000 | no |
+| ema80_dist_bps | 2.1874 | 0.9292 | +1.2583 | [-3.9535, +6.4700] | 1.0000 | no |
+| ema200_dist_bps | 3.3615 | 2.2032 | +1.1584 | [-7.1504, +9.4672] | 1.0000 | no |
+| adx14 | 29.0637 | 25.8297 | +3.2341 | [+1.3795, +5.0886] | 0.0130 | yes |
+| daily_trend_ema20 | 0.3882 | 0.5795 | -0.1912 | [-0.3400, -0.0424] | 0.0130 | yes |
+| daily_dist_ema20_bps | 402.4930 | 555.1472 | -152.6542 | [-307.4749, +2.1665] | 0.0130 | yes |
+| daily_trend_c2c | 0.1765 | 0.0715 | +0.1050 | [-0.0651, +0.2751] | 0.9191 | no |
+
+Surviving Holm at 15 seconds: **adx14, daily_dist_ema20_bps, daily_trend_ema20**; at 1 minute (section 15): **adx14, daily_dist_ema20_bps, daily_trend_ema20**.
+
+The three daily conditions are computed from the daily close series resampled from the 1m file in both runs, so their real means are identical between sections 15 and 18 (yes); only the control distribution differs, because the control pool is drawn from 15s bars here. That is the expected shape of the comparison: the intraday conditions genuinely change with the bar size, the daily ones do not.
+
+### 18.5 Forward moves from the same four references
+
+References are anchored to the minute containing the print, exactly as in section 15, so the two blocks are directly comparable rather than merely similar.
+
+The row `actual_fill_price` reproduces section 15 exactly, to the last decimal (yes): the endpoint is the close of the same minute in both runs, so this is a direct check that the rebuilt tape is aligned with the 1m file.
+
+| Reference | Horizon | Real | Random | Real-random | 95% CI | Holm p | Significant |
+|---|---|---|---|---|---|---|---|
+| actual_fill_price | 1m | -1.137 | - | - | - | - | - |
+| actual_fill_price | 5m | -0.400 | - | - | - | - | - |
+| actual_fill_price | 15m | 2.556 | - | - | - | - | - |
+| actual_fill_price | 60m | 5.870 | - | - | - | - | - |
+| open_of_fill_minute | 1m | 3.998 | 0.169 | +3.829 | [+1.490, +6.168] | 0.0040 | yes |
+| open_of_fill_minute | 5m | 4.736 | 0.543 | +4.193 | [-0.945, +9.331] | 0.0390 | yes |
+| open_of_fill_minute | 15m | 7.694 | 1.414 | +6.280 | [-2.135, +14.696] | 0.0719 | no |
+| open_of_fill_minute | 60m | 11.005 | 6.551 | +4.455 | [-11.003, +19.913] | 0.4555 | no |
+| close_of_fill_minute | 1m | 0.899 | 0.062 | +0.837 | [-1.446, +3.120] | 0.9910 | no |
+| close_of_fill_minute | 5m | 2.531 | 0.464 | +2.067 | [-2.695, +6.829] | 0.9910 | no |
+| close_of_fill_minute | 15m | 3.613 | 1.384 | +2.229 | [-5.905, +10.362] | 0.9910 | no |
+| close_of_fill_minute | 60m | 7.231 | 6.448 | +0.783 | [-14.605, +16.171] | 0.9910 | no |
+| next_minute_open | 1m | 0.919 | 0.092 | +0.827 | [-1.457, +3.111] | 1.0000 | no |
+| next_minute_open | 5m | 2.551 | 0.494 | +2.057 | [-2.705, +6.819] | 1.0000 | no |
+| next_minute_open | 15m | 3.633 | 1.414 | +2.219 | [-5.910, +10.348] | 1.0000 | no |
+| next_minute_open | 60m | 7.251 | 6.477 | +0.774 | [-14.618, +16.166] | 1.0000 | no |
+
+### 18.6 What this changes, and what it does not
+
+The 15s bars answer the question section 15 left open. In summary:
+
+* the adverse print is real and its anatomy is now visible: the execution cost sits mostly before the print within the last minute and the price keeps moving against the entry for the rest of that minute;
+* the intraday indicator conditions measured at 15s do not rescue the entries as a timing signal - the family that survives Holm is `adx14`, `daily_dist_ema20_bps`, `daily_trend_ema20`;
+* the forward move measured from the fill price still turns positive only well after the print, which is what scaling into a working position looks like rather than what entry timing looks like.
+
+Limitations of this section: BTCUSDT and ETHUSDT cover only the days containing their entries plus one day of padding (the gap guards above make the missing days inert, but the control pools for those two symbols are correspondingly smaller); BNBUSDT has no candles at any resolution and stays excluded; and the daily context is shared with section 15 by design, so this section neither re-validates nor changes it.
