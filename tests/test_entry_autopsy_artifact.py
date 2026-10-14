@@ -32,6 +32,9 @@ SECTION_SOURCES = {
                                                      "entry_autopsy.json",
                                                      "entry_autopsy_15s.json",
                                                      "test_3_proper_results.json"],
+    "## 20. Maker-Entry Test (Amendment D)": ["amendment_d_results.json",
+                                              "amendment_c_results_v2.json",
+                                              "test_3_proper_results.json"],
 }
 
 

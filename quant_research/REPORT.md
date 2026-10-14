@@ -1648,3 +1648,129 @@ single gate designed for exactly this situation.
 
 The test does not support the claim that a profitable system was found under the
 pre-registered hurdles: the honest output of this round remains **NO EDGE**.
+## 20. Maker-Entry Test (Amendment D)
+
+**Registered source:** [PREREG section 11](quant_research/PREREG.md), Amendment D,
+committed before any simulation. **Runner:** `quant_research/maker_runner.py`.
+Artifact: `results/amendment_d_results.json`; 24 trials appended to `trials.csv`.
+
+**Timing disclosure.** Amendment D was committed before Amendment C's runner
+defect (section 19.0) was discovered, so clause D.1's citations of the C1 1h
+near-miss rows quote the defective 4-unit values. The registered *rules* of
+Amendment D - the 5 bps offset anchored to the measured taker cross, the 3-bar
+order lifetime, the strict-through fill rule, the cost schedules and the DSR
+count 1,450 - do not depend on those rows, the run therefore went ahead exactly
+as registered, and the defect's correction (section 19) does not touch anything
+in this section except the historical context.
+
+### 20.1 The pooled verdict on all 8 registered configurations
+
+Fill rates in the artifact are fractions inside its `pooled_oos_fill_rate` field;
+the prose below converts them to percentages.
+
+| Arm | N | M | Signals | Filled (OOS trades) | OOS net bps | OOS stress bps | Pooled PF | Worst stitched DD % | DSR p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| R1 | 20 | 10 | 427 | 412 | +16.59 | +12.73 | 1.39 | 22.5 | 0.9937 | FAIL |
+| R1 | 20 | 20 | 348 | 334 | +30.77 | +26.37 | 1.54 | 27.2 | 0.9889 | FAIL |
+| R1 | 55 | 10 | 300 | 281 | +2.36 | -5.70 | 1.20 | 24.7 | 1.0000 | FAIL |
+| R1 | 55 | 20 | 254 | 237 | +18.25 | +10.15 | 1.41 | 23.6 | 0.9987 | FAIL |
+| R0 | 20 | 10 | 0 | 419 | +11.58 | +7.58 | 1.39 | 22.7 | 0.9975 | FAIL |
+| R0 | 20 | 20 | 0 | 341 | +25.69 | +21.68 | 1.52 | 30.2 | 0.9936 | FAIL |
+| R0 | 55 | 10 | 0 | 288 | +6.31 | +2.31 | 1.33 | 26.4 | 1.0000 | FAIL |
+| R0 | 55 | 20 | 0 | 243 | +21.93 | +17.93 | 1.53 | 24.6 | 0.9970 | FAIL |
+
+**0 of 8 configurations clear all six section-7.5 hurdles, so the registered
+verdict is NO EDGE (maker variant) and the frozen ETH hold-out remains
+untouched** (`holdout_touched` is false in the artifact). The deflated Sharpe
+gate at 1,450 trials failed on all 8 rows - it is again the sole binding gate
+for the maker arm's N=20 band and failed on every configuration overall.
+
+### 20.2 What the maker conversion bought, per channel pair
+
+| N | M | R0 taker OOS bps | R1 maker OOS bps | Maker delta | R1 fill rate | Trades R0 -> R1 |
+|---|---|---|---|---|---|---|
+| 20 | 20 | +25.69 | +30.77 | +5.09 | 0.960 | 341 -> 334 |
+| 20 | 10 | +11.58 | +16.59 | +5.00 | 0.965 | 419 -> 412 |
+| 55 | 20 | +21.93 | +18.25 | -3.68 | 0.933 | 243 -> 237 |
+| 55 | 10 | +6.31 | +2.36 | -3.95 | 0.937 | 288 -> 281 |
+
+The maker conversion is worth almost exactly its theoretical fee saving on the
+N=20 band (+5.09 and +5.00 bps per trade, against a base schedule worth 5 bps of
+fee and 2 bps of slippage saved): the resting limit fills on 96.0 to 96.5 percent
+of signals within the 3-hour lifetime, adverse selection costs little at fast
+breakouts, and missed fills are 4 to 5 percent of signals. On the N=55 band the
+direction INVERTS: the delta is -3.68 and -3.95 bps and the fill rate drops to
+93.3 to 93.7 percent - slower breakouts revert to the limit, so the endogenous
+fills arrive precisely when price comes back, which is textbook adverse
+selection. The maker entry is a real, measured cost improvement on fast
+breakout configurations only.
+
+### 20.3 The near-miss again: five of six hurdles, the same single gate short
+
+| Config | OOS net bps | OOS stress bps | Pooled PF | DSR p | Worst stitched DD % | E2E hurdle count clear |
+|---|---|---|---|---|---|---|
+| R1 N=20 M=10 | +16.59 | +12.73 | 1.39 | 0.9937 | 22.5 | 5 of 5 |
+| R1 N=20 M=20 | +30.77 | +26.37 | 1.54 | 0.9889 | 27.2 | 5 of 5 |
+| R1 N=55 M=20 | +18.25 | +10.15 | 1.41 | 0.9987 | 23.6 | 5 of 5 |
+
+| Asset | Maker OOS net bps | Taker OOS net bps | Stitched DD % |
+|---|---|---|---|
+| R1 20/20 SOLUSDT | +36.35 | +28.83 | 23.7 |
+| R1 20/20 BTCUSDT | +2.07 | -3.77 | 25.6 |
+| R1 20/20 ETHUSDT | +56.40 | +55.51 | 27.2 |
+| R1 20/10 SOLUSDT | +14.38 | +6.49 | 20.9 |
+| R1 20/10 BTCUSDT | +4.14 | +0.23 | 20.5 |
+| R1 20/10 ETHUSDT | +32.89 | +29.88 | 22.5 |
+
+Amendment D's best configuration (R1 N=20/M=20: +30.77 bps pooled OOS, stress
++26.37, PF 1.54, worst stitched drawdown 27.2% - every hurdle passed except the
+deflated Sharpe p = 0.9889 at 1,450 trials) is a materially improved version of
+the same near-miss section 19 registered: better execution moved OOS expectancy
+from +25.69 to +30.77 bps, but the per-trade Sharpe that the deflated test
+scores is still nowhere near the expected maximum of 1,450 trials' best. A
+p-value of 0.99 on the best of 1,450 configurations is the test working - the
+direction that survives every return, drawdown, and profit-factor gate still
+has no statistical identity beyond luck.
+
+### 20.4 Cross-runner reproducibility check (built into the registration)
+
+| Config (asset N/M) | R0 taker OOS bps | Amendment C corrected C1 OOS bps | OOS trades R0 / C1 |
+|---|---|---|---|
+| BTCUSDT 20/10 | +0.23 | +0.23 | 141 / 141 |
+| BTCUSDT 20/20 | -3.77 | -3.77 | 118 / 118 |
+| BTCUSDT 55/10 | -11.75 | -11.75 | 99 / 99 |
+| BTCUSDT 55/20 | -5.64 | -5.64 | 84 / 84 |
+| ETHUSDT 20/10 | +29.88 | +29.88 | 129 / 129 |
+| ETHUSDT 20/20 | +55.51 | +55.51 | 104 / 104 |
+| ETHUSDT 55/10 | +48.71 | +48.71 | 87 / 87 |
+| ETHUSDT 55/20 | +56.25 | +56.25 | 77 / 77 |
+| SOLUSDT 20/10 | +6.49 | +6.49 | 149 / 149 |
+| SOLUSDT 20/20 | +28.83 | +28.83 | 119 / 119 |
+| SOLUSDT 55/10 | -12.33 | -12.33 | 102 / 102 |
+| SOLUSDT 55/20 | +17.94 | +17.94 | 82 / 82 |
+
+The taker yardstick arm R0 is by construction the same system as the corrected
+section-19 C1 rows, and the table above shows it: every one of the 12
+asset-channel rows reproduces the committed `amendment_c_results_v2.json`
+expectancies and trade counts exactly, inside the same runner that produced the
+maker rows. The maker-vs-taker deltas are therefore code-identical
+attributions, not comparisons between two different engines.
+
+### 20.5 Where that leaves the research
+
+* The registered candidate set is again exhausted: 24 configurations, logged,
+  none re-tuned, none dropped for its result, hold-out still never touched
+  across the whole research program (sections 19 and 20).
+* The measured findings this round adds: the daily-trend filter improves 11 of
+  12 pooled pairings at 1 unit (section 19.3); the maker conversion is worth
+  +5 bps per trade on N=20 breakouts and costs 4 bps per trade on N=55; and
+  every surviving configuration, in both rounds, dies on the same deflated
+  Sharpe gate.
+* Per Amendment D's anti-garden-of-forking-paths clause (section 11 D.4), a
+  failed round does not license re-registering the same skeleton with a
+  different offset or lifetime: any further variant needs a new amendment,
+  committed with its own DSR penalty, before it runs.
+
+The honest output of this round remains **NO EDGE**, now established over 96
+distinct registered configurations spanning three pre-registered amendment
+rounds, with execution improvements priced by measurement rather than assumed.
