@@ -1774,3 +1774,43 @@ attributions, not comparisons between two different engines.
 The honest output of this round remains **NO EDGE**, now established over 96
 distinct registered configurations spanning three pre-registered amendment
 rounds, with execution improvements priced by measurement rather than assumed.
+## 21. Funding-Sign Test (Amendment E)
+
+**Registered source:** [PREREG section 12](quant_research/PREREG.md), Amendment E, committed before any simulation (`92340e7`). **Evidence basis: `results/funding_carry_evidence.json`** (IS-window-only descriptive probe, committed `c3ae105` BEFORE the amendment was written). **Runner:** `quant_research/funding_runner.py`. Artifact: `results/amendment_e_results.json`; 6 trials appended to `trials.csv`.
+
+This round registered a NEW signal family by construction: the settled funding rate itself, crowd side (long while r > 0, short while r < 0), with no price condition, channel, oscillator or daily filter anywhere in the entry/exit rule. The maker arm imports Amendment D's offset/lifetime/fill mechanics verbatim (E.2).
+
+**Runner-defect disclosure.** Three defects were found and fixed during the pre-run smoke test, BEFORE the registered run: (1) the entry side was inverted relative to the registered pro-side rule (the flip check and the entry disagreed, producing a per-settlement flip loop); (2) the stop distance used the action bar's own not-yet-closed ATR (lookahead) and now uses the settlement bar's ATR, complete exactly at the action instant; (3) the maker/taker wiring compare used the arm label instead of the mechanism, so the first draft silently ran both arms as taker. No threshold, offset, lifetime or rule value was changed by any of the fixes; the registered run below is the fixed runner, and the committed evidence numbers were never edited.
+
+### 21.1 The six registered configurations
+
+| Arm | Asset | IS tr | IS exp | IS stress exp | OOS tr | OOS exp | OOS stress exp | Stops OOS | Stitched DD % |
+|---|---|---|---|---|---|---|---|---|---|---|----|
+| U1_taker | SOLUSDT | 346 | +8.98 | +4.98 | 407 | -17.40 | -21.40 | 182 | 44.4 |
+| U1_taker | BTCUSDT | 247 | +5.33 | +1.32 | 328 | -35.96 | -39.96 | 174 | 65.1 |
+| U1_taker | ETHUSDT | 172 | -32.77 | -36.77 | 318 | -0.22 | -4.22 | 137 | 46.9 |
+| U2_maker | SOLUSDT | 342 | +15.58 | +13.57 | 403 | -11.60 | -13.31 | 179 | 36.8 |
+| U2_maker | BTCUSDT | 243 | +9.13 | +6.98 | 315 | -34.15 | -39.33 | 167 | 60.1 |
+| U2_maker | ETHUSDT | 169 | -21.90 | -23.90 | 315 | +3.82 | -0.33 | 138 | 42.4 |
+
+In-sample the family behaved as the evidence probe predicted (positive taker IS expectancy on SOL and BTC; the maker conversion is again worth roughly its 5 bps fee/execution saving, +6.60 bps on SOL IS). Out-of-sample it does not survive: every asset is negative OOS under the base schedule except ETH's marginal +0.22 (taker) / +3.82 (maker), and the stress schedule is negative everywhere. The maker cancels (17 OOS on SOL) show the passive entry still fills ~96 percent of its signals.
+
+### 21.2 The pooled per-arm verdict
+
+| Arm | Pooled IS exp | Pooled OOS exp | Pooled OOS stress exp | Pooled OOS trades | Pooled PF | Worst stitched DD % | DSR p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|----|
+| U1_taker | -1.59 | -17.99 | -21.99 | 1053 | 1.068 | 65.1 | 1.0000 | FAIL |
+| U2_maker | +5.10 | -13.77 | -17.29 | 1033 | 1.047 | 60.1 | 1.0000 | FAIL |
+
+**0 of 6 configurations, and neither pooled arm, survive: the registered verdict is NO EDGE (funding-sign variant) and the frozen ETH hold-out remains untouched (`holdout_touched` is false in the artifact).** Both arms fail five of the six section-7.5 hurdles verbatim; only the pooled trade-count hurdle clears.
+
+### 21.3 What this round establishes about the funding signal
+
+* The funding sign IS a real, measured signal - the committed IS decomposition shows the crowd side earning a positive price leg (+20 to +33 bps per cycle) against the funding it pays. But the registered risk layer prices stop-outs (137-182 per asset per window) that the stop-free probe did not, and once they are priced the IS pooled expectancy collapses to near zero for the taker arm.
+* The effect does not survive out-of-sample at all under this registration: pooled OOS expectancy is negative in both arms and under both schedules. Under E.4, inverting the rule, adding an |r| threshold, or re-timing any hold requires a new committed amendment with its own DSR penalty - none is licensed by this number.
+* The maker conversion is positive here as in Amendment D (+5 bps class), but a cost overlay cannot rescue a negative-expectancy signal.
+
+### 21.4 Where the program stands
+
+* 102 distinct registered configurations have now been executed across four pre-registration rounds (sections 7, 10, 11, 12), all logged, none re-tuned after seeing results; the ETH hold-out has never been opened.
+* Every family tested so far - classic Turtle, Donchian with a daily filter, maker execution, funding-sign positioning - meets the same wall: either the expectancy is not positive out-of-sample, or it is positive and dies on the deflated Sharpe gate. That combination is the program's honest output and the commitment governs what may be tried next.

@@ -35,6 +35,8 @@ SECTION_SOURCES = {
     "## 20. Maker-Entry Test (Amendment D)": ["amendment_d_results.json",
                                               "amendment_c_results_v2.json",
                                               "test_3_proper_results.json"],
+    "## 21. Funding-Sign Test (Amendment E)": ["amendment_e_results.json",
+                                              "funding_carry_evidence.json"],
 }
 
 
