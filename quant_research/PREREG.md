@@ -426,3 +426,116 @@ the stress trade-through (1 bps) are fixed HERE and may not be re-chosen after s
 results. A failed round does not license a second round with a different offset or
 lifetime: any such variant is a new amendment, committed before it runs, with its own
 DSR penalty. Previously touched windows remain burned per section 7.4.
+## 12. Amendment E - dated, appended (2026-10-14); committed BEFORE running any simulation
+
+**Status.** Appended and committed strictly BEFORE any funding-sign simulation runs.
+The candidate design below is derived only from the evidence artifact committed at
+`c3ae105` (`results/funding_carry_evidence.json`), which measures the committed raw
+funding series and 1m tape on the IN-SAMPLE window exclusively and runs no strategy.
+This is a NEW signal family, not a variant of the section-7/10/11 skeleton: the
+signal is the settled funding rate itself and no price condition enters the entry
+rule at all, so section C.4/D.4's clauses (no intraday filter, no re-chosen maker
+offset) are satisfied by construction.
+
+### E.1 Why this family, in terms of what the evidence measured
+
+1. **The funding sign is a measured signal - with the opposite sign to the naive
+   carry trade.** The evidence probe (512 flip cycles pooled, IS only, no stop/size
+   layer, 1m fills) decomposed the contrarian flip cycle (long while funding < 0,
+   short while > 0): its price leg averages -27.58 bps per cycle pooled and its
+   funding leg only +6.55, for a gross of -27.58 - net -41.58 taker / -36.58 maker.
+   Fading the crowd's funding side loses.
+2. **The mirror side passes every pre-cost sanity check on IS, in all three
+   assets.** The pro-side cycle (long while funding > 0, short while < 0 - exactly
+   the negative decomposition of the same cycles) averages gross +28.26 (SOL) /
+   +32.80 (BTC) / +19.95 (ETH) bps per cycle, so against 14 bps taker RT and 9 bps
+   maker RT every asset's IS net expectancy is positive: +14.26 / +18.80 / +5.95
+   taker and +19.26 / +23.80 / +10.95 maker. Cycle holds are long (pooled mean
+   ~106 h), consistent with section C.1.2's measured conclusion that gross edge per
+   trade must approach or exceed ~20 bps: the pro-side cycle's gross clears that
+   bar on IS.
+3. **Cycle counts are feasible.** IS produced 252 / 141 / 119 flip cycles per
+   asset (sign persistence 0.816 / 0.898 / 0.914); a similar rate over the 12-month
+   OOS window supports a plausible >= 150 pooled OOS trades without any invented
+   re-entry rule.
+4. **The risk layer stays the committed unchanged section-7.2 machinery.** The
+   real account died through overtrading (C.1.4), not through any single bet.
+   Pro-side funding positioning without a stop would replicate that failure mode;
+   the registered rules therefore retain 1%-risk sizing, the 2.0 x ATR(55, 1h)
+   intrabar stop with the stop-first pessimistic fallback (A.1) and the 2.0x
+   leverage cap verbatim.
+
+### E.2 Exactly what is registered
+
+* **Signal (the only discretionary input).** At each funding settlement T with
+  settled rate r_T: the target side is LONG while r_T > 0 and SHORT while r_T < 0
+  (the crowd's side, the mirror of the probe). r_T = 0 produces no target and no
+  flip; positions simply continue. No price condition, channel or oscillator is
+  admitted; the daily-trend filter of Amendment C/D is NOT used (it belongs to the
+  breakout family and would merely blur the attribution).
+* **Actionable timing (zero lookahead, engine-consistent).** The rate settled at T
+  is actionable strictly after T: entries, flip exits and re-entries all execute at
+  the open of the first 1h bar stamped strictly after T. This is one hour later
+  than the evidence probe's strictly-after-1m fills; the probe numbers are the
+  design basis and the RUNNER is authoritative, and this timing is coarser, not
+  kinder. Funding accrual follows the committed engine convention: a position held
+  at the start of the bar containing settlement T pays dir x (-r_T) notional bps
+  (long: -r_T; short: +r_T), so a position entered after T pays at the NEXT
+  settlement it is held into - the rate is never known before it accrues.
+* **Entry.** U1 (taker): enter at that bar open, 5 bps fee + 2 bps slippage entry
+  (section 7.3). U2 (maker): a LIMIT order at that open moved 5 bps passively -
+  the D.2 offset and lifetime are IMPORTED VERBATIM, not re-chosen (K = 3 closed
+  1h bars, cancel, stay flat until the next settlement, re-arm then if that
+  settlement's sign still maps to the pro-side); fills only when the 1m tape
+  trades STRICTLY THROUGH the limit, at the limit price, 2 bps maker fee, zero
+  entry slippage. Exits are taker in both arms.
+* **Exits.** (a) FLIP: the first settlement T' with r_T' opposite in sign to the
+  open position closes it at the open of the first 1h bar strictly after T'; that
+  same bar open simultaneously opens the opposite side (one round-trip of
+  friction). (b) INTRABAR STOP: 2.0 x ATR(55, 1h) from the entry price, evaluated
+  on 1m sub-bars from the fill time on the fill bar and by the committed
+  stop-first pessimistic fallback on later bars (A.1); the stop-out is flat until
+  the next settlement and re-enters at the first 1h open strictly after it if
+  that settlement's sign still maps to the pro-side for that side. There is no
+  channel D-exit of any kind.
+* **Sizing, ATR and leverage (verbatim section 7.2).** qty = 1% of equity / stop
+  distance, stop distance = 2.0 x ATR(55) of the same asset's 1h bars
+  (`prepare_turtle_features` N=55, M=55; the channel arrays are computed but
+  unused), 2.0x leverage cap, $10 minimum notional, strictly 1 unit.
+* **Cost schedules.** U1: 14 bps RT base / 18 bps stress (section 7.3). U2: the
+  D.2 schedule - 9 bps RT base / 11 bps stress, stress fill requiring 1 bp of
+  extra trade-through.
+* **6 new configurations total are registered: 3 assets x U1 + 3 assets x U2
+  (1h only, all data windows as in section 7.4). Nothing is searched beyond this
+  grid; no threshold may be re-tuned; no configuration may be dropped for its
+  result; all 6 are reported regardless of outcome. The pooled verdict is taken
+  PER ARM, pooling the three assets' OOS trades (the same pooling D.3 uses).**
+* **Trials and DSR:** all 6 are appended to `trials.csv` (7.7). The deflated
+  Sharpe hurdle uses N_trials = 1,450 (D.2) + 6 = **1,456**, computed on the pooled
+  OOS per-trade Sharpe at T = pooled OOS trade count, the same canonical
+  computation as C.2/D.2.
+
+### E.3 Decision rule (fixed before running)
+
+The six hurdles of C.3/D.3 apply verbatim to the pooled per-arm verdict:
+(1) pooled OOS net expectancy >= +5.0 bps after the base schedule and funding;
+(2) pooled OOS expectancy > 0.0 bps under the stress schedule; (3) pooled OOS
+trades >= 150; (4) DSR p-value < 0.05 at N_trials = 1,456; (5) max drawdown < 30%
+on stitched equity (continuous 2024-01-01 to 2026-03-31 per asset, verdict the
+MAXIMUM of the three); (6) pooled OOS profit factor >= 1.25.
+
+Consequences, fixed now: if no arm clears all six the verdict is
+**NO EDGE (funding-sign variant)** and no hold-out is touched. If one or both arms
+clear all six, the ETH 2026-04-01+ frozen veto hold-out is accessed exactly once,
+at frozen parameters, per section 7.4. A NO EDGE result is accepted as a
+successful scientific conclusion.
+
+### E.4 Anti-garden-of-forking-paths clause
+
+The pro-side direction, the settlement-driven action timing, the imported 5 bps
+offset / K = 3 lifetime / strict-through rule and the stop/sizing layer are fixed
+HERE and may not be re-chosen after seeing results. A failed round does not
+license inverting this rule, adding a threshold on |r_T|, or shortening/lengthening
+any hold: any such variant is a new amendment, committed before it runs, with its
+own DSR penalty. Previously touched windows remain burned per section 7.4, and
+the ETH hold-out stays untouched until a pooled verdict clears all six hurdles.
