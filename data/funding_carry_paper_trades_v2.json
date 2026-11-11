@@ -5269,5 +5269,13 @@
     "perp_equity": 87344.88867273493,
     "maintenance_margin": 458.65244,
     "combined_equity": 202007.99867273495
+  },
+  {
+    "timestamp": "2026-11-11T22:39:23.801383+00:00",
+    "event": "mark",
+    "mark_price": 74141.8,
+    "perp_equity": 87088.20867273492,
+    "maintenance_margin": 459.67916,
+    "combined_equity": 202007.99867273495
   }
 ]
