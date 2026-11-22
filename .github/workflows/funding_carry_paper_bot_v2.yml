@@ -30,8 +30,8 @@ on:
         description: 'isolated or cross'
         required: false
         default: 'isolated'
-  schedule:
-    - cron: '10 0,8,16 * * *'  # 5 min after v1, to keep the two runs' log ordering clear
+  # schedule:
+  #   - cron: '10 0,8,16 * * *'  # 5 min after v1, to keep the two runs' log ordering clear
 
 permissions:
   contents: write

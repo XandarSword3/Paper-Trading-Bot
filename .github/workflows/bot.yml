@@ -1,9 +1,9 @@
 name: BTC Trading Bot
 
 on:
-  schedule:
-    # V4 runs every hour (fast strategy)
-    - cron: '5 * * * *'
+  # schedule:
+  #   # V4 runs every hour (fast strategy) - DISABLED: failed readiness gate (-28.7% loss, Sharpe -1.36)
+  #   - cron: '5 * * * *'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:

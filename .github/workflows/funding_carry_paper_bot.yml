@@ -15,10 +15,10 @@ name: Funding Carry Paper Track
 
 on:
   workflow_dispatch:
-  schedule:
-    # Funding settles at 00:00 / 08:00 / 16:00 UTC on Binance & OKX.
-    # Run a few minutes after each to avoid any settlement-boundary race.
-    - cron: '5 0,8,16 * * *'
+  # schedule:
+  #   # Funding settles at 00:00 / 08:00 / 16:00 UTC on Binance & OKX.
+  #   # Run a few minutes after each to avoid any settlement-boundary race.
+  #   - cron: '5 0,8,16 * * *'
 
 permissions:
   contents: write

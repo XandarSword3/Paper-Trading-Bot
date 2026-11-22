@@ -51,45 +51,112 @@ SLIPPAGE_BPS = 3.0
 MAX_DRAWDOWN_GUARD = 0.30
 
 
-class BybitDirectClient:
-    """Direct HTTP client for Bybit public market data without external pybit requirement."""
+class ResilientMarketClient:
+    """Direct HTTP market client fetching from Bybit with automatic OKX fallback for cloud/US runners."""
 
-    def __init__(self, base_url: str = "https://api.bybit.com") -> None:
-        self.base_url = base_url
+    def __init__(self, bybit_url: str = "https://api.bybit.com", okx_url: str = "https://www.okx.com") -> None:
+        self.bybit_url = bybit_url
+        self.okx_url = okx_url
         self.session = requests.Session()
+        self.provider = "bybit"
+        try:
+            r = self.session.get(f"{self.bybit_url}/v5/market/tickers?category=linear&limit=1", timeout=5)
+            if r.status_code == 200 and "result" in r.json():
+                self.provider = "bybit"
+                logger.info("Market data provider: Bybit Linear API")
+            else:
+                self.provider = "okx"
+                logger.info("Market data provider: OKX API (Bybit returned %s)", r.status_code)
+        except Exception as e:
+            self.provider = "okx"
+            logger.info("Market data provider: OKX API (Bybit probe failed: %s)", e)
+
+    def _to_okx_inst(self, symbol: str) -> str:
+        base = symbol.replace("USDT", "")
+        if base.startswith("1000"):
+            base = base[4:]
+        return f"{base}-USDT-SWAP"
 
     def get_tickers(self) -> Dict[str, dict]:
-        url = f"{self.base_url}/v5/market/tickers"
-        params = {"category": "linear"}
+        if self.provider == "bybit":
+            try:
+                url = f"{self.bybit_url}/v5/market/tickers"
+                params = {"category": "linear"}
+                resp = self.session.get(url, params=params, timeout=15)
+                resp.raise_for_status()
+                data = resp.json().get("result", {}).get("list", [])
+                if data:
+                    return {item["symbol"]: item for item in data if "symbol" in item}
+            except Exception as e:
+                logger.warning("Bybit tickers failed (%s), falling back to OKX...", e)
+                self.provider = "okx"
+
+        # OKX fallback
+        url = f"{self.okx_url}/api/v5/market/tickers"
+        params = {"instType": "SWAP"}
         resp = self.session.get(url, params=params, timeout=15)
         resp.raise_for_status()
-        data = resp.json().get("result", {}).get("list", [])
-        return {item["symbol"]: item for item in data if "symbol" in item}
+        data = resp.json().get("data", [])
+        result = {}
+        for item in data:
+            inst = item.get("instId", "")
+            if inst.endswith("-USDT-SWAP"):
+                base = inst.replace("-USDT-SWAP", "")
+                sym = f"{base}USDT"
+                result[sym] = {
+                    "symbol": sym,
+                    "lastPrice": item.get("last", "0.0"),
+                    "turnover24h": item.get("volCcy24h", "0.0"),
+                }
+                if base in ("PEPE", "SHIB", "FLOKI", "BONK", "SATS"):
+                    result[f"1000{base}USDT"] = result[sym]
+        return result
 
     def get_daily_klines(self, symbol: str, limit: int = 500) -> pd.Series:
-        url = f"{self.base_url}/v5/market/kline"
-        params = {"category": "linear", "symbol": symbol, "interval": "D", "limit": limit}
-        resp = self.session.get(url, params=params, timeout=15)
-        resp.raise_for_status()
-        raw = resp.json().get("result", {}).get("list", [])
-        if not raw:
+        if self.provider == "bybit":
+            try:
+                url = f"{self.bybit_url}/v5/market/kline"
+                params = {"category": "linear", "symbol": symbol, "interval": "D", "limit": limit}
+                resp = self.session.get(url, params=params, timeout=15)
+                resp.raise_for_status()
+                raw = resp.json().get("result", {}).get("list", [])
+                if raw:
+                    df = pd.DataFrame(raw, columns=["start", "open", "high", "low", "close", "volume", "turnover"])
+                    df["timestamp"] = pd.to_datetime(df["start"].astype("int64"), unit="ms", utc=True)
+                    df["close"] = pd.to_numeric(df["close"], errors="coerce")
+                    df = df.dropna(subset=["close"]).sort_values("timestamp")
+                    today_utc = pd.Timestamp(datetime.now(timezone.utc).date(), tz="UTC")
+                    df = df[df["timestamp"] < today_utc]
+                    if not df.empty:
+                        return df.set_index("timestamp")["close"]
+            except Exception as e:
+                logger.warning("Bybit klines failed for %s (%s), trying OKX...", symbol, e)
+
+        # OKX fallback
+        try:
+            inst_id = self._to_okx_inst(symbol)
+            url = f"{self.okx_url}/api/v5/market/candles"
+            params = {"instId": inst_id, "bar": "1D", "limit": min(limit, 300)}
+            resp = self.session.get(url, params=params, timeout=15)
+            resp.raise_for_status()
+            raw = resp.json().get("data", [])
+            if not raw:
+                return pd.Series(dtype=float)
+            df = pd.DataFrame(raw, columns=["start", "open", "high", "low", "close", "vol", "volCcy", "volCcyQuote", "confirm"])
+            df["timestamp"] = pd.to_datetime(df["start"].astype("int64"), unit="ms", utc=True)
+            df["close"] = pd.to_numeric(df["close"], errors="coerce")
+            df = df.dropna(subset=["close"]).sort_values("timestamp")
+            today_utc = pd.Timestamp(datetime.now(timezone.utc).date(), tz="UTC")
+            df = df[df["timestamp"] < today_utc]
+            if df.empty:
+                return pd.Series(dtype=float)
+            return df.set_index("timestamp")["close"]
+        except Exception as e:
+            logger.warning("OKX klines also failed for %s: %s", symbol, e)
             return pd.Series(dtype=float)
 
-        # Bybit kline columns: [startTime, open, high, low, close, volume, turnover]
-        df = pd.DataFrame(raw, columns=["start", "open", "high", "low", "close", "volume", "turnover"])
-        df["timestamp"] = pd.to_datetime(df["start"].astype("int64"), unit="ms", utc=True)
-        df["close"] = pd.to_numeric(df["close"], errors="coerce")
-        df = df.dropna(subset=["close"]).sort_values("timestamp")
 
-        # Exclude today's incomplete candle
-        today_utc = pd.Timestamp(datetime.now(timezone.utc).date(), tz="UTC")
-        df = df[df["timestamp"] < today_utc]
-        if df.empty:
-            return pd.Series(dtype=float)
-        return df.set_index("timestamp")["close"]
-
-
-def fetch_panel(client: BybitDirectClient, symbols: List[str]) -> pd.DataFrame:
+def fetch_panel(client: ResilientMarketClient, symbols: List[str]) -> pd.DataFrame:
     series_map: Dict[str, pd.Series] = {}
     for sym in symbols:
         try:
@@ -100,7 +167,7 @@ def fetch_panel(client: BybitDirectClient, symbols: List[str]) -> pd.DataFrame:
             logger.warning("Failed kline fetch for %s: %s", sym, err)
 
     if not series_map:
-        raise RuntimeError("No candle data fetched from Bybit")
+        raise RuntimeError("No candle data fetched from market data client")
 
     panel = pd.DataFrame(series_map).sort_index()
     logger.info("Panel fetched: %d symbols x %d daily bars (last close %s)",
@@ -163,7 +230,7 @@ def main() -> None:
     parser.add_argument("--capital", type=float, default=10000.0)
     args = parser.parse_args()
 
-    client = BybitDirectClient()
+    client = ResilientMarketClient()
     all_tickers = client.get_tickers()
 
     # Filter universe by liquidity

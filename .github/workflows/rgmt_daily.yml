@@ -41,4 +41,5 @@ jobs:
           git config --local user.name "GitHub Action [RGMT]"
           git add data/rgmt_paper_state.json data/rgmt_targets.csv 2>/dev/null || true
           git diff --staged --quiet || git commit -m "RGMT daily paper rebalance: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin ${{ github.ref_name }} || true
           git push origin HEAD:${{ github.ref_name }} || git push origin master
