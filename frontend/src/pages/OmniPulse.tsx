@@ -307,6 +307,37 @@ export default function OmniPulse() {
                 </span>
               </div>
             </div>
+
+            {/* Institutional 5-Criterion Scorecard */}
+            {killGate?.criteria && (
+              <div style={{ marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 14 }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff', marginBottom: 10 }}>
+                  Institutional Alpha Verification Criteria Scorecard
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ color: '#8b949e', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Criterion</th>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Pre-Registered Threshold</th>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Empirical Value</th>
+                      <th style={{ textAlign: 'right', padding: '6px 8px' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(killGate.criteria).map(([k, c]: [string, any]) => (
+                      <tr key={k} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '8px', fontWeight: 600, color: '#e6edf3' }}>{c.name}</td>
+                        <td style={{ padding: '8px', color: '#8b949e' }}>{c.threshold}</td>
+                        <td style={{ padding: '8px', fontFamily: 'monospace', color: c.passed ? '#00ff88' : '#ff7b72' }}>{c.value}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>
+                          <Badge tone={c.passed ? 'good' : 'bad'}>{c.passed ? 'PASS' : 'FAILING'}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
 
           {/* Research Architecture Metrics Grid */}
@@ -661,7 +692,7 @@ export default function OmniPulse() {
                   ${feesPaid.toFixed(2)}
                 </div>
                 <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
-                  5 bps taker + 3 bps slippage
+                  11.0 bps VIP0 taker + real measured spread
                 </div>
               </Card>
             </Span>

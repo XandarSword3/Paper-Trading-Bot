@@ -208,33 +208,118 @@ def moving_block_bootstrap_by_time(
     }
 
 
-def evaluate_institutional_kill_gate(bootstrap_res: dict) -> dict:
-    """Applies the strict institutional kill criterion:
+def evaluate_institutional_kill_gate(
+    bootstrap_res: dict,
+    df: Optional[pd.DataFrame] = None,
+    horizons_summary: Optional[dict] = None,
+    min_required_episodes: int = 300,
+    min_required_blocks: int = 50,
+) -> dict:
+    """Applies the complete institutional 5-criterion kill gate.
 
-    The LOWER bound of the 95% Bootstrap CI on the primary 5m horizon MUST clear 0.0 bps Net.
+    A strategy can NEVER proceed on an interim look. It requires:
+    1. Sample Adequacy: N >= 300 independent primary episodes and >= 50 time blocks (covering >= 7 days).
+    2. Positive Median: 5m Median Net Return > 0.0 bps (rules out right-skewed lottery pumps).
+    3. Leave-One-Coin-Out (LOCO): Mean Net Return > 0.0 bps after dropping the single top-performing coin.
+    4. Multi-Horizon Sign Consistency: 1m, 5m, and 15m medians must all be positive.
+    5. Bootstrap CI Lower Bound: Lower 95% Bootstrap CI bound > 0.0 bps Net.
     """
-    if "error" in bootstrap_res:
-        return {
-            "decision": "COLLECTING_SAMPLE",
-            "reason": bootstrap_res["error"],
-            "cleared": False,
-        }
+    n_primary = bootstrap_res.get("n_primary_episodes", 0) if "error" not in bootstrap_res else 0
+    n_blocks = bootstrap_res.get("n_blocks", 0) if "error" not in bootstrap_res else 0
+    lower_ci = bootstrap_res.get("net_95_ci_bps", [0.0, 0.0])[0] if "error" not in bootstrap_res else None
 
-    lower_ci = bootstrap_res["net_95_ci_bps"][0]
-    cleared = lower_ci > 0.0
-    decision = "PROCEED_TO_MAKER_EXECUTION_ENGINEERING" if cleared else "KILL_STRATEGY"
+    # Compute empirical median on primary 5m
+    median_5m = None
+    loco_mean = None
+    loco_top_coin = None
+    if df is not None and not df.empty and "5m" in df.columns:
+        prims = df[(df.get("is_primary_episode", True) == True) & (~df.get("is_control", False))]
+        r5 = prims["5m"].dropna().to_numpy()
+        if len(r5) > 0:
+            median_5m = float(np.median(r5))
+            n_primary = len(r5)
 
-    statement = (
-        f"Primary 5m Horizon 95% Bootstrap CI is [{bootstrap_res['net_95_ci_bps'][0]:+.2f}, {bootstrap_res['net_95_ci_bps'][1]:+.2f}] bps net. "
-        f"Lower bound ({lower_ci:+.2f} bps) {'CLEARS' if cleared else 'FAILS TO CLEAR'} break-even (> 0.0 bps net)."
-    )
+        # LOCO Analysis
+        if "symbol" in prims.columns and len(r5) >= 5:
+            coin_sums = prims.groupby("symbol")["5m"].sum()
+            if not coin_sums.empty:
+                loco_top_coin = str(coin_sums.idxmax())
+                no_top = prims[prims["symbol"] != loco_top_coin]["5m"].dropna().to_numpy()
+                loco_mean = float(np.mean(no_top)) if len(no_top) > 0 else 0.0
+
+    # Horizon consistency
+    h_consistent = False
+    med_1m, med_15m = None, None
+    if horizons_summary and isinstance(horizons_summary, dict):
+        med_1m = horizons_summary.get("1m", {}).get("median_net_bps")
+        med_5m_sum = horizons_summary.get("5m", {}).get("median_net_bps")
+        med_15m = horizons_summary.get("15m", {}).get("median_net_bps")
+        if med_1m is not None and med_5m_sum is not None and med_15m is not None:
+            h_consistent = bool(med_1m > 0 and med_5m_sum > 0 and med_15m > 0)
+
+    # Criteria scorecard
+    criteria = {
+        "sample_adequacy": {
+            "name": f"Sample Adequacy (N ≥ {min_required_episodes}, Blocks ≥ {min_required_blocks})",
+            "threshold": f"N ≥ {min_required_episodes}, Blocks ≥ {min_required_blocks}",
+            "value": f"N = {n_primary}, Blocks = {n_blocks}",
+            "passed": bool(n_primary >= min_required_episodes and n_blocks >= min_required_blocks),
+        },
+        "positive_median": {
+            "name": "Positive Median at 5m Horizon",
+            "threshold": "Median Net > 0.0 bps",
+            "value": f"{median_5m:+.2f} bps" if median_5m is not None else "Pending",
+            "passed": bool(median_5m is not None and median_5m > 0.0),
+        },
+        "leave_one_coin_out": {
+            "name": f"Leave-One-Coin-Out (LOCO) Robustness (Drop {loco_top_coin or 'Top Coin'})",
+            "threshold": "Mean Net > 0.0 bps without top coin",
+            "value": f"{loco_mean:+.2f} bps (Ex-{loco_top_coin})" if loco_mean is not None else "Pending",
+            "passed": bool(loco_mean is not None and loco_mean > 0.0),
+        },
+        "horizon_consistency": {
+            "name": "Multi-Horizon Consistency (1m, 5m, 15m Medians > 0)",
+            "threshold": "1m > 0, 5m > 0, 15m > 0",
+            "value": f"1m: {med_1m or 0:+.1f}, 5m: {median_5m or 0:+.1f}, 15m: {med_15m or 0:+.1f} bps",
+            "passed": h_consistent,
+        },
+        "bootstrap_ci_lower": {
+            "name": "95% Temporal Block Bootstrap Lower CI Bound",
+            "threshold": "CI_lower > 0.0 bps Net",
+            "value": f"{lower_ci:+.2f} bps" if lower_ci is not None else "Pending (<50 blocks)",
+            "passed": bool(lower_ci is not None and lower_ci > 0.0 and n_blocks >= min_required_blocks),
+        },
+    }
+
+    # Strict Gate Verdict
+    is_interim = n_primary < min_required_episodes or n_blocks < min_required_blocks
+    all_passed = all(c["passed"] for c in criteria.values())
+
+    if is_interim:
+        decision = "COLLECTING_SAMPLE"
+        failing_count = sum(1 for c in criteria.values() if not c["passed"])
+        statement = (
+            f"INTERIM DIAGNOSTIC ONLY ({n_primary}/{min_required_episodes} episodes, {n_blocks}/{min_required_blocks} blocks). "
+            f"Currently {failing_count} of 5 institutional criteria failing. DO NOT PROCEED TO EXECUTION ENGINEERING."
+        )
+    elif all_passed:
+        decision = "PROCEED_TO_MAKER_EXECUTION_ENGINEERING"
+        statement = f"All 5 institutional criteria confirmed on full sample (N={n_primary}). Cleared for passive maker execution modeling."
+    else:
+        decision = "KILL_STRATEGY"
+        statement = "Strategy failed institutional verification criteria on completed sample. Momentum alpha rejected."
 
     return {
         "decision": decision,
-        "cleared": cleared,
-        "primary_horizon": bootstrap_res["horizon"],
-        "mean_net_bps": bootstrap_res["net_mean_bps"],
-        "lower_95_ci_bps": lower_ci,
-        "excess_over_naive_bps": bootstrap_res["excess_over_naive_bps"],
+        "cleared": bool(all_passed and not is_interim),
+        "is_interim": is_interim,
+        "primary_horizon": "5m",
+        "n_primary_episodes": n_primary,
+        "n_blocks": n_blocks,
+        "median_net_bps": median_5m,
+        "loco_mean_net_bps": loco_mean,
+        "loco_top_coin": loco_top_coin,
+        "criteria": criteria,
+        "statement": statement,
         "verdict_statement": statement,
     }

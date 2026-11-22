@@ -619,6 +619,7 @@ def get_omnipulse_signal_research():
                             r = json.loads(line)
                             net_rets = r.get("net_returns_bps", {})
                             rows.append({
+                                "symbol": r.get("symbol"),
                                 "timestamp": r.get("timestamp"),
                                 "is_primary_episode": r.get("is_primary_episode", True),
                                 "is_control": r.get("is_control", False),
@@ -641,7 +642,13 @@ def get_omnipulse_signal_research():
                             boot_by_horizon[h_name] = {"error": str(h_err)}
 
                     boot_res = boot_by_horizon.get("5m", {})
-                    kill_gate = evaluate_institutional_kill_gate(boot_res)
+                    kill_gate = evaluate_institutional_kill_gate(
+                        boot_res,
+                        df=b_df,
+                        horizons_summary=data.get("horizons"),
+                        min_required_episodes=300,
+                        min_required_blocks=50,
+                    )
                     
                     # Calibrated DSR using effective T and per-period Sharpe
                     ep_clean = b_df[(b_df["is_primary_episode"] == True) & (~b_df["is_control"])]["5m"].dropna().to_numpy()
