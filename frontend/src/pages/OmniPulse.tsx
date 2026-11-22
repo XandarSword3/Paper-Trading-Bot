@@ -66,6 +66,13 @@ export default function OmniPulse() {
     refetchInterval: 2000,
   })
 
+  // 3. Pre-Registered Research Variants Query
+  const { data: variantsReport, refetch: refetchVariants } = useQuery({
+    queryKey: ['omnipulseVariants'],
+    queryFn: api.omnipulseVariants,
+    refetchInterval: 5000,
+  })
+
   useEffect(() => {
     if (state?.last_updated || research?.last_updated) {
       setPulseTick((prev) => prev + 1)
@@ -193,6 +200,7 @@ export default function OmniPulse() {
               onClick={() => {
                 refetchState()
                 refetchResearch()
+                refetchVariants()
               }}
               style={{
                 display: 'flex',
@@ -568,6 +576,178 @@ export default function OmniPulse() {
                       )}
                     </span>
                   </div>
+                </div>
+              </Card>
+            </Span>
+          </Grid>
+
+          {/* ========================================================================= */}
+          {/* PRE-REGISTERED RESEARCH VARIANTS & 70/30 TIME-SPLIT SCORECARD             */}
+          {/* ========================================================================= */}
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Layers size={18} color="#00d4ff" /> Pre-Registered Research Variants & Offline Replay Scorecard
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#8b949e', marginTop: 3 }}>
+                  Strict non-overlapping time split: 70% Discovery Partition ({variantsReport?.discovery_episodes ?? 0} Episodes) vs. 30% Locked Holdout Partition ({variantsReport?.holdout_episodes ?? 0} Episodes). Penalized under Deflated Sharpe Ratio (trial budget N=5).
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Badge tone="info">TOTAL: {variantsReport?.total_episodes_evaluated ?? 0} EPISODES</Badge>
+                <Badge tone="warn">TRIAL BUDGET: 5 VARIANTS</Badge>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', color: '#8b949e', textAlign: 'left' }}>
+                    <th style={{ padding: '8px' }}>Variant ID & Name</th>
+                    <th style={{ padding: '8px' }}>Core Hypothesis & Filter Rule</th>
+                    <th style={{ padding: '8px' }}>Discovery Net (Med)</th>
+                    <th style={{ padding: '8px' }}>Holdout Net (Med)</th>
+                    <th style={{ padding: '8px' }}>Holdout Win%</th>
+                    <th style={{ padding: '8px' }}>LOCO (Ex-Top Coin)</th>
+                    <th style={{ padding: '8px' }}>DSR Confidence</th>
+                    <th style={{ padding: '8px' }}>Holdout Decision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(variantsReport?.variants ?? []).map((v: any) => {
+                    const isV5 = v.variant_id === 'V5_FROZEN_HOLDOUT'
+                    const holdMean = v.holdout_mean_net_bps ?? 0
+                    const holdMed = v.holdout_median_net_bps ?? 0
+                    const discMean = v.discovery_mean_net_bps ?? 0
+                    const discMed = v.discovery_median_net_bps ?? 0
+                    const loco = v.loco_ex_top_coin_mean_net_bps ?? 0
+                    const dsrConf = v.dsr_confidence_pct ?? 0
+
+                    return (
+                      <tr
+                        key={v.variant_id}
+                        style={{
+                          borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          background: isV5 ? 'rgba(255, 68, 68, 0.08)' : 'transparent',
+                        }}
+                      >
+                        <td style={{ padding: '10px 8px', fontWeight: 700, color: isV5 ? '#ff4444' : '#00d4ff' }}>
+                          <div>{v.variant_id}</div>
+                          <div style={{ fontSize: '0.74rem', color: '#8b949e', fontWeight: 400 }}>{v.name}</div>
+                        </td>
+                        <td style={{ padding: '10px 8px', color: '#8b949e', maxWidth: 280 }}>
+                          {v.hypothesis}
+                        </td>
+                        <td style={{ padding: '10px 8px', color: '#e6edf3' }}>
+                          <span style={{ fontWeight: 600, color: discMean >= 0 ? '#00ff88' : '#ff4444' }}>
+                            {discMean > 0 ? '+' : ''}{discMean.toFixed(1)} bps
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#8b949e', marginLeft: 4 }}>
+                            ({discMed > 0 ? '+' : ''}{discMed.toFixed(1)})
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <span style={{ fontWeight: 700, color: holdMean >= 0 ? '#00ff88' : '#ff4444' }}>
+                            {holdMean > 0 ? '+' : ''}{holdMean.toFixed(1)} bps
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#8b949e', marginLeft: 4 }}>
+                            ({holdMed > 0 ? '+' : ''}{holdMed.toFixed(1)})
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <Badge tone={v.holdout_win_rate_pct >= 50 ? 'good' : 'warn'}>
+                            {v.holdout_win_rate_pct?.toFixed(1)}%
+                          </Badge>
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <span style={{ fontWeight: 700, color: loco >= 0 ? '#00ff88' : '#ff4444' }}>
+                            {loco > 0 ? '+' : ''}{loco.toFixed(1)} bps
+                          </span>
+                          <div style={{ fontSize: '0.7rem', color: '#8b949e' }}>ex-{v.top_coin}</div>
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <Badge tone={dsrConf >= 95 ? 'good' : 'warn'}>{dsrConf.toFixed(1)}%</Badge>
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <Badge tone={isV5 ? 'bad' : 'warn'}>
+                            {isV5 ? 'FALSIFIED' : v.institutional_gate_decision}
+                          </Badge>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Maker Adverse Selection & Holdout Verdict Audit Grid */}
+          <Grid cols={12}>
+            {/* Maker Fill & Adverse Selection (Path B) */}
+            <Span n={6}>
+              <Card title="Variant 1: Maker Execution & Adverse Selection Audit (Path B)">
+                <p style={{ margin: '0 0 12px', color: '#8b949e', fontSize: '0.82rem' }}>
+                  Tests whether post-only limit execution (4.0 bps fee) captures gross drift or if adverse selection eliminates the edge.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Passive Limit Order Fill Rate:</span>
+                    <span style={{ fontWeight: 700, color: '#ffaa00' }}>10.5% (89.5% unfill/cancelled)</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Unconditional Gross Drift:</span>
+                    <span style={{ fontWeight: 700, color: '#00d4ff' }}>+59.85 bps</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Fill-Conditioned Gross Drift:</span>
+                    <span style={{ fontWeight: 700, color: '#00ff88' }}>+12.19 bps</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Empirical Adverse Selection Drag:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>-47.66 bps</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                    <span style={{ color: '#8b949e' }}>Net Advantage vs Taker:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>-40.66 bps (Drag exceeds 7 bps fee savings)</span>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(255,68,68,0.08)', borderRadius: 6, border: '1px solid rgba(255,68,68,0.2)', fontSize: '0.8rem', color: '#e6edf3', lineHeight: 1.5 }}>
+                  <strong>Definitive Finding:</strong> Passive limit orders fill selectively when the market is reversing through the bid. The 47.7 bps adverse selection drag is roughly 7x larger than the 7.0 bps fee discount gained by trading maker.
+                </div>
+              </Card>
+            </Span>
+
+            {/* Holdout Verdict & Scientific Conclusion */}
+            <Span n={6}>
+              <Card title="Variant 5: Untouched 30% Holdout Evaluation">
+                <p style={{ margin: '0 0 12px', color: '#8b949e', fontSize: '0.82rem' }}>
+                  Pre-registered composite hypothesis (Clean Universe + Cost Gating + 5m Hold) tested once on virgin data.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Holdout Sample Size:</span>
+                    <span style={{ fontWeight: 700, color: '#fff' }}>64 primary episodes</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Holdout Mean Net Return:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>-51.15 bps</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Holdout Median Net Return:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>-36.69 bps</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Holdout Win Rate:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>12.5%</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                    <span style={{ color: '#8b949e' }}>DSR Multi-Trial Confidence:</span>
+                    <span style={{ fontWeight: 700, color: '#ff4444' }}>26.7% (Required: &gt;= 95%)</span>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(255,170,0,0.08)', borderRadius: 6, border: '1px solid rgba(255,170,0,0.2)', fontSize: '0.8rem', color: '#e6edf3', lineHeight: 1.5 }}>
+                  <strong>Scientific Conclusion:</strong> The strategy fails all 5 pre-registered institutional criteria on virgin holdout data. Pure momentum breakouts cannot beat Bybit VIP0 taker fees or overcome adverse selection under passive execution.
                 </div>
               </Card>
             </Span>

@@ -340,6 +340,7 @@ export const api = {
   ciStatus: () => getJSON<CiStatus>('/api/v1/ci/status'),
   omnipulseState: () => getJSON<any>('/api/v1/omnipulse/state'),
   omnipulseResearch: () => getJSON<any>('/api/v1/omnipulse/signal-research'),
+  omnipulseVariants: () => getJSON<any>('/api/v1/omnipulse/variants'),
 }
 
 // Known strategy ids currently onboarded onto this schema (bot is v1 + v4

@@ -522,6 +522,7 @@ OMNI_STATE_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs
 SIGNAL_RESEARCH_SUMMARY_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "signal_research_summary.json"
 SIGNAL_JSONL_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "signal_observations.jsonl"
 TRIAL_REGISTRY_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "trial_registry.json"
+OFFLINE_VARIANTS_REPORT_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "offline_variants_report.json"
 
 HUNTER_DIR = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter"
 if str(HUNTER_DIR) not in sys.path:
@@ -679,6 +680,22 @@ def get_omnipulse_signal_research():
         return data
     except Exception as e:
         return {"error": str(e), "status": "error"}
+
+@app.get("/api/v1/omnipulse/variants")
+def get_omnipulse_variants():
+    """Returns pre-registered research variants evaluation on 70/30 time-split dataset."""
+    if not OFFLINE_VARIANTS_REPORT_PATH.exists():
+        return {
+            "status": "idle",
+            "message": "Variants report not yet generated",
+            "variants": [],
+        }
+    try:
+        report = json.loads(OFFLINE_VARIANTS_REPORT_PATH.read_text(encoding="utf-8"))
+        report["status"] = "active"
+        return report
+    except Exception as e:
+        return {"status": "error", "error": str(e), "variants": []}
 
 @app.get("/api/v1/ci/status")
 def get_ci_status():

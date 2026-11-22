@@ -64,6 +64,15 @@ class SignalObservation:
     entry_fill_ts: Optional[float] = None
     fade_entry_price: Optional[float] = None
 
+    # Maker execution fields (Post-Only limit order at Bid/Ask, 4.0 bps VIP0 fee)
+    maker_attempted: bool = True
+    maker_filled: bool = False
+    maker_fill_price: Optional[float] = None
+    maker_fill_ts: Optional[float] = None
+    maker_net_returns_bps: Dict[str, Optional[float]] = field(
+        default_factory=lambda: {h: None for h in HORIZONS}
+    )
+
     # Forward net returns across horizons (in bps, after bid-ask crossing and 11 bps fees)
     net_returns_bps: Dict[str, Optional[float]] = field(
         default_factory=lambda: {h: None for h in HORIZONS}
@@ -102,6 +111,7 @@ class SignalEvaluator:
 
         self.primary_horizon = primary_horizon
         self.fee_bps = fee_bps
+        self.maker_fee_bps = 4.0  # 2.0 bps entry, 2.0 bps exit (VIP0 maker fee)
         self.episode_gap_seconds = episode_gap_seconds
 
         self.last_episode_time: Dict[str, float] = {}
@@ -352,6 +362,30 @@ class SignalEvaluator:
                         obs.gross_mid_returns_bps[h_name] = round(gross_mid_bps, 2)
                         obs.exit_prices[h_name] = exit_px
 
+                        # Simulated Maker Fill-Conditioned Return (4 bps fee)
+                        if not obs.maker_filled and hasattr(feed, "check_maker_fill"):
+                            side_str = "Buy" if obs.direction > 0 else "Sell"
+                            limit_px = obs.detected_bid if obs.direction > 0 else obs.detected_ask
+                            if limit_px > 0:
+                                filled, fill_px, fill_t = feed.check_maker_fill(
+                                    obs.symbol,
+                                    side=side_str,
+                                    limit_price=limit_px,
+                                    start_ts=obs.timestamp + obs.latency_seconds,
+                                    timeout_seconds=30.0,
+                                )
+                                if filled:
+                                    obs.maker_filled = True
+                                    obs.maker_fill_price = fill_px
+                                    obs.maker_fill_ts = fill_t
+
+                        if obs.maker_filled and obs.maker_fill_price:
+                            if obs.direction > 0:
+                                m_gross = (exit_bid - obs.maker_fill_price) / obs.maker_fill_price
+                            else:
+                                m_gross = (obs.maker_fill_price - exit_ask) / obs.maker_fill_price
+                            obs.maker_net_returns_bps[h_name] = round((m_gross * 10000.0) - self.maker_fee_bps, 2)
+
                         # Flag if window spans a WebSocket disconnection gap
                         if feed.spans_gap(obs.timestamp, target_ts):
                             obs.has_ws_gap = True
@@ -464,6 +498,27 @@ class SignalEvaluator:
             else:
                 dose_response[b_name] = {"count": 0}
 
+        # Maker Fill & Adverse Selection Metrics on Primary Horizon (5m)
+        maker_5m_resolved = [r for r in primary_signals if r.get("net_returns_bps", {}).get(self.primary_horizon) is not None]
+        maker_filled_5m = [r for r in maker_5m_resolved if r.get("maker_filled") and r.get("maker_net_returns_bps", {}).get(self.primary_horizon) is not None]
+        maker_fill_rate = (len(maker_filled_5m) / len(maker_5m_resolved) * 100.0) if maker_5m_resolved else 0.0
+        maker_mean_net = float(np.mean([r["maker_net_returns_bps"][self.primary_horizon] for r in maker_filled_5m])) if maker_filled_5m else 0.0
+        maker_med_net = float(np.median([r["maker_net_returns_bps"][self.primary_horizon] for r in maker_filled_5m])) if maker_filled_5m else 0.0
+
+        uncond_gross = float(np.mean([r["gross_mid_returns_bps"][self.primary_horizon] for r in maker_5m_resolved])) if maker_5m_resolved else 0.0
+        filled_gross = float(np.mean([r["gross_mid_returns_bps"][self.primary_horizon] for r in maker_filled_5m])) if maker_filled_5m else 0.0
+        adverse_selection_drag = uncond_gross - filled_gross
+
+        maker_stats = {
+            "evaluated_episodes": len(maker_5m_resolved),
+            "filled_count": len(maker_filled_5m),
+            "fill_rate_pct": round(maker_fill_rate, 1),
+            "maker_fee_roundtrip_bps": self.maker_fee_bps,
+            "maker_fill_conditioned_mean_net_bps": round(maker_mean_net, 2),
+            "maker_fill_conditioned_median_net_bps": round(maker_med_net, 2),
+            "adverse_selection_drag_bps": round(adverse_selection_drag, 2),
+        }
+
         return {
             "total_primary_episodes": len(primary_signals),
             "total_secondary_ticks": len(secondary_signals),
@@ -473,6 +528,7 @@ class SignalEvaluator:
             "taker_fee_deducted_bps": self.fee_bps,
             "horizons": horizon_stats,
             "dose_response_5m": dose_response,
+            "maker_execution_5m": maker_stats,
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
