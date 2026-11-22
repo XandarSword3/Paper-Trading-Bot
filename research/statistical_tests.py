@@ -78,22 +78,29 @@ class TrialRegistry:
         return max(10, len(self.trials))
 
 
-def compute_expected_max_sharpe(n_trials: int, variance_trials: float = 1.0) -> float:
+def compute_expected_max_sharpe(n_trials: int, variance_trials: Optional[float] = None, effective_t: Optional[int] = None) -> float:
     """Bailey & Lopez de Prado (2014) expected maximum Sharpe ratio under N trials, scaled by cross-trial std dev."""
     if n_trials <= 1:
         return 0.0
     euler_mascheroni = 0.5772156649
     z = math.sqrt(2.0 * math.log(n_trials))
     sr_star_standard = z + (euler_mascheroni / z)
-    # Scale by empirical cross-trial standard deviation
-    return float(math.sqrt(max(0.1, variance_trials)) * sr_star_standard)
+
+    # Scale by empirical cross-trial std dev, or asymptotic null std dev 1/sqrt(T-1) for per-period Sharpe
+    if variance_trials is not None and variance_trials > 0:
+        sigma_sr = math.sqrt(variance_trials)
+    elif effective_t is not None and effective_t > 1:
+        sigma_sr = 1.0 / math.sqrt(effective_t - 1)
+    else:
+        sigma_sr = 1.0
+    return float(sigma_sr * sr_star_standard)
 
 
 def compute_deflated_sharpe_ratio(
     observed_sr: float,
     n_trials: int,
     effective_t: int,
-    variance_trials: float = 1.0,
+    variance_trials: Optional[float] = None,
     skewness: float = 0.0,
     kurtosis: float = 3.0,
 ) -> Tuple[float, float]:
@@ -104,7 +111,7 @@ def compute_deflated_sharpe_ratio(
     if effective_t <= 2:
         return (0.0, 0.0)
 
-    sr_star = compute_expected_max_sharpe(n_trials, variance_trials=variance_trials)
+    sr_star = compute_expected_max_sharpe(n_trials, variance_trials=variance_trials, effective_t=effective_t)
 
     # Asymptotic standard error of Sharpe ratio under non-normality (Mertens 2002)
     denom_inner = 1.0 - skewness * observed_sr + ((kurtosis - 1.0) / 4.0) * (observed_sr ** 2)

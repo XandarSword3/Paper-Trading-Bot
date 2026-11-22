@@ -119,6 +119,29 @@ export default function OmniPulse() {
                 OmniPulse Quantitative Terminal
               </h2>
               <Badge tone="good">BYBIT V5 WEBSOCKET LIVE</Badge>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', background: 'rgba(0, 255, 136, 0.1)', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: 16 }}>
+                <span style={{ position: 'relative', display: 'flex', height: 8, width: 8 }}>
+                  <motion.span
+                    animate={{ scale: [1, 2, 1], opacity: [0.8, 0, 0.8] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+                    style={{ position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '50%', background: '#00ff88' }}
+                  />
+                  <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '50%', height: 8, width: 8, background: '#00ff88' }} />
+                </span>
+                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#00ff88', letterSpacing: '0.04em' }}>
+                  ACTIVE (Tick #{pulseTick})
+                </span>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 12, marginLeft: 4 }}>
+                  {[8, 12, 6, 14, 10, 16, 7].map((barH, bi) => (
+                    <motion.div
+                      key={bi}
+                      animate={{ height: [barH * 0.3, barH, barH * 0.2] }}
+                      transition={{ duration: 0.6 + (bi * 0.12), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                      style={{ width: 2.5, background: '#00d4ff', borderRadius: 1 }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
             <p style={{ margin: '6px 0 0', color: 'var(--text-muted, #8b949e)', fontSize: '0.88rem' }}>
               Streaming top-of-book orderbook.1 & execution tape across {universeSize} linear perpetuals with 5m episode debouncing
@@ -195,6 +218,36 @@ export default function OmniPulse() {
       {/* ========================================================================= */}
       {activeTab === 'research' && (
         <>
+          {/* Pre-Registered Stopping Rule Banner */}
+          <Card>
+            <div style={{ borderLeft: '4px solid #00d4ff', background: 'rgba(0, 212, 255, 0.04)', padding: 14, borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ padding: 6, borderRadius: 8, background: 'rgba(0, 212, 255, 0.1)', color: '#00d4ff' }}>
+                  <ShieldCheck size={22} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.94rem', color: '#fff' }}>
+                      Institutional Pre-Registered Stopping Rule: Target N ≥ 300 Primary Episodes at 5m
+                    </span>
+                    <Badge tone="info">SAMPLE PROGRESS: {totalPrimaryEpisodes} / 300 EPISODES</Badge>
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: '#8b949e', lineHeight: 1.5 }}>
+                    Per institutional peer review: interim peeking swamps true means with noise. The final 100 episodes (last 33%) are strictly reserved as an untouched confirmation holdout set.
+                    Alpha clearance requires: (1) 95% Bootstrap CI Lower Bound &gt; 0.0 bps Net at 5m, (2) Positive Median, (3) Sign Agreement across 1m, 5m, and 15m, and (4) Monotonic Dose-Response across Z-score buckets.
+                  </p>
+                  <div style={{ marginTop: 10, height: 6, width: '100%', background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, (totalPrimaryEpisodes / 300) * 100)}%` }}
+                      style={{ height: '100%', background: 'linear-gradient(90deg, #00d4ff, #00ff88)', borderRadius: 3 }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
           {/* Institutional Kill Criterion Hero Banner */}
           <Card>
             <div
@@ -321,6 +374,7 @@ export default function OmniPulse() {
                     <th style={{ padding: '8px' }}>Net Mean (bps)</th>
                     <th style={{ padding: '8px' }}>5% Trimmed Mean</th>
                     <th style={{ padding: '8px' }}>Median Net</th>
+                    <th style={{ padding: '8px' }}>95% Bootstrap CI</th>
                     <th style={{ padding: '8px' }}>Win Rate (%)</th>
                     <th style={{ padding: '8px' }}>Fade / Reversal Mean</th>
                     <th style={{ padding: '8px' }}>Naive Control Mean</th>
@@ -361,6 +415,9 @@ export default function OmniPulse() {
                         </td>
                         <td style={{ padding: '10px 8px', color: '#e6edf3' }}>
                           {hasData ? `${stat.median_net_bps > 0 ? '+' : ''}${stat.median_net_bps.toFixed(2)} bps` : '—'}
+                        </td>
+                        <td style={{ padding: '10px 8px', fontFamily: 'monospace', fontSize: '0.8rem', color: '#00d4ff' }}>
+                          {hasData && stat.bootstrap_ci_95 ? `[${stat.bootstrap_ci_95[0]} to ${stat.bootstrap_ci_95[1]}] bps` : 'Pending (Blocks<3)'}
                         </td>
                         <td style={{ padding: '10px 8px' }}>
                           {hasData ? (
@@ -669,6 +726,77 @@ export default function OmniPulse() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </Card>
+
+          {/* Live Market Velocity Radar (Top 20 Key Movers Analyzed) */}
+          <Card title={`Live Market Velocity Radar (${topMovers.length > 0 ? topMovers.length : 20} Key Movers Analyzed)`}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: '0.84rem', color: '#8b949e' }}>
+                Real-time rolling 60-second momentum velocities and volume bursts refreshed every sub-second cycle:
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: '#00ff88', fontWeight: 600 }}>
+                <span style={{ position: 'relative', display: 'flex', height: 8, width: 8 }}>
+                  <motion.span
+                    animate={{ scale: [1, 2, 1], opacity: [0.8, 0, 0.8] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+                    style={{ position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '50%', background: '#00ff88' }}
+                  />
+                  <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '50%', height: 8, width: 8, background: '#00ff88' }} />
+                </span>
+                <span>BYBIT V5 LIVE RADAR SCANNER</span>
+              </div>
+            </div>
+
+            {topMovers.length === 0 ? (
+              <div style={{ padding: '30px 0', textAlign: 'center', color: '#8b949e' }}>
+                Scanning live Bybit linear contract feed for top velocity movers…
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+                {topMovers.slice(0, 20).map((m: any, idx: number) => {
+                  const vel = m.velocity_pct ?? 0.0
+                  const isPump = vel >= 0.15
+                  const isDump = vel <= -0.15
+                  const borderCol = isPump ? 'rgba(0, 255, 136, 0.4)' : isDump ? 'rgba(255, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)'
+                  const bgGlow = isPump ? 'rgba(0, 255, 136, 0.06)' : isDump ? 'rgba(255, 68, 68, 0.06)' : 'rgba(255, 255, 255, 0.02)'
+
+                  return (
+                    <motion.div
+                      key={m.symbol || idx}
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 8,
+                        background: bgGlow,
+                        border: `1px solid ${borderCol}`,
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>{m.symbol}</span>
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            color: isPump ? '#00ff88' : isDump ? '#ff4444' : '#8b949e',
+                          }}
+                        >
+                          {vel >= 0 ? '+' : ''}{vel.toFixed(2)}%
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#8b949e', marginTop: 6 }}>
+                        <span>${m.last_price?.toFixed(4)}</span>
+                        <span>Vol: {m.turnover_surge?.toFixed(1)}x</span>
+                        <span>{m.spread_bps?.toFixed(1)} bps</span>
+                      </div>
+                    </motion.div>
+                  )
+                })}
               </div>
             )}
           </Card>

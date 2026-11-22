@@ -595,6 +595,7 @@ def get_omnipulse_signal_research():
 
         # Calculate bootstrap & kill gate from signal_observations.jsonl
         boot_res = {"error": "No observations yet"}
+        boot_by_horizon = {}
         kill_gate = {
             "decision": "COLLECTING_SAMPLE",
             "cleared": False,
@@ -616,19 +617,33 @@ def get_omnipulse_signal_research():
                     for line in f:
                         if line.strip():
                             r = json.loads(line)
+                            net_rets = r.get("net_returns_bps", {})
                             rows.append({
                                 "timestamp": r.get("timestamp"),
                                 "is_primary_episode": r.get("is_primary_episode", True),
                                 "is_control": r.get("is_control", False),
                                 "has_ws_gap": r.get("has_ws_gap", False),
-                                "5m": r.get("net_returns_bps", {}).get("5m"),
+                                "10s": net_rets.get("10s"),
+                                "30s": net_rets.get("30s"),
+                                "1m": net_rets.get("1m"),
+                                "5m": net_rets.get("5m"),
+                                "15m": net_rets.get("15m"),
                             })
                 if rows:
                     b_df = pd.DataFrame(rows)
-                    boot_res = moving_block_bootstrap_by_time(b_df, horizon_col="5m", block_duration_minutes=30.0, n_bootstrap=1000)
+                    for h_name in ["10s", "30s", "1m", "5m", "15m"]:
+                        try:
+                            b_res = moving_block_bootstrap_by_time(b_df, horizon_col=h_name, block_duration_minutes=30.0, n_bootstrap=500)
+                            boot_by_horizon[h_name] = b_res
+                            if "horizons" in data and h_name in data["horizons"] and isinstance(data["horizons"][h_name], dict):
+                                data["horizons"][h_name]["bootstrap_ci_95"] = b_res.get("net_95_ci_bps")
+                        except Exception as h_err:
+                            boot_by_horizon[h_name] = {"error": str(h_err)}
+
+                    boot_res = boot_by_horizon.get("5m", {})
                     kill_gate = evaluate_institutional_kill_gate(boot_res)
                     
-                    # DSR
+                    # Calibrated DSR using effective T and per-period Sharpe
                     ep_clean = b_df[(b_df["is_primary_episode"] == True) & (~b_df["is_control"])]["5m"].dropna().to_numpy()
                     if len(ep_clean) >= 15:
                         m_r = float(np.mean(ep_clean))
@@ -647,6 +662,7 @@ def get_omnipulse_signal_research():
 
         cached_payload = {
             "bootstrap_5m": boot_res,
+            "bootstrap_all": boot_by_horizon,
             "kill_gate": kill_gate,
             "dsr": dsr_info,
         }

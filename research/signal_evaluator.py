@@ -62,6 +62,7 @@ class SignalObservation:
     latency_seconds: float = 0.75
     entry_fill_price: Optional[float] = None
     entry_fill_ts: Optional[float] = None
+    fade_entry_price: Optional[float] = None
 
     # Forward net returns across horizons (in bps, after bid-ask crossing and 11 bps fees)
     net_returns_bps: Dict[str, Optional[float]] = field(
@@ -250,31 +251,33 @@ class SignalEvaluator:
         self.pending.append(sig_obs)
         self.observations[sig_id] = sig_obs
 
-        # 2. Matched Naive-Momentum Control:
-        # Same coin, direction = sign of prior 20s move (unfiltered trend continuation)
-        ctrl_direction = 1 if prior_20s_move >= 0 else -1
-        ctrl_id = str(uuid.uuid4())
-        ctrl_obs = SignalObservation(
-            signal_id=ctrl_id,
-            timestamp=now,
-            time_utc=now_utc,
-            symbol=symbol,
-            direction=ctrl_direction,
-            z_score=0.0,
-            turnover_surge=1.0,
-            velocity_pct=prior_20s_move,
-            detected_mid=detected_mid,
-            detected_bid=detected_bid,
-            detected_ask=detected_ask,
-            detected_spread_bps=detected_spread_bps,
-            is_primary_episode=is_primary,
-            is_control=True,
-            matched_signal_id=sig_id,
-            z_bucket="control",
-            latency_seconds=latency_seconds,
-        )
-        self.pending.append(ctrl_obs)
-        self.observations[ctrl_id] = ctrl_obs
+        # 2. Matched Naive-Momentum Controls (Multiple controls to reduce control sampling error)
+        # Tests whether Z/surge filters beat naive drift on the same coin
+        ctrl_lookbacks = [10.0, 15.0, 20.0, 30.0, 45.0]
+        for idx, lb in enumerate(ctrl_lookbacks):
+            drift_dir = 1 if (prior_20s_move > 0 or (prior_20s_move == 0 and (idx % 2 == 0))) else -1
+            ctrl_id = str(uuid.uuid4())
+            ctrl_obs = SignalObservation(
+                signal_id=ctrl_id,
+                timestamp=now,
+                time_utc=now_utc,
+                symbol=symbol,
+                direction=drift_dir,
+                z_score=0.0,
+                turnover_surge=1.0,
+                velocity_pct=prior_20s_move,
+                detected_mid=detected_mid,
+                detected_bid=detected_bid,
+                detected_ask=detected_ask,
+                detected_spread_bps=detected_spread_bps,
+                is_primary_episode=is_primary,
+                is_control=True,
+                matched_signal_id=sig_id,
+                z_bucket="control",
+                latency_seconds=latency_seconds,
+            )
+            self.pending.append(ctrl_obs)
+            self.observations[ctrl_id] = ctrl_obs
 
         self._save_pending_queue()
         return sig_obs
@@ -300,10 +303,20 @@ class SignalEvaluator:
                 if ts >= (obs.timestamp + obs.latency_seconds):
                     fill_quote = feed.get_quote_at_timestamp(obs.symbol, obs.timestamp + obs.latency_seconds)
                     if fill_quote:
-                        obs.entry_fill_price = fill_quote.ask if obs.direction > 0 else fill_quote.bid
+                        if obs.direction > 0:
+                            obs.entry_fill_price = fill_quote.ask
+                            obs.fade_entry_price = fill_quote.bid
+                        else:
+                            obs.entry_fill_price = fill_quote.bid
+                            obs.fade_entry_price = fill_quote.ask
                         obs.entry_fill_ts = fill_quote.exchange_ts
                     else:
-                        obs.entry_fill_price = ask if obs.direction > 0 else bid
+                        if obs.direction > 0:
+                            obs.entry_fill_price = ask
+                            obs.fade_entry_price = bid
+                        else:
+                            obs.entry_fill_price = bid
+                            obs.fade_entry_price = ask
                         obs.entry_fill_ts = ts
 
             # Step 2: Forward horizon evaluations (Exit at Bid for Long, Ask for Short)
@@ -316,17 +329,22 @@ class SignalEvaluator:
                         exit_ask = exit_quote.ask if exit_quote else ask
                         exit_mid = exit_quote.mid if exit_quote else mid
 
-                        # For Long: exit at Bid. For Short: exit at Ask.
+                        # Realistic Fills:
+                        # Momentum Long: Buy Ask, Sell Bid. Fade Short: Sell Bid, Buy Ask.
                         if obs.direction > 0:
                             exit_px = exit_bid
                             gross_trade_ret = (exit_px - obs.entry_fill_price) / obs.entry_fill_price
+                            fade_entry = obs.fade_entry_price or obs.detected_bid
+                            fade_gross_ret = (fade_entry - exit_ask) / fade_entry
                         else:
                             exit_px = exit_ask
                             gross_trade_ret = (obs.entry_fill_price - exit_px) / obs.entry_fill_price
+                            fade_entry = obs.fade_entry_price or obs.detected_ask
+                            fade_gross_ret = (exit_bid - fade_entry) / fade_entry
 
                         # True Net Return = Gross Trade Return - Roundtrip Taker Fees
                         net_bps = (gross_trade_ret * 10000.0) - self.fee_bps
-                        fade_net_bps = (-gross_trade_ret * 10000.0) - self.fee_bps
+                        fade_net_bps = (fade_gross_ret * 10000.0) - self.fee_bps
                         gross_mid_bps = obs.direction * ((exit_mid - obs.detected_mid) / obs.detected_mid) * 10000.0
 
                         obs.net_returns_bps[h_name] = round(net_bps, 2)
