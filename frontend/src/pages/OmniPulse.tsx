@@ -25,6 +25,29 @@ import {
   Layers,
 } from 'lucide-react'
 
+function formatTelemetryTime(timeStr: string): string {
+  if (!timeStr) return ''
+  if (timeStr.includes('T') || timeStr.endsWith('Z')) {
+    const d = new Date(timeStr)
+    return isNaN(d.getTime()) ? timeStr : d.toLocaleTimeString([], { hour12: false })
+  }
+  const match = timeStr.match(/^(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/)
+  if (match) {
+    const now = new Date()
+    const utcDate = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      parseInt(match[1]),
+      parseInt(match[2]),
+      parseInt(match[3]),
+      parseInt(match[4] || '0')
+    ))
+    return isNaN(utcDate.getTime()) ? timeStr : utcDate.toLocaleTimeString([], { hour12: false })
+  }
+  return timeStr
+}
+
 export default function OmniPulse() {
   const [pulseTick, setPulseTick] = useState(0)
   const [activeTab, setActiveTab] = useState<'research' | 'execution'>('research')
@@ -673,7 +696,7 @@ export default function OmniPulse() {
                   ) : (
                     telemetryEvents.map((ev: any, idx: number) => (
                       <div key={idx} style={{ display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#8b949e' }}>[{ev.time}]</span>
+                        <span style={{ color: '#8b949e' }}>[{formatTelemetryTime(ev.time)}]</span>
                         <span style={{ color: ev.type === 'ENTRY' ? '#00d4ff' : '#00ff88', fontWeight: 600 }}>{ev.type}:</span>
                         <span style={{ color: '#e6edf3' }}>{ev.message}</span>
                       </div>
