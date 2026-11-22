@@ -16,43 +16,74 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Terminal,
+  FlaskConical,
+  BarChart3,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Flame,
+  Layers,
 } from 'lucide-react'
 
 export default function OmniPulse() {
   const [pulseTick, setPulseTick] = useState(0)
+  const [activeTab, setActiveTab] = useState<'research' | 'execution'>('research')
 
-  const { data: state, isLoading, refetch } = useQuery({
+  // 1. Live Paper Trader State Query
+  const { data: state, isLoading: stateLoading, refetch: refetchState } = useQuery({
     queryKey: ['omnipulseState'],
     queryFn: api.omnipulseState,
-    refetchInterval: 1500, // 1.5s refresh for fluid live feel
+    refetchInterval: 1500,
   })
 
-  // Trigger pulse animation whenever data updates
+  // 2. Institutional Signal Research Query
+  const { data: research, isLoading: researchLoading, refetch: refetchResearch } = useQuery({
+    queryKey: ['omnipulseResearch'],
+    queryFn: api.omnipulseResearch,
+    refetchInterval: 2000,
+  })
+
   useEffect(() => {
-    if (state?.last_updated) {
+    if (state?.last_updated || research?.last_updated) {
       setPulseTick((prev) => prev + 1)
     }
-  }, [state?.last_updated])
+  }, [state?.last_updated, research?.last_updated])
 
-  if (isLoading) return <LoadingState label="Connecting to OmniPulse Real-Time Telemetry…" />
+  if (stateLoading && researchLoading) {
+    return <LoadingState label="Connecting to OmniPulse Real-Time Telemetry & Research Stream…" />
+  }
 
   const equity = state?.equity ?? 10000.0
   const cash = state?.cash ?? 10000.0
   const realizedPnl = state?.realized_pnl ?? 0.0
   const feesPaid = state?.total_fees_paid ?? 0.0
-  const universeSize = state?.universe_size ?? 124
+  const winRate = state?.win_rate_pct ?? 0.0
+  const universeSize = state?.universe_size ?? 122
   const openPositions = state?.open_positions_detail ?? []
   const recentTrades = state?.recent_trades ?? []
   const topMovers = state?.top_movers ?? []
   const telemetryEvents = state?.telemetry_events ?? []
-  const winRate = state?.win_rate_pct ?? 0.0
-  const signalsCount = state?.signals_detected ?? 0
+
+  // Research metrics
+  const totalPrimaryEpisodes = research?.total_primary_episodes ?? 0
+  const totalSecondaryTicks = research?.total_secondary_ticks ?? 0
+  const totalNaiveControls = research?.total_naive_controls ?? 0
+  const pendingQueue = research?.pending_queue ?? 0
+  const horizons = research?.horizons ?? {}
+  const bootstrap5m = research?.bootstrap_5m ?? {}
+  const killGate = research?.kill_gate ?? {}
+  const doseResponse = research?.dose_response_5m ?? {}
+  const dsr = research?.dsr ?? {}
+  const trialsRegistered = research?.trials_registered ?? 10
+
+  const killStatus = killGate?.decision ?? 'COLLECTING_SAMPLE'
+  const killTone = killStatus === 'PROCEED_TO_MAKER_EXECUTION_ENGINEERING' ? 'good' : killStatus === 'KILL_STRATEGY' ? 'bad' : 'warn'
 
   return (
     <div className="qat-omnipulse" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* 1. Header Banner & Live Pipeline Pulse */}
+      {/* Top Header & View Switcher */}
       <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <motion.div
@@ -62,22 +93,61 @@ export default function OmniPulse() {
                 <Zap size={26} style={{ color: 'var(--accent-cyan, #00d4ff)' }} />
               </motion.div>
               <h2 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-                OmniPulse Real-Time Multi-Asset Scanner & Trader
+                OmniPulse Quantitative Terminal
               </h2>
-              <Badge tone="good">LIVE TELEMETRY STREAM</Badge>
+              <Badge tone="good">BYBIT V5 WEBSOCKET LIVE</Badge>
             </div>
             <p style={{ margin: '6px 0 0', color: 'var(--text-muted, #8b949e)', fontSize: '0.88rem' }}>
-              Streaming live order flow & cross-sectional velocity anomalies across {universeSize} Bybit linear perpetuals
+              Streaming top-of-book orderbook.1 & execution tape across {universeSize} linear perpetuals with 5m episode debouncing
             </p>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted, #8b949e)' }}>
-              <div>Stream Status: <span style={{ color: '#00ff88', fontWeight: 600 }}>Active (2.0s pulse)</span></div>
-              <div>Buffer Depth: <span style={{ color: '#fff', fontWeight: 600 }}>600s rolling</span></div>
+            {/* View Switcher Tabs */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 3, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <button
+                onClick={() => setActiveTab('research')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '7px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  background: activeTab === 'research' ? 'rgba(0, 212, 255, 0.2)' : 'transparent',
+                  color: activeTab === 'research' ? '#00d4ff' : '#8b949e',
+                }}
+              >
+                <FlaskConical size={14} /> 🔬 Signal Research & Kill Gate
+              </button>
+              <button
+                onClick={() => setActiveTab('execution')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '7px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  background: activeTab === 'execution' ? 'rgba(0, 255, 136, 0.2)' : 'transparent',
+                  color: activeTab === 'execution' ? '#00ff88' : '#8b949e',
+                }}
+              >
+                <Cpu size={14} /> ⚡ Paper Trader & Execution
+              </button>
             </div>
+
             <button
-              onClick={() => refetch()}
+              onClick={() => {
+                refetchState()
+                refetchResearch()
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -95,362 +165,482 @@ export default function OmniPulse() {
             </button>
           </div>
         </div>
-
-        {/* Dynamic Data Flow Pipeline Visualizer */}
-        <div
-          style={{
-            marginTop: 20,
-            padding: '16px 20px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 10,
-          }}
-        >
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #8b949e)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-            REAL-TIME DATA PROCESSING PIPELINE
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-            {/* Stage 1: Ingestion */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(0, 212, 255, 0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#00d4ff', fontSize: '0.82rem', fontWeight: 600 }}>
-                <Radio size={14} /> 1. Ingestion Stream
-              </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
-                {universeSize} Coins / Tick
-              </div>
-              <div style={{ fontSize: '0.74rem', color: '#8b949e' }}>Bybit V5 Linear Batch</div>
-            </div>
-
-            {/* Animated Connector 1 */}
-            <div style={{ width: 40, position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              <motion.div
-                key={`p1-${pulseTick}`}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 20, opacity: 1 }}
-                transition={{ duration: 0.8, ease: 'linear' }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }}
-              />
-            </div>
-
-            {/* Stage 2: Cross-Sectional Velocity */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(168, 85, 247, 0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#c084fc', fontSize: '0.82rem', fontWeight: 600 }}>
-                <Activity size={14} /> 2. Statistical Z-Score
-              </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
-                &gt; 2.2σ Threshold
-              </div>
-              <div style={{ fontSize: '0.74rem', color: '#8b949e' }}>Robust IQR Normalization</div>
-            </div>
-
-            {/* Animated Connector 2 */}
-            <div style={{ width: 40, position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              <motion.div
-                key={`p2-${pulseTick}`}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 20, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: 'linear' }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: '#c084fc', boxShadow: '0 0 8px #c084fc' }}
-              />
-            </div>
-
-            {/* Stage 3: Volume & Spread Gate */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(234, 179, 8, 0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#facc15', fontSize: '0.82rem', fontWeight: 600 }}>
-                <ShieldCheck size={14} /> 3. Spread &amp; Volume Guard
-              </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
-                &gt; 2.0x Vol &amp; &lt; 12 bps
-              </div>
-              <div style={{ fontSize: '0.74rem', color: '#8b949e' }}>BTC Macro Direction Check</div>
-            </div>
-
-            {/* Animated Connector 3 */}
-            <div style={{ width: 40, position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              <motion.div
-                key={`p3-${pulseTick}`}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 20, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4, ease: 'linear' }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 8px #00ff88' }}
-              />
-            </div>
-
-            {/* Stage 4: Trailing Ratchet Execution */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(0, 255, 136, 0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#00ff88', fontSize: '0.82rem', fontWeight: 600 }}>
-                <Zap size={14} /> 4. Trailing Ratchet
-              </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
-                {openPositions.length} Active / 5 Max
-              </div>
-              <div style={{ fontSize: '0.74rem', color: '#8b949e' }}>+1.0% Trailing Activation</div>
-            </div>
-          </div>
-        </div>
       </Card>
 
-      {/* 2. Top Metric Tiles */}
-      <Grid cols={12} gap={16}>
-        <Span n={3}>
-          <Card title="Portfolio Equity" glow>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', marginTop: 8 }}>
-              ${equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted, #8b949e)', marginTop: 4 }}>
-              Available Cash: ${cash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          </Card>
-        </Span>
-
-        <Span n={3}>
-          <Card title="Realized Net PnL">
+      {/* ========================================================================= */}
+      {/* TAB 1: INSTITUTIONAL SIGNAL RESEARCH & KILL GATE                           */}
+      {/* ========================================================================= */}
+      {activeTab === 'research' && (
+        <>
+          {/* Institutional Kill Criterion Hero Banner */}
+          <Card>
             <div
               style={{
-                fontSize: '1.8rem',
-                fontWeight: 800,
-                color: realizedPnl >= 0 ? 'var(--accent-emerald, #00ff88)' : 'var(--accent-crimson, #ff4444)',
-                marginTop: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderRadius: 8,
+                background:
+                  killTone === 'good'
+                    ? 'rgba(0, 255, 136, 0.08)'
+                    : killTone === 'bad'
+                    ? 'rgba(255, 68, 68, 0.08)'
+                    : 'rgba(255, 170, 0, 0.08)',
+                border: `1px solid ${
+                  killTone === 'good'
+                    ? 'rgba(0, 255, 136, 0.3)'
+                    : killTone === 'bad'
+                    ? 'rgba(255, 68, 68, 0.3)'
+                    : 'rgba(255, 170, 0, 0.3)'
+                }`,
               }}
             >
-              {realizedPnl >= 0 ? '+' : ''}${realizedPnl.toFixed(2)}
-            </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted, #8b949e)', marginTop: 4 }}>
-              Fees &amp; Slippage: ${feesPaid.toFixed(2)}
-            </div>
-          </Card>
-        </Span>
-
-        <Span n={3}>
-          <Card title="Active Positions">
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-cyan, #00d4ff)', marginTop: 8 }}>
-              {openPositions.length} <span style={{ fontSize: '1.1rem', color: '#8b949e' }}>/ 5 max</span>
-            </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted, #8b949e)', marginTop: 4 }}>
-              Signals Triggered: {signalsCount}
-            </div>
-          </Card>
-        </Span>
-
-        <Span n={3}>
-          <Card title="Win Rate &amp; Closed">
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', marginTop: 8 }}>
-              {winRate.toFixed(1)}%
-            </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted, #8b949e)', marginTop: 4 }}>
-              Total Closed: {recentTrades.length} trades
-            </div>
-          </Card>
-        </Span>
-      </Grid>
-
-      {/* 3. Live Market Pulse Heatmap / Matrix Radar */}
-      <Card title={`Live Market Velocity Radar (${topMovers.length} Key Movers Analyzed)`}>
-        <div style={{ marginBottom: 12, fontSize: '0.84rem', color: 'var(--text-muted, #8b949e)' }}>
-          Real-time rolling 60-second momentum velocities and volume bursts refreshed every sub-second cycle:
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-          {topMovers.map((m: any, idx: number) => {
-            const vel = m.velocity_pct ?? 0.0
-            const isPump = vel >= 0.15
-            const isDump = vel <= -0.15
-            const borderCol = isPump ? 'rgba(0, 255, 136, 0.4)' : isDump ? 'rgba(255, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)'
-            const bgGlow = isPump ? 'rgba(0, 255, 136, 0.06)' : isDump ? 'rgba(255, 68, 68, 0.06)' : 'rgba(255, 255, 255, 0.02)'
-
-            return (
-              <motion.div
-                key={m.symbol}
-                initial={{ opacity: 0.8 }}
-                animate={{ scale: [1, 1.02, 1], opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  padding: '10px 12px',
-                  background: bgGlow,
-                  border: `1px solid ${borderCol}`,
-                  borderRadius: 8,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>{m.symbol}</span>
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.84rem',
-                      color: vel >= 0 ? 'var(--accent-emerald, #00ff88)' : 'var(--accent-crimson, #ff4444)',
-                    }}
-                  >
-                    {vel >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                    {vel >= 0 ? '+' : ''}{vel.toFixed(2)}%
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ShieldCheck size={22} style={{ color: killTone === 'good' ? '#00ff88' : killTone === 'bad' ? '#ff4444' : '#ffaa00' }} />
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    Institutional Kill Criterion Gate (Pre-Registered 5m Horizon)
                   </span>
+                  <Badge tone={killTone}>{killStatus.replace(/_/g, ' ')}</Badge>
                 </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#8b949e', marginTop: 6 }}>
-                  <span>${m.last_price?.toFixed(4)}</span>
-                  <span>Vol: {m.turnover_surge?.toFixed(1)}x</span>
-                  <span>{m.spread_bps?.toFixed(1)} bps</span>
+                <p style={{ margin: '6px 0 0', color: 'var(--text-muted, #8b949e)', fontSize: '0.86rem' }}>
+                  Rule: The <strong>Lower Bound of the 95% Moving Block Bootstrap CI on 5m</strong> must clear <strong>&gt; 0.0 bps Net</strong> after crossing Ask/Bid and deducting 11 bps taker fee.
+                </p>
+                <div style={{ marginTop: 8, fontSize: '0.84rem', color: '#e6edf3', fontWeight: 600 }}>
+                  {killGate?.statement ?? 'Collecting primary episodes for temporal block bootstrap verification…'}
                 </div>
-              </motion.div>
-            )
-          })}
-        </div>
-      </Card>
+              </div>
 
-      {/* 4. Active Positions Table */}
-      <Card title={`Active Open Positions (${openPositions.length})`}>
-        {openPositions.length === 0 ? (
-          <div style={{ padding: '30px 0', textAlign: 'center', color: 'var(--text-muted, #8b949e)' }}>
-            <Activity size={32} style={{ margin: '0 auto 10px', opacity: 0.5 }} />
-            <div>No open positions currently. OmniPulse is actively scanning {universeSize} coins for breakout anomalies.</div>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted, #8b949e)' }}>
-                  <th style={{ padding: '10px 8px' }}>Symbol</th>
-                  <th style={{ padding: '10px 8px' }}>Side</th>
-                  <th style={{ padding: '10px 8px' }}>Entry Price</th>
-                  <th style={{ padding: '10px 8px' }}>Mark Price</th>
-                  <th style={{ padding: '10px 8px' }}>Notional</th>
-                  <th style={{ padding: '10px 8px' }}>Unrealized PnL</th>
-                  <th style={{ padding: '10px 8px' }}>Stop Loss</th>
-                  <th style={{ padding: '10px 8px' }}>Take Profit</th>
-                  <th style={{ padding: '10px 8px' }}>Trailing Status</th>
-                  <th style={{ padding: '10px 8px' }}>Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                {openPositions.map((pos: any, idx: number) => {
-                  const pnl = pos.unrealized_pnl ?? 0.0
-                  const pnlPct = pos.notional > 0 ? (pnl / pos.notional) * 100 : 0
-                  const isProfit = pnl >= 0
-                  const holdMin = ((pos.hold_seconds ?? 0) / 60).toFixed(1)
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>5m Primary Net Drift</span>
+                <span
+                  style={{
+                    fontSize: '1.6rem',
+                    fontWeight: 800,
+                    color: (bootstrap5m?.net_mean_bps ?? 0) >= 0 ? '#00ff88' : '#ff4444',
+                  }}
+                >
+                  {bootstrap5m?.net_mean_bps !== undefined ? `${bootstrap5m.net_mean_bps > 0 ? '+' : ''}${bootstrap5m.net_mean_bps.toFixed(2)} bps` : 'Pending'}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#8b949e' }}>
+                  95% CI:{' '}
+                  {bootstrap5m?.net_95_ci_bps
+                    ? `[${bootstrap5m.net_95_ci_bps[0] > 0 ? '+' : ''}${bootstrap5m.net_95_ci_bps[0].toFixed(2)}, ${bootstrap5m.net_95_ci_bps[1] > 0 ? '+' : ''}${bootstrap5m.net_95_ci_bps[1].toFixed(2)}] bps`
+                    : 'Awaiting Blocks'}
+                </span>
+              </div>
+            </div>
+          </Card>
 
-                  return (
-                    <tr
-                      key={idx}
-                      style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.06)',
-                        background: idx % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent',
-                      }}
-                    >
-                      <td style={{ padding: '12px 8px', fontWeight: 700 }}>{pos.symbol}</td>
-                      <td style={{ padding: '12px 8px' }}>
-                        <Badge tone={pos.side === 'Buy' ? 'good' : 'bad'}>{pos.side}</Badge>
-                      </td>
-                      <td style={{ padding: '12px 8px' }}>${pos.entry_price?.toFixed(4)}</td>
-                      <td style={{ padding: '12px 8px' }}>${pos.current_price?.toFixed(4)}</td>
-                      <td style={{ padding: '12px 8px' }}>${pos.notional?.toFixed(1)}</td>
-                      <td
+          {/* Research Architecture Metrics Grid */}
+          <Grid cols={12}>
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Primary Episodes</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#00d4ff', marginTop: 4 }}>
+                  {totalPrimaryEpisodes}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  1st signal per coin after ≥ 5m quiet
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Debounced Intra-Burst Ticks</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#a371f7', marginTop: 4 }}>
+                  {totalSecondaryTicks}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  Filtered out of primary statistical tests
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Matched Naive Controls</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffaa00', marginTop: 4 }}>
+                  {totalNaiveControls}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  Same-coin trend without Z/surge filter
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>In-Flight Evaluation Queue</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#00ff88', marginTop: 4 }}>
+                  {pendingQueue}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  Persisted to disk across restarts
+                </div>
+              </Card>
+            </Span>
+          </Grid>
+
+          {/* Realistic Multi-Horizon Forward Net Returns Table */}
+          <Card title="Primary Episodes: Realistic Net Returns (Entry Ask/Bid + Latency + 11.0 bps VIP0 Taker Fee)">
+            <p style={{ margin: '0 0 16px', color: '#8b949e', fontSize: '0.84rem' }}>
+              All returns measured from entry fill at <strong>t + latency</strong> at the <strong>Ask</strong> (Long) or <strong>Bid</strong> (Short), exiting at opposite quote and deducting round-trip fees.
+            </p>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', color: '#8b949e' }}>
+                    <th style={{ padding: '8px' }}>Horizon</th>
+                    <th style={{ padding: '8px' }}>Episodes (N)</th>
+                    <th style={{ padding: '8px' }}>Net Mean (bps)</th>
+                    <th style={{ padding: '8px' }}>5% Trimmed Mean</th>
+                    <th style={{ padding: '8px' }}>Median Net</th>
+                    <th style={{ padding: '8px' }}>Win Rate (%)</th>
+                    <th style={{ padding: '8px' }}>Fade / Reversal Mean</th>
+                    <th style={{ padding: '8px' }}>Naive Control Mean</th>
+                    <th style={{ padding: '8px' }}>Excess over Naive</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {['10s', '30s', '1m', '5m', '15m'].map((h) => {
+                    const stat = horizons[h]
+                    const hasData = stat && typeof stat === 'object' && stat.count > 0
+                    const isPrim = h === '5m'
+                    const netMean = stat?.mean_net_bps ?? 0
+                    const excess = stat?.excess_over_naive_bps ?? 0
+
+                    return (
+                      <tr
+                        key={h}
                         style={{
-                          padding: '12px 8px',
-                          fontWeight: 700,
-                          color: isProfit ? 'var(--accent-emerald, #00ff88)' : 'var(--accent-crimson, #ff4444)',
+                          borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          background: isPrim ? 'rgba(0, 212, 255, 0.05)' : 'transparent',
                         }}
                       >
-                        {isProfit ? '+' : ''}${pnl.toFixed(2)} ({isProfit ? '+' : ''}
-                        {pnlPct.toFixed(2)}%)
-                      </td>
-                      <td style={{ padding: '12px 8px', color: '#ff7b72' }}>${pos.stop_loss?.toFixed(4)}</td>
-                      <td style={{ padding: '12px 8px', color: '#7ee787' }}>${pos.take_profit?.toFixed(4)}</td>
-                      <td style={{ padding: '12px 8px' }}>
-                        {pos.trailing_active ? (
-                          <Badge tone="good">ACTIVE (Trailing Peak)</Badge>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted, #8b949e)', fontSize: '0.8rem' }}>Waiting +1.0%</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '12px 8px', color: 'var(--text-muted, #8b949e)' }}>{holdMin}m</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      {/* 5. Live Telemetry Console & Recent Closed Trades */}
-      <Grid cols={12} gap={16}>
-        <Span n={6}>
-          <Card title="Live Stream Telemetry Console">
-            <div
-              style={{
-                background: '#0d1117',
-                border: '1px solid #30363d',
-                borderRadius: 8,
-                padding: '12px 14px',
-                fontFamily: 'monospace',
-                fontSize: '0.80rem',
-                height: 230,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              {telemetryEvents.length === 0 ? (
-                <div style={{ color: '#8b949e' }}>Streaming live order flow &amp; risk triggers...</div>
-              ) : (
-                telemetryEvents.map((ev: any, idx: number) => (
-                  <div key={idx} style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ color: '#8b949e' }}>[{ev.time}]</span>
-                    <span style={{ color: ev.type === 'ENTRY' ? '#00d4ff' : '#00ff88', fontWeight: 600 }}>{ev.type}:</span>
-                    <span style={{ color: '#e6edf3' }}>{ev.message}</span>
-                  </div>
-                ))
-              )}
+                        <td style={{ padding: '10px 8px', fontWeight: 700, color: isPrim ? '#00d4ff' : '#fff' }}>
+                          {h} {isPrim && <Badge tone="info">PRIMARY</Badge>}
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>{hasData ? stat.count : '0 (in queue)'}</td>
+                        <td
+                          style={{
+                            padding: '10px 8px',
+                            fontWeight: 700,
+                            color: hasData ? (netMean >= 0 ? '#00ff88' : '#ff4444') : '#8b949e',
+                          }}
+                        >
+                          {hasData ? `${netMean > 0 ? '+' : ''}${netMean.toFixed(2)} bps` : 'Pending'}
+                        </td>
+                        <td style={{ padding: '10px 8px', color: '#e6edf3' }}>
+                          {hasData ? `${stat.trimmed_mean_net_bps > 0 ? '+' : ''}${stat.trimmed_mean_net_bps.toFixed(2)} bps` : '—'}
+                        </td>
+                        <td style={{ padding: '10px 8px', color: '#e6edf3' }}>
+                          {hasData ? `${stat.median_net_bps > 0 ? '+' : ''}${stat.median_net_bps.toFixed(2)} bps` : '—'}
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>
+                          {hasData ? (
+                            <Badge tone={stat.win_rate_pct >= 50 ? 'good' : 'warn'}>{stat.win_rate_pct.toFixed(1)}%</Badge>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 8px', color: (stat?.fade_mean_net_bps ?? 0) >= 0 ? '#00ff88' : '#8b949e' }}>
+                          {hasData ? `${stat.fade_mean_net_bps > 0 ? '+' : ''}${stat.fade_mean_net_bps.toFixed(2)} bps` : '—'}
+                        </td>
+                        <td style={{ padding: '10px 8px', color: '#8b949e' }}>
+                          {hasData ? `${stat.naive_control_mean_net_bps > 0 ? '+' : ''}${stat.naive_control_mean_net_bps.toFixed(2)} bps` : '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 8px',
+                            fontWeight: 700,
+                            color: hasData ? (excess >= 0 ? '#00ff88' : '#ffaa00') : '#8b949e',
+                          }}
+                        >
+                          {hasData ? `${excess > 0 ? '+' : ''}${excess.toFixed(2)} bps` : '—'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </Card>
-        </Span>
 
-        <Span n={6}>
-          <Card title={`Recent Closed Trades (${recentTrades.length})`}>
-            {recentTrades.length === 0 ? (
+          {/* Dose-Response Monotonicity & Calibrated DSR Grid */}
+          <Grid cols={12}>
+            {/* Dose-Response Curve */}
+            <Span n={6}>
+              <Card title="Dose-Response Monotonicity Curve (5m Horizon)">
+                <p style={{ margin: '0 0 14px', color: '#8b949e', fontSize: '0.82rem' }}>
+                  Tests whether net forward return scales monotonically with signal conviction ($Z$-score floor).
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {['1.2-1.8', '1.8-2.2', '2.2-2.8', '2.8-3.5', '3.5+'].map((bucket) => {
+                    const bData = doseResponse[bucket]
+                    const bCount = bData?.count ?? 0
+                    const bMean = bData?.mean_net_bps ?? 0
+                    const bWr = bData?.win_rate_pct ?? 0
+
+                    return (
+                      <div
+                        key={bucket}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.03)',
+                          borderRadius: 6,
+                          border: '1px solid rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontWeight: 700, color: '#00d4ff', minWidth: 65 }}>Z {bucket}</span>
+                          <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>N = {bCount} episodes</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          {bCount > 0 ? (
+                            <>
+                              <Badge tone={bWr >= 50 ? 'good' : 'warn'}>{bWr.toFixed(1)}% WR</Badge>
+                              <span style={{ fontWeight: 700, color: bMean >= 0 ? '#00ff88' : '#ff4444' }}>
+                                {bMean > 0 ? '+' : ''}{bMean.toFixed(2)} bps
+                              </span>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '0.78rem', color: '#6e7681' }}>Collecting…</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            </Span>
+
+            {/* Calibrated DSR Audit */}
+            <Span n={6}>
+              <Card title="Calibrated Deflated Sharpe Ratio (DSR) Multi-Trial Audit">
+                <p style={{ margin: '0 0 14px', color: '#8b949e', fontSize: '0.82rem' }}>
+                  Accounts for all historical strategy iterations, parameter grids, and 5 horizons tested.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Lifetime Tested Configurations (N_trials):</span>
+                    <span style={{ fontWeight: 700, color: '#fff' }}>{trialsRegistered}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Effective Independent Events (T):</span>
+                    <span style={{ fontWeight: 700, color: '#00d4ff' }}>{totalPrimaryEpisodes} Episodes</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Per-Period Net Sharpe (unannualized):</span>
+                    <span style={{ fontWeight: 700, color: '#fff' }}>
+                      {dsr?.observed_sharpe !== undefined ? dsr.observed_sharpe : 'Awaiting N>=15'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#8b949e' }}>Multi-Trial Deflation Hurdle (SR*):</span>
+                    <span style={{ fontWeight: 700, color: '#ffaa00' }}>
+                      {dsr?.sr_star !== undefined ? dsr.sr_star : '—'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                    <span style={{ color: '#8b949e' }}>DSR Statistical Confidence:</span>
+                    <span>
+                      {dsr?.dsr_prob_pct !== undefined ? (
+                        <Badge tone={dsr.passed ? 'good' : 'warn'}>{dsr.dsr_prob_pct.toFixed(1)}%</Badge>
+                      ) : (
+                        <span style={{ color: '#8b949e' }}>Collecting baseline</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Span>
+          </Grid>
+        </>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: LIVE PAPER TRADER & MICROSTRUCTURE EXECUTION                        */}
+      {/* ========================================================================= */}
+      {activeTab === 'execution' && (
+        <>
+          {/* Dynamic Data Flow Pipeline Visualizer */}
+          <Card>
+            <div
+              style={{
+                padding: '16px 20px',
+                background: 'rgba(0, 0, 0, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 10,
+              }}
+            >
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #8b949e)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                REAL-TIME DATA PROCESSING PIPELINE
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                {/* Stage 1: Ingestion */}
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(0, 212, 255, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#00d4ff', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <Radio size={14} /> 1. Ingestion Stream
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
+                    {universeSize} Coins / Tick
+                  </div>
+                </div>
+
+                {/* Animated Flow Arrow 1 */}
+                <div style={{ padding: '0 12px' }}>
+                  <motion.div animate={{ x: [0, 8, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity }}>
+                    <ArrowUpRight size={18} style={{ color: '#00d4ff', transform: 'rotate(45deg)' }} />
+                  </motion.div>
+                </div>
+
+                {/* Stage 2: Scanning & Z-Score Filtering */}
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(163, 113, 247, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#a371f7', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <Activity size={14} /> 2. Statistical Anomaly Scan
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
+                    Z &gt; 1.2σ &amp; Vol &gt; 1.5x
+                  </div>
+                </div>
+
+                {/* Animated Flow Arrow 2 */}
+                <div style={{ padding: '0 12px' }}>
+                  <motion.div animate={{ x: [0, 8, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}>
+                    <ArrowUpRight size={18} style={{ color: '#a371f7', transform: 'rotate(45deg)' }} />
+                  </motion.div>
+                </div>
+
+                {/* Stage 3: Microstructure Filter */}
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255, 170, 0, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#ffaa00', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <ShieldCheck size={14} /> 3. Microstructure Gate
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
+                    Spread &le; 12 bps + BTC Guard
+                  </div>
+                </div>
+
+                {/* Animated Flow Arrow 3 */}
+                <div style={{ padding: '0 12px' }}>
+                  <motion.div animate={{ x: [0, 8, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}>
+                    <ArrowUpRight size={18} style={{ color: '#ffaa00', transform: 'rotate(45deg)' }} />
+                  </motion.div>
+                </div>
+
+                {/* Stage 4: Order Sizing & Ratchet */}
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(0, 255, 136, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#00ff88', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <Zap size={14} /> 4. Trailing Ratchet Execution
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: 4 }}>
+                    +1.0% Ratchet / -1.5% Stop
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Financial Overview Metrics */}
+          <Grid cols={12}>
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Portfolio Equity</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', marginTop: 4 }}>
+                  ${equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  Initial: $10,000.00
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Realized PnL</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: realizedPnl >= 0 ? '#00ff88' : '#ff4444', marginTop: 4 }}>
+                  {realizedPnl >= 0 ? '+' : ''}${realizedPnl.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  Win Rate: {winRate.toFixed(1)}% ({recentTrades.length} closed)
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Total Fees Paid</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffaa00', marginTop: 4 }}>
+                  ${feesPaid.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  5 bps taker + 3 bps slippage
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={3}>
+              <Card>
+                <div style={{ fontSize: '0.78rem', color: '#8b949e', textTransform: 'uppercase' }}>Open Positions</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#00d4ff', marginTop: 4 }}>
+                  {openPositions.length} / 5
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 4 }}>
+                  ${(openPositions.length * 2000).toLocaleString()} Active Notional
+                </div>
+              </Card>
+            </Span>
+          </Grid>
+
+          {/* Active Positions */}
+          <Card title={`Active Open Positions (${openPositions.length})`}>
+            {openPositions.length === 0 ? (
               <div style={{ padding: '40px 0', textAlign: 'center', color: '#8b949e' }}>
-                No completed trades yet in this session.
+                No active positions open. Scanner searching for high-velocity surge breakouts…
               </div>
             ) : (
-              <div style={{ maxHeight: 230, overflowY: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#8b949e' }}>
-                      <th style={{ padding: '6px' }}>Symbol</th>
-                      <th style={{ padding: '6px' }}>Side</th>
-                      <th style={{ padding: '6px' }}>Net PnL</th>
-                      <th style={{ padding: '6px' }}>Exit Reason</th>
-                      <th style={{ padding: '6px' }}>Duration</th>
+                      <th style={{ padding: '8px' }}>Symbol</th>
+                      <th style={{ padding: '8px' }}>Side</th>
+                      <th style={{ padding: '8px' }}>Entry Price</th>
+                      <th style={{ padding: '8px' }}>Current Price</th>
+                      <th style={{ padding: '8px' }}>Unrealized PnL</th>
+                      <th style={{ padding: '8px' }}>Stop Loss</th>
+                      <th style={{ padding: '8px' }}>Trailing Ratchet</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentTrades.slice(-5).reverse().map((t: any, idx: number) => {
-                      const isProfit = (t.net_pnl ?? 0) >= 0
-                      const durMin = ((t.duration_seconds ?? 0) / 60).toFixed(1)
+                    {openPositions.map((pos: any) => {
+                      const isProfit = (pos.unrealized_pnl ?? 0) >= 0
                       return (
-                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                          <td style={{ padding: '8px 6px', fontWeight: 700 }}>{t.symbol}</td>
-                          <td style={{ padding: '8px 6px' }}>
-                            <Badge tone={t.side === 'Buy' ? 'good' : 'bad'}>{t.side}</Badge>
+                        <tr key={pos.symbol} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                          <td style={{ padding: '10px 8px', fontWeight: 700 }}>{pos.symbol}</td>
+                          <td style={{ padding: '10px 8px' }}>
+                            <Badge tone={pos.side === 'Buy' ? 'good' : 'bad'}>{pos.side}</Badge>
                           </td>
-                          <td
-                            style={{
-                              padding: '8px 6px',
-                              fontWeight: 700,
-                              color: isProfit ? '#00ff88' : '#ff4444',
-                            }}
-                          >
-                            {isProfit ? '+' : ''}${t.net_pnl?.toFixed(2)}
+                          <td style={{ padding: '10px 8px' }}>${pos.entry_price?.toFixed(4)}</td>
+                          <td style={{ padding: '10px 8px' }}>${pos.current_price?.toFixed(4)}</td>
+                          <td style={{ padding: '10px 8px', fontWeight: 700, color: isProfit ? '#00ff88' : '#ff4444' }}>
+                            {isProfit ? '+' : ''}${pos.unrealized_pnl?.toFixed(2)}
                           </td>
-                          <td style={{ padding: '8px 6px' }}>
-                            <span style={{ color: isProfit ? '#7ee787' : '#ffa657' }}>{t.exit_reason}</span>
+                          <td style={{ padding: '10px 8px', color: '#ff4444' }}>${pos.stop_loss?.toFixed(4)}</td>
+                          <td style={{ padding: '10px 8px' }}>
+                            {pos.trailing_active ? (
+                              <Badge tone="good">TRAILING LOCKED (+0.5%)</Badge>
+                            ) : (
+                              <span style={{ color: '#8b949e' }}>Pending +1.0% Profit</span>
+                            )}
                           </td>
-                          <td style={{ padding: '8px 6px', color: '#8b949e' }}>{durMin}m</td>
                         </tr>
                       )
                     })}
@@ -459,8 +649,93 @@ export default function OmniPulse() {
               </div>
             )}
           </Card>
-        </Span>
-      </Grid>
+
+          {/* Telemetry Log & Closed Trades */}
+          <Grid cols={12}>
+            <Span n={6}>
+              <Card title="Live Microstructure Event Tape">
+                <div
+                  style={{
+                    maxHeight: 230,
+                    overflowY: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    padding: '8px 12px',
+                    background: '#0d1117',
+                    borderRadius: 6,
+                  }}
+                >
+                  {telemetryEvents.length === 0 ? (
+                    <div style={{ color: '#8b949e' }}>Streaming live ticker events…</div>
+                  ) : (
+                    telemetryEvents.map((ev: any, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', gap: 8 }}>
+                        <span style={{ color: '#8b949e' }}>[{ev.time}]</span>
+                        <span style={{ color: ev.type === 'ENTRY' ? '#00d4ff' : '#00ff88', fontWeight: 600 }}>{ev.type}:</span>
+                        <span style={{ color: '#e6edf3' }}>{ev.message}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </Span>
+
+            <Span n={6}>
+              <Card title={`Recent Closed Trades (${recentTrades.length})`}>
+                {recentTrades.length === 0 ? (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#8b949e' }}>
+                    No completed trades yet in this session.
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: 230, overflowY: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#8b949e' }}>
+                          <th style={{ padding: '6px' }}>Symbol</th>
+                          <th style={{ padding: '6px' }}>Side</th>
+                          <th style={{ padding: '6px' }}>Net PnL</th>
+                          <th style={{ padding: '6px' }}>Exit Reason</th>
+                          <th style={{ padding: '6px' }}>Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentTrades.slice(-5).reverse().map((t: any, idx: number) => {
+                          const isProfit = (t.net_pnl ?? 0) >= 0
+                          const durMin = ((t.duration_seconds ?? 0) / 60).toFixed(1)
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                              <td style={{ padding: '8px 6px', fontWeight: 700 }}>{t.symbol}</td>
+                              <td style={{ padding: '8px 6px' }}>
+                                <Badge tone={t.side === 'Buy' ? 'good' : 'bad'}>{t.side}</Badge>
+                              </td>
+                              <td
+                                style={{
+                                  padding: '8px 6px',
+                                  fontWeight: 700,
+                                  color: isProfit ? '#00ff88' : '#ff4444',
+                                }}
+                              >
+                                {isProfit ? '+' : ''}${t.net_pnl?.toFixed(2)}
+                              </td>
+                              <td style={{ padding: '8px 6px' }}>
+                                <span style={{ color: isProfit ? '#7ee787' : '#ffa657' }}>{t.exit_reason}</span>
+                              </td>
+                              <td style={{ padding: '8px 6px', color: '#8b949e' }}>{durMin}m</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            </Span>
+          </Grid>
+        </>
+      )}
     </div>
   )
 }

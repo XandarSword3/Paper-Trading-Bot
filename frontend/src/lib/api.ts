@@ -339,6 +339,7 @@ export const api = {
   walkForward: (id: string) => getJSON<WalkForwardResult>(`/api/v1/walkforward/${id}`),
   ciStatus: () => getJSON<CiStatus>('/api/v1/ci/status'),
   omnipulseState: () => getJSON<any>('/api/v1/omnipulse/state'),
+  omnipulseResearch: () => getJSON<any>('/api/v1/omnipulse/signal-research'),
 }
 
 // Known strategy ids currently onboarded onto this schema (bot is v1 + v4

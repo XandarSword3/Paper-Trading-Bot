@@ -518,6 +518,15 @@ _ci_cache = {"data": None, "fetched_at": 0.0}
 
 # === OMNIPULSE REAL-TIME STATUS ENDPOINTS ===
 OMNI_STATE_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "trendlab" / "omni_paper_state.json"
+SIGNAL_RESEARCH_SUMMARY_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "signal_research_summary.json"
+SIGNAL_JSONL_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "signal_observations.jsonl"
+TRIAL_REGISTRY_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "signal_research" / "trial_registry.json"
+
+HUNTER_DIR = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter"
+if str(HUNTER_DIR) not in sys.path:
+    sys.path.insert(0, str(HUNTER_DIR))
+
+_bootstrap_cache = {"data": None, "computed_at": 0.0}
 
 @app.get("/api/v1/omnipulse/state")
 def get_omnipulse_state():
@@ -540,6 +549,109 @@ def get_omnipulse_state():
     try:
         data = json.loads(OMNI_STATE_PATH.read_text(encoding="utf-8"))
         data["status"] = "active"
+        return data
+    except Exception as e:
+        return {"error": str(e), "status": "error"}
+
+@app.get("/api/v1/omnipulse/signal-research")
+def get_omnipulse_signal_research():
+    """Returns decoupled signal research telemetry, forward returns across 5 horizons, moving block bootstrap, and kill criterion status."""
+    if not SIGNAL_RESEARCH_SUMMARY_PATH.exists():
+        return {
+            "status": "idle",
+            "message": "Signal research engine initializing...",
+            "total_primary_episodes": 0,
+            "total_secondary_ticks": 0,
+            "total_naive_controls": 0,
+            "pending_queue": 0,
+            "horizons": {},
+            "bootstrap_5m": {"error": "Collecting initial observations"},
+            "kill_gate": {
+                "decision": "COLLECTING_SAMPLE",
+                "cleared": False,
+                "statement": "Collecting baseline observations...",
+            },
+            "trials_registered": 0,
+        }
+    try:
+        data = json.loads(SIGNAL_RESEARCH_SUMMARY_PATH.read_text(encoding="utf-8"))
+        data["status"] = "active"
+        
+        trials_count = 0
+        if TRIAL_REGISTRY_PATH.exists():
+            try:
+                reg_data = json.loads(TRIAL_REGISTRY_PATH.read_text(encoding="utf-8"))
+                trials_count = reg_data.get("total_trials", 0)
+            except Exception:
+                pass
+        data["trials_registered"] = trials_count
+
+        now_t = time.time()
+        # Compute or return cached bootstrap analysis (cached for 10s)
+        if _bootstrap_cache["data"] is not None and (now_t - _bootstrap_cache["computed_at"]) < 10.0:
+            data.update(_bootstrap_cache["data"])
+            return data
+
+        # Calculate bootstrap & kill gate from signal_observations.jsonl
+        boot_res = {"error": "No observations yet"}
+        kill_gate = {
+            "decision": "COLLECTING_SAMPLE",
+            "cleared": False,
+            "statement": "Collecting observations for moving block bootstrap...",
+        }
+        dsr_info = {"total_trials": trials_count, "status": "INSUFFICIENT_SAMPLE"}
+
+        if SIGNAL_JSONL_PATH.exists():
+            try:
+                import pandas as pd
+                import numpy as np
+                from research.statistical_tests import (
+                    moving_block_bootstrap_by_time,
+                    evaluate_institutional_kill_gate,
+                    compute_deflated_sharpe_ratio,
+                )
+                rows = []
+                with open(SIGNAL_JSONL_PATH, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.strip():
+                            r = json.loads(line)
+                            rows.append({
+                                "timestamp": r.get("timestamp"),
+                                "is_primary_episode": r.get("is_primary_episode", True),
+                                "is_control": r.get("is_control", False),
+                                "has_ws_gap": r.get("has_ws_gap", False),
+                                "5m": r.get("net_returns_bps", {}).get("5m"),
+                            })
+                if rows:
+                    b_df = pd.DataFrame(rows)
+                    boot_res = moving_block_bootstrap_by_time(b_df, horizon_col="5m", block_duration_minutes=30.0, n_bootstrap=1000)
+                    kill_gate = evaluate_institutional_kill_gate(boot_res)
+                    
+                    # DSR
+                    ep_clean = b_df[(b_df["is_primary_episode"] == True) & (~b_df["is_control"])]["5m"].dropna().to_numpy()
+                    if len(ep_clean) >= 15:
+                        m_r = float(np.mean(ep_clean))
+                        s_r = float(np.std(ep_clean, ddof=1)) + 1e-8
+                        sr_p = m_r / s_r
+                        dsr_p, sr_s = compute_deflated_sharpe_ratio(sr_p, n_trials=trials_count, effective_t=len(ep_clean))
+                        dsr_info = {
+                            "total_trials": trials_count,
+                            "observed_sharpe": round(sr_p, 4),
+                            "sr_star": round(sr_s, 4),
+                            "dsr_prob_pct": round(dsr_p * 100.0, 2),
+                            "passed": bool(dsr_p >= 0.95),
+                        }
+            except Exception as b_err:
+                boot_res = {"error": str(b_err)}
+
+        cached_payload = {
+            "bootstrap_5m": boot_res,
+            "kill_gate": kill_gate,
+            "dsr": dsr_info,
+        }
+        _bootstrap_cache["data"] = cached_payload
+        _bootstrap_cache["computed_at"] = now_t
+        data.update(cached_payload)
         return data
     except Exception as e:
         return {"error": str(e), "status": "error"}
