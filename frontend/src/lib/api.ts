@@ -338,6 +338,7 @@ export const api = {
     getJSON<EventLogItem[]>(`/api/v1/events?category=${category}&limit=${limit}`),
   walkForward: (id: string) => getJSON<WalkForwardResult>(`/api/v1/walkforward/${id}`),
   ciStatus: () => getJSON<CiStatus>('/api/v1/ci/status'),
+  omnipulseState: () => getJSON<any>('/api/v1/omnipulse/state'),
 }
 
 // Known strategy ids currently onboarded onto this schema (bot is v1 + v4

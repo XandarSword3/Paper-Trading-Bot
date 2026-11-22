@@ -13,6 +13,7 @@ import RiskTerrain from './pages/RiskTerrain'
 import Reports from './pages/Reports'
 import Readiness from './pages/Readiness'
 import Settings from './pages/Settings'
+import OmniPulse from './pages/OmniPulse'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ function App() {
               <Route index element={<Navigate to="/command" replace />} />
               <Route path="command" element={<Command />} />
               <Route path="live-terminal" element={<LiveTerminal />} />
+              <Route path="omnipulse" element={<OmniPulse />} />
               <Route path="paper-trading" element={<PaperTrading />} />
               <Route path="alerts" element={<Alerts />} />
               <Route path="strategies" element={<Strategies />} />

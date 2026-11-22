@@ -38,6 +38,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import mimetypes
+
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
 from fastapi.staticfiles import StaticFiles
 
 # The new React (Vite) frontend builds to frontend/dist. Until that build
@@ -511,6 +516,34 @@ def get_walk_forward_results(strategy_id: str):
 GITHUB_REPO = "XandarSword3/Paper-Trading-Bot"
 _ci_cache = {"data": None, "fetched_at": 0.0}
 
+# === OMNIPULSE REAL-TIME STATUS ENDPOINTS ===
+OMNI_STATE_PATH = ROOT_DIR.parent / "Trading Bot" / "liquidation-hunter" / "logs" / "trendlab" / "omni_paper_state.json"
+
+@app.get("/api/v1/omnipulse/state")
+def get_omnipulse_state():
+    """Returns real-time status of the OmniPulse multi-asset engine."""
+    if not OMNI_STATE_PATH.exists():
+        return {
+            "status": "idle",
+            "initial_capital": 10000.0,
+            "equity": 10000.0,
+            "cash": 10000.0,
+            "realized_pnl": 0.0,
+            "total_fees_paid": 0.0,
+            "open_positions": 0,
+            "closed_trades": 0,
+            "win_rate_pct": 0.0,
+            "signals_detected": 0,
+            "open_positions_detail": [],
+            "recent_trades": [],
+        }
+    try:
+        data = json.loads(OMNI_STATE_PATH.read_text(encoding="utf-8"))
+        data["status"] = "active"
+        return data
+    except Exception as e:
+        return {"error": str(e), "status": "error"}
+
 @app.get("/api/v1/ci/status")
 def get_ci_status():
     """
@@ -555,5 +588,17 @@ def get_ci_status():
         # Never fake a status — surface the failure explicitly instead of
         # showing a plausible-looking green checkmark.
         return {"repo": GITHUB_REPO, "workflows": [], "error": str(e)}
+
+
+# === SPA CATCH-ALL FALLBACK ===
+@app.get("/{full_path:path}", response_class=FileResponse)
+def spa_fallback(full_path: str):
+    dist_index = FRONTEND_DIST_DIR / "index.html"
+    if dist_index.exists():
+        return FileResponse(dist_index)
+    legacy_index = LEGACY_STATIC_DIR / "index.html"
+    if legacy_index.exists():
+        return FileResponse(legacy_index)
+    raise HTTPException(status_code=404, detail="Page not found")
 
 

@@ -3,7 +3,7 @@ import { useStrategy } from '../lib/StrategyContext'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Badge, toneForWord } from './ui/Primitives'
-import { Activity, Command, Play, Settings, BarChart3, TrendingUp, Shield, Globe, FileText, GitBranch, Bell } from 'lucide-react'
+import { Activity, Command, Play, Settings, BarChart3, TrendingUp, Shield, Globe, FileText, GitBranch, Bell, Zap } from 'lucide-react'
 
 interface NavItem {
   path: string
@@ -14,6 +14,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/command', label: 'Command', icon: <Command size={18} />, cluster: 'LIVE' },
+  { path: '/omnipulse', label: '⚡ OmniPulse', icon: <Zap size={18} />, cluster: 'LIVE' },
   { path: '/live-terminal', label: 'Live Terminal', icon: <Activity size={18} />, cluster: 'LIVE' },
   { path: '/paper-trading', label: 'Paper Trading', icon: <TrendingUp size={18} />, cluster: 'LIVE' },
   { path: '/alerts', label: 'Alerts', icon: <Bell size={18} />, cluster: 'LIVE' },
