@@ -3,6 +3,7 @@ FastAPI Backend Application for Paper-Trading-Bot
 Provides endpoints for dashboard UI, trade ingestion, strategy performance, and readiness status.
 """
 import json
+import time
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import FastAPI, Depends, HTTPException, Query
