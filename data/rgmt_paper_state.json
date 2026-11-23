@@ -1,14 +1,46 @@
 {
   "strategy": "RGMT",
   "initial_capital": 10000.0,
-  "cash": 10000.0,
-  "equity": 10000.0,
+  "cash": 9996.148347135568,
+  "equity": 9996.148347135568,
   "peak_equity": 10000.0,
   "realized_pnl": 0.0,
-  "total_fees_paid": 0.0,
-  "positions": {},
-  "entry_prices": {},
-  "runs": 2,
+  "total_fees_paid": 3.851652864432683,
+  "positions": {
+    "1000SHIBUSDT": -94790326.53906183,
+    "ADAUSDT": -2022.4673725589942,
+    "APTUSDT": -570.2898520683646,
+    "DOGEUSDT": -6141.1513443483545,
+    "DOTUSDT": -411.03401293145794,
+    "FILUSDT": -424.62703330359807,
+    "OPUSDT": -3190.0699461661675,
+    "SEIUSDT": -7532.229784368589,
+    "SOLUSDT": -4.765756769664831,
+    "SUIUSDT": -392.26345487467364,
+    "TIAUSDT": -598.725842371233,
+    "TRXUSDT": -2835.0408784383217,
+    "WIFUSDT": -2032.222440369612,
+    "XLMUSDT": -2665.993745451088,
+    "XRPUSDT": -386.9371961663568
+  },
+  "entry_prices": {
+    "1000SHIBUSDT": 3.619e-06,
+    "ADAUSDT": 0.1455,
+    "APTUSDT": 0.3854,
+    "DOGEUSDT": 0.05558,
+    "DOTUSDT": 0.6688,
+    "FILUSDT": 0.5411,
+    "OPUSDT": 0.07146,
+    "SEIUSDT": 0.03444,
+    "SOLUSDT": 71.78,
+    "SUIUSDT": 0.6623,
+    "TIAUSDT": 0.3367,
+    "TRXUSDT": 0.30525,
+    "WIFUSDT": 0.1227,
+    "XLMUSDT": 0.12805,
+    "XRPUSDT": 0.942
+  },
+  "runs": 3,
   "history": [
     {
       "time": "2026-11-22T15:46:08.034691+00:00",
@@ -21,8 +53,14 @@
       "equity": 10000.0,
       "drawdown_pct": 0.0,
       "orders": 0
+    },
+    {
+      "time": "2026-11-23T06:21:44.403974+00:00",
+      "equity": 9996.148347135568,
+      "drawdown_pct": 0.0,
+      "orders": 15
     }
   ],
   "halted": false,
-  "last_run": "2026-11-22T16:01:34.676901+00:00"
+  "last_run": "2026-11-23T06:21:44.403974+00:00"
 }
