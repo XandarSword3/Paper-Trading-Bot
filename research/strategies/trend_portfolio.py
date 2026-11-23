@@ -95,11 +95,16 @@ def target_weights(
     cfg = cfg or TrendConfig()
     score = momentum_score(close, cfg.lookbacks, cfg.mode)
 
-    if cfg.regime_enabled and cfg.regime_symbol in close.columns:
-        ref = close[cfg.regime_symbol]
-        regime_ma = ref.ewm(span=cfg.regime_ma, min_periods=cfg.regime_ma, adjust=False).mean()
-        regime = (ref > regime_ma).astype(float).fillna(0.0)
-        score = score.mul(regime, axis=0)
+    if cfg.regime_enabled:
+        if cfg.regime_symbol in close.columns:
+            ref = close[cfg.regime_symbol]
+            regime_ma = ref.ewm(span=cfg.regime_ma, min_periods=cfg.regime_ma, adjust=False).mean()
+            regime = (ref > regime_ma).astype(float).fillna(0.0)
+            score = score.mul(regime, axis=0)
+        else:
+            # Fail closed: without the regime reference we cannot verify that
+            # risk is allowed, so the safe target is flat, not an ungated book.
+            score = score * 0.0
 
     sigma = realised_vol(close, cfg.vol_halflife, cfg.min_vol_obs)
     if cfg.min_asset_vol > 0:
@@ -140,8 +145,15 @@ class TrendPortfolio:
         self.cfg = cfg or TrendConfig()
 
     def regime_active(self, close: pd.DataFrame) -> bool:
-        if not self.cfg.regime_enabled or self.cfg.regime_symbol not in close.columns:
+        """True only when the gate is enabled and its reference is above its MA.
+
+        A missing regime reference fails closed (returns False) instead of
+        silently disabling the gate.
+        """
+        if not self.cfg.regime_enabled:
             return True
+        if self.cfg.regime_symbol not in close.columns:
+            return False
         ref = close[self.cfg.regime_symbol]
         ma = ref.ewm(span=self.cfg.regime_ma, min_periods=self.cfg.regime_ma, adjust=False).mean()
         val = (ref > ma).iloc[-1]

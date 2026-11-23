@@ -12,6 +12,8 @@ venv/
 
 # Data & Results
 data/*.csv
+# The RGMT daily workflow commits its target snapshot; keep that one tracked.
+!data/rgmt_targets.csv
 data/*.parquet
 data/*.db
 research/results/

@@ -51,6 +51,19 @@ SLIPPAGE_BPS = 3.0
 MAX_DRAWDOWN_GUARD = 0.30
 
 
+def _okx_turnover_usd(item: dict) -> float:
+    """Convert an OKX ticker's 24h volume to USD notional.
+
+    OKX reports ``volCcy24h`` in base-currency units (BTC, PEPE, ...), not USDT.
+    Comparing that raw number to a USD threshold dropped BTC from the universe,
+    which in turn silently disabled the regime gate.
+    """
+    try:
+        return float(item.get("volCcy24h") or 0.0) * float(item.get("last") or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 class ResilientMarketClient:
     """Direct HTTP market client fetching from Bybit with automatic OKX fallback for cloud/US runners."""
 
@@ -106,7 +119,7 @@ class ResilientMarketClient:
                 result[sym] = {
                     "symbol": sym,
                     "lastPrice": item.get("last", "0.0"),
-                    "turnover24h": item.get("volCcy24h", "0.0"),
+                    "turnover24h": _okx_turnover_usd(item),
                 }
                 if base in ("PEPE", "SHIB", "FLOKI", "BONK", "SATS"):
                     result[f"1000{base}USDT"] = result[sym]
@@ -242,15 +255,27 @@ def main() -> None:
 
     # Fetch panel and compute targets
     panel = fetch_panel(client, liquid)
+    if "BTCUSDT" not in panel.columns:
+        logger.error(
+            "BTCUSDT is missing from the fetched panel; the regime gate cannot be "
+            "evaluated. Forcing a flat book (no new risk)."
+        )
     cfg = TrendConfig(lookbacks=(60, 120), target_vol=0.25, max_gross=3.0)
     portfolio = TrendPortfolio(cfg)
     regime_on = portfolio.regime_active(panel)
     detail = portfolio.describe(panel)
+    if "BTCUSDT" not in panel.columns and float(detail["target_weight"].abs().sum()) > 1e-12:
+        raise RuntimeError(
+            "Regime reference missing but non-zero targets were produced; refusing to trade"
+        )
     detail.to_csv(TARGETS_PATH)
 
     gross_exposure = float(detail["target_weight"].abs().sum())
     net_exposure = float(detail["target_weight"].sum())
-    regime_status = "ON (Risk Active)" if regime_on else "OFF (Cash Preservation)"
+    if "BTCUSDT" not in panel.columns:
+        regime_status = "OFF (BTCUSDT unavailable, forced flat)"
+    else:
+        regime_status = "ON (Risk Active)" if regime_on else "OFF (Cash Preservation)"
 
     state = load_state(args.capital)
     prices = {s: float(all_tickers[s]["lastPrice"]) for s in liquid if s in all_tickers}
