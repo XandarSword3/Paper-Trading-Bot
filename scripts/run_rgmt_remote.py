@@ -56,6 +56,18 @@ from research.strategies.trend_portfolio import TrendConfig, TrendPortfolio  # n
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("rgmt_remote")
 
+
+def _configure_stdout() -> None:
+    """Avoid UnicodeEncodeError on Windows consoles when printing the report."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
+_configure_stdout()
+
 DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -334,6 +346,40 @@ def load_state(initial_capital: float = 10000.0) -> dict:
     base.setdefault("history", [])
     base.setdefault("trades", [])
     base.setdefault("halted", False)
+
+    # Older state files may contain explicit nulls (e.g. total_funding_cost),
+    # which would break float arithmetic on the next run.  Normalise them.
+    numeric_defaults = {
+        "initial_capital": initial_capital,
+        "cash": initial_capital,
+        "equity": initial_capital,
+        "peak_equity": initial_capital,
+        "realized_pnl": 0.0,
+        "total_fees_paid": 0.0,
+        "total_funding_cost": 0.0,
+    }
+    for key, default in numeric_defaults.items():
+        try:
+            base[key] = float(base.get(key, default))
+        except (TypeError, ValueError):
+            base[key] = float(default)
+    try:
+        base["runs"] = int(base.get("runs", 0))
+    except (TypeError, ValueError):
+        base["runs"] = 0
+
+    for key in ("positions", "entry_prices"):
+        raw_map = base.get(key) or {}
+        if not isinstance(raw_map, dict):
+            raw_map = {}
+        clean: Dict[str, float] = {}
+        for symbol, raw_value in raw_map.items():
+            try:
+                clean[str(symbol)] = float(raw_value)
+            except (TypeError, ValueError):
+                logger.warning("Dropping invalid %s value for %s: %r", key, symbol, raw_value)
+        base[key] = clean
+
     return base
 
 
