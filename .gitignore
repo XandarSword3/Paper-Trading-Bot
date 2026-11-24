@@ -16,6 +16,11 @@ data/*.csv
 !data/rgmt_targets.csv
 data/*.parquet
 data/*.db
+# Local live-executor state and kill switch; never commit account state.
+data/rgmt_live_state.json
+data/rgmt_live_state.json.tmp
+data/RGMT_LIVE_HALT
+data/.rgmt_paper.lock
 research/results/
 *.png
 *.jpg
