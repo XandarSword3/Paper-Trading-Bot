@@ -8,7 +8,7 @@
   "total_fees_paid": 0.0,
   "positions": {},
   "entry_prices": {},
-  "runs": 3,
+  "runs": 4,
   "history": [
     {
       "time": "2026-11-22T15:46:08.034691+00:00",
@@ -28,9 +28,15 @@
       "drawdown_pct": 0.0,
       "orders": 0,
       "note": "Invalidated: the OKX fallback dropped BTCUSDT, silently disabling the regime gate and opening 15 erroneous shorts. Reset to flat."
+    },
+    {
+      "time": "2026-11-24T08:55:24.265310+00:00",
+      "equity": 10000.0,
+      "drawdown_pct": 0.0,
+      "orders": 0
     }
   ],
   "halted": false,
-  "last_run": "2026-11-23T06:21:44.403974+00:00",
+  "last_run": "2026-11-24T08:55:24.265310+00:00",
   "state_note": "Reset to flat on 2026-11-23 after the invalidated GitHub Actions run."
 }
