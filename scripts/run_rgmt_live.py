@@ -375,6 +375,10 @@ def safety_check(targets: Dict[str, float], equity: float, orders: List[dict], m
         raise RuntimeError(f"target gross {gross_target:.4f} exceeds {MAX_GROSS}")
     total_notional = 0.0
     for order in orders:
+        # Reduce-only orders lower risk and must never be blocked by a
+        # notional cap; otherwise a small/empty account could not de-risk.
+        if order.get("reduce_only"):
+            continue
         mark = marks.get(order["symbol"], 0.0)
         notional = order["quantity"] * mark
         total_notional += notional

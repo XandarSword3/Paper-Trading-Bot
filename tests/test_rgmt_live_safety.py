@@ -192,13 +192,20 @@ def test_safety_check_rejects_gross_above_frozen_limit() -> None:
 
 
 def test_safety_check_rejects_a_single_order_over_fraction_of_equity() -> None:
-    # Flipping a large existing book in one run would exceed the per-order cap.
     targets = {"BTCUSDT": 0.15}
     equity = 10_000.0
     marks = {"BTCUSDT": 100.0}
-    orders = plan_orders(targets, equity, {"BTCUSDT": -50.0}, marks, FILTERS)
+    oversized = [{"symbol": "BTCUSDT", "quantity": 50.0, "reduce_only": False}]
     with pytest.raises(RuntimeError):
-        safety_check(targets, equity, orders, marks)
+        safety_check(targets, equity, oversized, marks)
+
+
+def test_safety_check_never_blocks_reduce_only_de_risking() -> None:
+    # A small or nearly empty account must still be able to flatten.
+    targets = {"BTCUSDT": 0.0}
+    marks = {"BTCUSDT": 100.0}
+    closing = [{"symbol": "BTCUSDT", "quantity": 50.0, "reduce_only": True}]
+    safety_check(targets, 100.0, closing, marks)
 
 
 def test_execution_gates_require_explicit_opt_in() -> None:
