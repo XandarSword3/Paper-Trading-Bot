@@ -26,7 +26,11 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests pandas numpy
+          pip install requests pandas numpy pytest
+
+      - name: Run RGMT Accounting & Safety Tests
+        run: |
+          python -m pytest -q tests/test_rgmt_paper_accounting.py tests/test_rgmt_live_safety.py
 
       - name: Execute RGMT Daily Rebalance
         env:
@@ -34,6 +38,10 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python scripts/run_rgmt_remote.py --mode paper --capital 10000
+
+      - name: Verify Paper State Health
+        run: |
+          python -c "import json,sys; s=json.load(open('data/rgmt_paper_state.json')); e=s.get('health_error'); print('RGMT state health_error: %s' % e) if e else print('RGMT state healthy: equity=%s halted=%s' % (s.get('equity'), s.get('halted'))); sys.exit(1 if e else 0)"
 
       - name: Commit & Push State Updates
         run: |
