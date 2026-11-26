@@ -59,6 +59,9 @@ Thumbs.db
 quant_research/data/
 quant_research/results/*.parquet
 
+# V4 system market-data cache (large parquet datasets, regenerable)
+v4_system/data/
+
 # Streamlit (legacy)
 .streamlit/
 
