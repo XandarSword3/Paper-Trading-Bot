@@ -1,8 +1,9 @@
 # RGMT Live Runbook
 
 Regime-Gated Multi-Horizon Trend (RGMT) is the only strategy in this repo with a
-promising but unproven out-of-sample edge: Sharpe 1.22, 27.2% CAGR, -19.0% max
-drawdown (2020-01-01 to 2026-10-31), holdout Sharpe 0.71, DSR 0.659.
+promising but unproven out-of-sample edge: full-period (2020-01-01 to
+2026-10-31) Sharpe 1.22, 27.2% CAGR, -19.0% max drawdown; holdout
+(2025-07 to 2026-10) Sharpe 0.71; DSR 0.659.
 
 > **DSR correction (2026-11-26):** the previously quoted DSR 0.999 was computed
 > with a bug in `research/trendlab/stats.py` — the expected-max null benchmark
@@ -99,8 +100,7 @@ python scripts/run_rgmt_live.py --execute
 - Reduce-only orders are never blocked by notional caps, so the book can always
   be de-risked.
 - **Mainnet is blocked while DSR < 0.95** (currently 0.659). Testnet and paper
-  are unaffected. Revisit only if DSR improves on new data or the trial count
-  is reduced.
+  are unaffected. Revisit only if DSR improves on new data.
 
 ## What "ready" means
 

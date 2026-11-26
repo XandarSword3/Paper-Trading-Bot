@@ -68,6 +68,8 @@ DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 STATE_PATH = DATA_DIR / "rgmt_live_state.json"
 HALT_PATH = DATA_DIR / "RGMT_LIVE_HALT"
+DSR_GATE_PATH = ROOT_DIR / "data" / "RGMT_DSR_GATE.json"
+DSR_MIN_THRESHOLD = 0.95
 
 TESTNET_BASE = "https://testnet.binancefuture.com"
 MAINNET_BASE = "https://fapi.binance.com"
@@ -127,6 +129,34 @@ def check_execution_gates(
         raise SystemExit("Refusing mainnet: set ALLOW_MAINNET_LIVE=true to override")
     if execute and not allow_live:
         raise SystemExit("Refusing to trade: set ALLOW_LIVE=true to override")
+
+
+def dsr_gate_allows_mainnet(path: Path = DSR_GATE_PATH,
+                           threshold: float = DSR_MIN_THRESHOLD) -> bool:
+    """Fail-closed DSR gate for mainnet new exposure.
+
+    Reads the committed gate file ``data/RGMT_DSR_GATE.json``. Returns True
+    only if it parses and ``dsr >= threshold``. Missing, unreadable, or
+    malformed files all return False — mainnet must never open new risk on an
+    absent or stale gate.
+    """
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        dsr = float(payload["dsr"])
+    except Exception:
+        return False
+    return dsr >= threshold
+
+
+def apply_dsr_gate(orders: List[dict], allowed: bool) -> List[dict]:
+    """When the DSR gate blocks mainnet, keep only reduce-only orders.
+
+    Flattening and de-risking must always remain possible; only NEW exposure
+    is refused.
+    """
+    if allowed:
+        return orders
+    return [order for order in orders if order.get("reduce_only")]
 
 
 class BinanceFuturesClient:
@@ -491,6 +521,19 @@ def main() -> None:
 
     filters = parse_filters(client.exchange_info())
     orders = plan_orders(targets, equity, positions, marks, filters, max_orders=args.max_orders)
+
+    # DSR gate: mainnet may only de-risk while the committed gate file shows
+    # DSR below threshold (or is missing/unreadable). Testnet is unaffected.
+    if not testnet:
+        dsr_ok = dsr_gate_allows_mainnet()
+        if not dsr_ok:
+            logger.error(
+                "DSR GATE BLOCKED mainnet new exposure (need DSR >= %.2f in %s); "
+                "only reduce-only orders will be sent",
+                DSR_MIN_THRESHOLD, DSR_GATE_PATH,
+            )
+            orders = apply_dsr_gate(orders, allowed=False)
+
     safety_check(targets, equity, orders, marks)
 
     gross = sum(abs(v) for v in targets.values())
