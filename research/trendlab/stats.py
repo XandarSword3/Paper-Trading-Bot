@@ -140,7 +140,12 @@ def deflated_sharpe_ratio(
     kurtosis: float = 3.0,
     sr_variance: float | None = None,
 ) -> float:
-    """Bailey & Lopez de Prado deflated Sharpe ratio (probability SR > 0).
+    """Bailey & Lopez de Prado deflated Sharpe ratio.
+
+    Returns the probability that the true Sharpe ratio exceeds the expected
+    maximum Sharpe attainable by ``n_trials`` null (no-edge) configurations —
+    i.e. confidence the observed result survives selection bias. It is NOT
+    the probability that the Sharpe exceeds zero.
 
     ``n_trials`` is the number of independent-ish configurations tried, which
     penalises the selection of a lucky backtest.
