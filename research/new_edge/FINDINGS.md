@@ -17,6 +17,7 @@ production, and nothing should be traded with real capital.
 | H6 | Funding reversal + funding cash | Sharpe 0.70 | 2024 Sharpe -1.28 | KILL |
 | H7 | 12-month TSMOM, monthly | Sharpe 0.36, DD -72% | placebo p=0.17 | KILL |
 | H8 | Weekend alt/BTC relative value | -1.64 (mirror +0.52) | holdout gross ~0 | KILL |
+| H9 | OI crowding, live 21-day pilot | gross +12.4 bps/event | net -3.6 bps after cost | PILOT KILL |
 
 ## The five things this lab actually established
 
@@ -53,7 +54,12 @@ production, and nothing should be traded with real capital.
   internally inconsistent (`trade_count` is always zero, `buy_vol`/`sell_vol`
   do not reconcile with `signed_flow`). It is not usable for a microstructure
   edge.
-- Crowding / squeeze mechanics: no open interest, no liquidation prints.
+- Crowding / squeeze mechanics: the cached history has no open interest and no
+  liquidation prints. The public Binance API *is* reachable without keys, but
+  `/futures/data/openInterestHist` only serves ~21 days (500 hourly bars), so
+  OI cannot be backtested over 2020-2026. The 21-day pilot (H9) found a
+  +12.4 bps gross fade per 8h event (t=1.70), which is below the 16 bps round
+  trip and is not evidence of anything on its own.
 - Basis and cross-exchange effects: no spot prices, one venue.
 - Anything involving delisted symbols: the history is not there.
 
@@ -61,8 +67,10 @@ production, and nothing should be traded with real capital.
 
 In priority order:
 
-1. **Open interest + liquidation prints per symbol** (hourly is enough). This
-   would let H2/H4 be tested as crowding mechanics rather than price proxies.
+1. **Start recording open interest, funding and 1m bars forward, now.** The
+   public API works without keys, but only serves ~21 days of OI history, so
+   the only way to get a real OI sample is to record it. Re-test H9 in 3-6
+   months.
 2. **Spot vs perp prices on the same venue.** Basis, funding dispersion and
    spot-led price discovery are separate, structural edges.
 3. **A second exchange.** Cross-venue funding dispersion and lead-lag are the

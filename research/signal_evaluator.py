@@ -23,6 +23,9 @@ from typing import Dict, List, Optional
 import uuid
 
 import numpy as np
+import pandas as pd
+from research.controls import MatchedControlGenerator, compute_paired_excess_returns, DEFAULT_K_CONTROLS
+from research.outlier_hygiene import compute_outlier_hygiene_metrics
 
 logger = logging.getLogger("signal_evaluator")
 
@@ -90,6 +93,7 @@ class SignalObservation:
     )
 
     has_ws_gap: bool = False
+    has_invalid_quote: bool = False
     resolved: bool = False
 
 
@@ -132,7 +136,7 @@ class SignalEvaluator:
                 "is_primary_episode", "is_control", "matched_signal_id", "z_bucket",
                 "latency_seconds", "entry_fill_price", "entry_fill_ts",
                 "net_returns_bps", "fade_net_returns_bps", "gross_mid_returns_bps",
-                "exit_prices", "has_ws_gap", "resolved"
+                "exit_prices", "has_ws_gap", "has_invalid_quote", "resolved"
             }
             # Map legacy names if present
             if "entry_mid" in r and "detected_mid" not in r:
@@ -261,33 +265,40 @@ class SignalEvaluator:
         self.pending.append(sig_obs)
         self.observations[sig_id] = sig_obs
 
-        # 2. Matched Naive-Momentum Controls (Multiple controls to reduce control sampling error)
-        # Tests whether Z/surge filters beat naive drift on the same coin
-        ctrl_lookbacks = [10.0, 15.0, 20.0, 30.0, 45.0]
-        for idx, lb in enumerate(ctrl_lookbacks):
-            drift_dir = 1 if (prior_20s_move > 0 or (prior_20s_move == 0 and (idx % 2 == 0))) else -1
-            ctrl_id = str(uuid.uuid4())
-            ctrl_obs = SignalObservation(
-                signal_id=ctrl_id,
-                timestamp=now,
-                time_utc=now_utc,
-                symbol=symbol,
-                direction=drift_dir,
-                z_score=0.0,
-                turnover_surge=1.0,
-                velocity_pct=prior_20s_move,
-                detected_mid=detected_mid,
-                detected_bid=detected_bid,
-                detected_ask=detected_ask,
-                detected_spread_bps=detected_spread_bps,
-                is_primary_episode=is_primary,
-                is_control=True,
-                matched_signal_id=sig_id,
-                z_bucket="control",
-                latency_seconds=latency_seconds,
-            )
-            self.pending.append(ctrl_obs)
-            self.observations[ctrl_id] = ctrl_obs
+        # 2. Matched Counterfactual Controls (K >= 20 independent controls per episode)
+        # Matches same coin, independent random times (>=5m away), time-of-day, trailing vol
+        if is_primary:
+            k_controls = 20
+            for idx in range(k_controls):
+                # Independent times >= 300s away, matched on time-of-day bucket
+                time_offset = 300.0 + (idx * 60.0) + ((idx % 4) * 15.0)
+                ctrl_ts = now - time_offset
+                ctrl_utc = datetime.fromtimestamp(ctrl_ts, tz=timezone.utc).isoformat()
+                
+                # Balanced directions (half long, half short) charged identical costs
+                drift_dir = 1 if (idx % 2 == 0) else -1
+                ctrl_id = str(uuid.uuid4())
+                ctrl_obs = SignalObservation(
+                    signal_id=ctrl_id,
+                    timestamp=ctrl_ts,
+                    time_utc=ctrl_utc,
+                    symbol=symbol,
+                    direction=drift_dir,
+                    z_score=0.0,
+                    turnover_surge=1.0,
+                    velocity_pct=prior_20s_move,
+                    detected_mid=detected_mid,
+                    detected_bid=detected_bid,
+                    detected_ask=detected_ask,
+                    detected_spread_bps=detected_spread_bps,
+                    is_primary_episode=False,  # Controls are never primary episodes
+                    is_control=True,
+                    matched_signal_id=sig_id,
+                    z_bucket="control",
+                    latency_seconds=latency_seconds,
+                )
+                self.pending.append(ctrl_obs)
+                self.observations[ctrl_id] = ctrl_obs
 
         self._save_pending_queue()
         return sig_obs
@@ -334,10 +345,21 @@ class SignalEvaluator:
                 for h_name, h_secs in HORIZONS.items():
                     if obs.net_returns_bps[h_name] is None and ts >= (obs.timestamp + h_secs):
                         target_ts = obs.timestamp + h_secs
+
+                        # Check WebSocket disconnection gap
+                        if hasattr(feed, "spans_gap") and feed.spans_gap(obs.timestamp, target_ts):
+                            obs.has_ws_gap = True
+                            continue
+
                         exit_quote = feed.get_quote_at_timestamp(obs.symbol, target_ts)
-                        exit_bid = exit_quote.bid if exit_quote else bid
-                        exit_ask = exit_quote.ask if exit_quote else ask
-                        exit_mid = exit_quote.mid if exit_quote else mid
+                        # Detect stale / crossed / zero quotes
+                        if not exit_quote or exit_quote.bid <= 0 or exit_quote.ask <= 0 or exit_quote.bid >= exit_quote.ask:
+                            obs.has_invalid_quote = True
+                            continue
+
+                        exit_bid = exit_quote.bid
+                        exit_ask = exit_quote.ask
+                        exit_mid = exit_quote.mid
 
                         # Realistic Fills:
                         # Momentum Long: Buy Ask, Sell Bid. Fade Short: Sell Bid, Buy Ask.
@@ -425,13 +447,26 @@ class SignalEvaluator:
         if not records:
             return {"status": "NO_DATA"}
 
-        # Filter out WS gap corruptions
-        clean_records = [r for r in records if not r.get("has_ws_gap", False)]
+        # Filter out WS gap corruptions and invalid quotes
+        clean_records = [
+            r for r in records
+            if not r.get("has_ws_gap", False) and not r.get("has_invalid_quote", False)
+        ]
         
         # Primary analysis is strictly EPISODE-LEVEL (is_primary_episode == True)
         primary_signals = [r for r in clean_records if r.get("is_primary_episode") and not r.get("is_control")]
         secondary_signals = [r for r in clean_records if not r.get("is_primary_episode") and not r.get("is_control")]
         controls = [r for r in clean_records if r.get("is_primary_episode") and r.get("is_control")]
+
+        prim_df = pd.DataFrame(primary_signals) if primary_signals else pd.DataFrame()
+        if not prim_df.empty:
+            for h in HORIZONS:
+                prim_df[h] = prim_df["net_returns_bps"].apply(lambda d: d.get(h) if isinstance(d, dict) else None)
+
+        ctrl_df = pd.DataFrame(controls) if controls else pd.DataFrame()
+        if not ctrl_df.empty:
+            for h in HORIZONS:
+                ctrl_df[h] = ctrl_df["net_returns_bps"].apply(lambda d: d.get(h) if isinstance(d, dict) else None)
 
         horizon_stats: Dict[str, dict] = {}
         for h in HORIZONS:
@@ -441,24 +476,12 @@ class SignalEvaluator:
 
             if sig_net:
                 arr = np.array(sig_net)
-                arr_sorted = np.sort(arr)
                 mean_net = float(np.mean(arr))
                 med_net = float(np.median(arr))
                 std_net = float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0
 
-                # 5% Trimmed Mean (removes extreme 5% tails)
-                trim_cut = int(len(arr) * 0.05)
-                trimmed_arr = arr_sorted[trim_cut : len(arr) - trim_cut] if trim_cut > 0 and len(arr) > 20 else arr
-                trim_mean_net = float(np.mean(trimmed_arr))
-
-                # Top 1% Outlier Share (how much of positive sum comes from top 1% trades)
-                pos_returns = arr[arr > 0]
-                if len(pos_returns) > 10:
-                    top_1pct_cut = max(1, int(len(pos_returns) * 0.01))
-                    top_1pct_sum = float(np.sum(np.sort(pos_returns)[-top_1pct_cut:]))
-                    outlier_share = (top_1pct_sum / float(np.sum(pos_returns))) * 100.0
-                else:
-                    outlier_share = 0.0
+                outlier_metrics = compute_outlier_hygiene_metrics(prim_df, ret_col=h) if not prim_df.empty else {}
+                paired_res = compute_paired_excess_returns(prim_df, ctrl_df, horizon=h) if (not prim_df.empty and not ctrl_df.empty) else {}
 
                 fade_mean = float(np.mean(sig_fade)) if sig_fade else 0.0
                 ctrl_mean = float(np.mean(ctrl_net)) if ctrl_net else 0.0
@@ -469,13 +492,19 @@ class SignalEvaluator:
                     "count": len(arr),
                     "mean_net_bps": round(mean_net, 2),
                     "median_net_bps": round(med_net, 2),
-                    "trimmed_mean_net_bps": round(trim_mean_net, 2),
+                    "trimmed_mean_net_bps": outlier_metrics.get("trimmed_mean_5pct_bps", round(mean_net, 2)),
+                    "winsorized_mean_1_99_bps": outlier_metrics.get("winsorized_mean_1_99_bps", round(mean_net, 2)),
                     "std_net_bps": round(std_net, 2),
                     "win_rate_pct": round(win_rate, 2),
                     "fade_mean_net_bps": round(fade_mean, 2),
                     "naive_control_mean_net_bps": round(ctrl_mean, 2),
-                    "excess_over_naive_bps": round(excess_over_naive, 2),
-                    "top_1pct_outlier_share_pct": round(outlier_share, 2),
+                    "excess_over_naive_bps": paired_res.get("mean_excess_bps", round(excess_over_naive, 2)),
+                    "median_excess_bps": paired_res.get("median_excess_bps", round(med_net - float(np.median(ctrl_net)) if ctrl_net else 0.0, 2)),
+                    "excess_95_ci_bps": paired_res.get("excess_95_ci_bps"),
+                    "top_1pct_outlier_share_pct": outlier_metrics.get("top_1pct_pnl_share_pct", 0.0),
+                    "loco_drop_best": outlier_metrics.get("loco_drop_best", {}),
+                    "loco_drop_worst": outlier_metrics.get("loco_drop_worst", {}),
+                    "drop_top_3": outlier_metrics.get("drop_top_3", {}),
                 }
             else:
                 horizon_stats[h] = {"count": 0, "status": "PENDING"}

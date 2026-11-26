@@ -311,7 +311,7 @@ export default function OmniPulse() {
                   95% CI:{' '}
                   {bootstrap5m?.net_95_ci_bps
                     ? `[${bootstrap5m.net_95_ci_bps[0] > 0 ? '+' : ''}${bootstrap5m.net_95_ci_bps[0].toFixed(2)}, ${bootstrap5m.net_95_ci_bps[1] > 0 ? '+' : ''}${bootstrap5m.net_95_ci_bps[1].toFixed(2)}] bps`
-                    : 'Awaiting Blocks'}
+                    : 'Awaiting Blocks (< 50)'}
                 </span>
               </div>
             </div>
@@ -456,7 +456,7 @@ export default function OmniPulse() {
                           {hasData ? `${stat.median_net_bps > 0 ? '+' : ''}${stat.median_net_bps.toFixed(2)} bps` : '—'}
                         </td>
                         <td style={{ padding: '10px 8px', fontFamily: 'monospace', fontSize: '0.8rem', color: '#00d4ff' }}>
-                          {hasData && stat.bootstrap_ci_95 ? `[${stat.bootstrap_ci_95[0]} to ${stat.bootstrap_ci_95[1]}] bps` : 'Pending (Blocks<3)'}
+                          {hasData && stat.bootstrap_ci_95 ? `[${stat.bootstrap_ci_95[0]} to ${stat.bootstrap_ci_95[1]}] bps` : 'Pending (Blocks<50)'}
                         </td>
                         <td style={{ padding: '10px 8px' }}>
                           {hasData ? (

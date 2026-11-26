@@ -612,6 +612,8 @@ def get_omnipulse_signal_research():
                     moving_block_bootstrap_by_time,
                     evaluate_institutional_kill_gate,
                     compute_deflated_sharpe_ratio,
+                    compute_per_block_sharpe,
+                    TrialRegistry,
                 )
                 rows = []
                 with open(SIGNAL_JSONL_PATH, "r", encoding="utf-8") as f:
@@ -635,7 +637,7 @@ def get_omnipulse_signal_research():
                     b_df = pd.DataFrame(rows)
                     for h_name in ["10s", "30s", "1m", "5m", "15m"]:
                         try:
-                            b_res = moving_block_bootstrap_by_time(b_df, horizon_col=h_name, block_duration_minutes=30.0, n_bootstrap=500)
+                            b_res = moving_block_bootstrap_by_time(b_df, horizon_col=h_name, block_duration_minutes=60.0, n_bootstrap=500, min_required_blocks=50)
                             boot_by_horizon[h_name] = b_res
                             if "horizons" in data and h_name in data["horizons"] and isinstance(data["horizons"][h_name], dict):
                                 data["horizons"][h_name]["bootstrap_ci_95"] = b_res.get("net_95_ci_bps")
@@ -651,19 +653,37 @@ def get_omnipulse_signal_research():
                         min_required_blocks=50,
                     )
                     
-                    # Calibrated DSR using effective T and per-period Sharpe
-                    ep_clean = b_df[(b_df["is_primary_episode"] == True) & (~b_df["is_control"])]["5m"].dropna().to_numpy()
-                    if len(ep_clean) >= 15:
-                        m_r = float(np.mean(ep_clean))
-                        s_r = float(np.std(ep_clean, ddof=1)) + 1e-8
-                        sr_p = m_r / s_r
-                        dsr_p, sr_s = compute_deflated_sharpe_ratio(sr_p, n_trials=trials_count, effective_t=len(ep_clean))
+                    # Calibrated DSR using effective T = independent 60m blocks and per-period Sharpe
+                    reg = TrialRegistry(registry_path=TRIAL_REGISTRY_PATH)
+                    exact_trials = reg.total_trials
+                    trial_sharpes = reg.get_trial_sharpes()
+
+                    block_stats = compute_per_block_sharpe(b_df, horizon_col="5m", block_duration_minutes=60.0)
+                    eff_t = block_stats["effective_t"]
+                    if eff_t >= 3:
+                        sr_p = block_stats["per_period_sharpe"]
+                        dsr_res = compute_deflated_sharpe_ratio(
+                            observed_sr=sr_p,
+                            n_trials=exact_trials,
+                            effective_t=eff_t,
+                            trial_sharpes=trial_sharpes,
+                            skewness=block_stats["skewness"],
+                            kurtosis=block_stats["kurtosis"],
+                        )
                         dsr_info = {
-                            "total_trials": trials_count,
+                            "total_trials": exact_trials,
+                            "effective_t_blocks": eff_t,
                             "observed_sharpe": round(sr_p, 4),
-                            "sr_star": round(sr_s, 4),
-                            "dsr_prob_pct": round(dsr_p * 100.0, 2),
-                            "passed": bool(dsr_p >= 0.95),
+                            "sr_star": round(dsr_res.expected_max_sr, 4),
+                            "dsr_prob_pct": round(dsr_res.dsr_prob * 100.0, 2),
+                            "dispersion_source": dsr_res.dispersion_source,
+                            "passed": bool(dsr_res.dsr_prob >= 0.95),
+                        }
+                    else:
+                        dsr_info = {
+                            "total_trials": exact_trials,
+                            "effective_t_blocks": eff_t,
+                            "status": f"INSUFFICIENT_BLOCKS ({eff_t} < 3 blocks)",
                         }
             except Exception as b_err:
                 boot_res = {"error": str(b_err)}

@@ -198,6 +198,25 @@
       },
       "verdict": "KILL",
       "reason": "The pre-registered direction was backwards: alts outperform BTC over the weekend, not the other way round. The mirror trade is real in 2020-2024 (t=4.0) but the gross edge is only ~31-39 bps/week against 16 bps of weekly cost, and it disappears in the 2025-2026 holdout (gross -8 to +1 bps/week). Dead on both counts."
+    },
+    {
+      "id": "H9",
+      "name": "Open-interest crowding pilot (live 21-day sample)",
+      "date": "2026-11-26",
+      "primary": {"z_oi_thresh": 1.5, "move_thresh": 0.005, "hold_hours": 8},
+      "universe": "34 Binance USDT perps, 1h, 2026-11-05 .. 2026-11-26",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "observations": 16104,
+        "events": 1389,
+        "gross_bps_per_event": 12.38,
+        "gross_t_stat": 1.70,
+        "net_bps_per_event": -3.62,
+        "net_t_stat": -0.50,
+        "hit_rate": 0.492
+      },
+      "verdict": "PILOT_KILL",
+      "reason": "Fading a crowded OI+price move has a +12.4 bps gross edge per 8h event (t=1.70) but the 16 bps round trip eats it. The sample is 21 days of one regime, so this is a mechanism check, not evidence. Binance only serves ~21 days of OI history; a forward recorder is required before this can be tested properly."
     }
   ],
   "cost_model": {
@@ -208,20 +227,22 @@
   },
   "conclusion": {
     "status": "NO_DEPLOYABLE_EDGE_FOUND",
-    "tested": 8,
+    "tested": 9,
+    "pilots": 1,
     "survivors": 0,
     "key_lessons": [
       "Same-bar fills create fake edges: H3 looked like Sharpe 4.7 until a one-minute entry delay turned it negative.",
       "The only strong gross signals (funding crowding 1.54, cross-sectional momentum 0.91) are regime bets that died in the 2025-2026 holdout.",
-      "Intraday signals (H1, H4) have gross edges of 1-2 bps, an order of magnitude below realistic round-trip costs.",
+      "Intraday signals (H1, H4, H9) have gross edges of 1-12 bps, at or below realistic round-trip costs.",
       "Calendar effects (H8) are real but too small to pay for weekly turnover and did not survive the holdout.",
       "The 36-symbol universe is survivorship-biased: every coin still listed in 2026 is in the sample, which flatters long-loser and short-alt books."
     ],
+    "data_access_finding": "Binance's public API is reachable and serves ~21 days of open-interest history (no API key needed). OI cannot be backtested over the cached 2020-2026 window; it has to be recorded forward. The one-month flow_bars dataset is unusable (trade_count is always zero and buy/sell volume does not reconcile).",
     "next_data_needed": [
-      "Order-book / L2 snapshots (only one month of low-quality flow bars exists; trade_count is zero and buy/sell volume is inconsistent)",
-      "Open interest and liquidation prints per symbol (to test crowding and squeeze mechanics directly)",
-      "Spot and multi-exchange perp prices (basis, funding dispersion, cross-exchange lead-lag)",
-      "Delisted-symbol history (to remove survivorship bias from cross-sectional tests)"
+      "Start a forward recorder for open interest, funding, and 1m bars now (public endpoints, no keys), then re-test H9 in 3-6 months.",
+      "Order-book / L2 snapshots or true taker-flow bars (the existing flow_bars are broken).",
+      "Spot and multi-exchange perp prices (basis, funding dispersion, cross-exchange lead-lag).",
+      "Delisted-symbol history (to remove survivorship bias from cross-sectional tests)."
     ]
   }
 }

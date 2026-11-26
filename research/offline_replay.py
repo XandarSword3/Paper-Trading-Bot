@@ -34,10 +34,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from research.episode import is_primary_signal_episode, split_by_calendar_time
+from research.outlier_hygiene import compute_outlier_hygiene_metrics
 from research.statistical_tests import (
     compute_deflated_sharpe_ratio,
+    compute_per_block_sharpe,
     evaluate_institutional_kill_gate,
     moving_block_bootstrap_by_time,
+    TrialRegistry,
 )
 
 logging.basicConfig(
@@ -95,7 +99,8 @@ class OfflineReplayEngine:
 
         self.discovery_split_pct = discovery_split_pct
         self.primary_horizon = primary_horizon
-        self.trial_budget = trial_budget
+        self.registry = TrialRegistry()
+        self.trial_budget = trial_budget or self.registry.total_trials
         self.report_path = self.output_dir / "offline_variants_report.json"
 
     def load_primary_episodes(self) -> pd.DataFrame:
@@ -111,8 +116,15 @@ class OfflineReplayEngine:
                     continue
                 try:
                     obj = json.loads(line)
-                    if obj.get("is_primary_episode"):
-                        records.append(obj)
+                    if is_primary_signal_episode(obj):
+                        # Outlier hygiene: drop observations spanning WS gaps or having invalid quotes
+                        if not obj.get("has_ws_gap", False) and not obj.get("has_invalid_quote", False):
+                            # Also check detected quote sanity
+                            bid = obj.get("detected_bid", 0.0) or 0.0
+                            ask = obj.get("detected_ask", 0.0) or 0.0
+                            if bid > 0 and ask > 0 and bid >= ask:
+                                continue
+                            records.append(obj)
                 except Exception:
                     continue
 
@@ -134,18 +146,8 @@ class OfflineReplayEngine:
         return df
 
     def split_by_time(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Strict chronological split: 70% Discovery, 30% Locked Holdout."""
-        t_min = df["timestamp"].min()
-        t_max = df["timestamp"].max()
-        t_split = t_min + self.discovery_split_pct * (t_max - t_min)
-
-        discovery_df = df[df["timestamp"] < t_split].copy()
-        holdout_df = df[df["timestamp"] >= t_split].copy()
-
-        logger.info("Time-split: Discovery N=%d (%.1f%%) | Holdout N=%d (%.1f%%) | Split TS=%.0f",
-                    len(discovery_df), len(discovery_df)/len(df)*100,
-                    len(holdout_df), len(holdout_df)/len(df)*100, t_split)
-        return discovery_df, holdout_df
+        """Strict chronological split: 70% Discovery, 30% Locked Holdout by calendar time."""
+        return split_by_calendar_time(df, split_pct=self.discovery_split_pct, time_col="timestamp")
 
     def evaluate_variant_0_baseline(self, disc_df: pd.DataFrame, hold_df: pd.DataFrame) -> VariantResult:
         """Variant 0: Baseline Naive Momentum Breakout (Taker 11 bps, all symbols)."""
@@ -155,7 +157,7 @@ class OfflineReplayEngine:
 
         # Evaluate on Holdout
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_sub, h_col)
-        dsr_res = self._compute_dsr(h_sub[h_col].values)
+        dsr_res = self._compute_dsr(h_sub, h_col)
 
         return VariantResult(
             variant_id="V0_BASELINE",
@@ -227,7 +229,7 @@ class OfflineReplayEngine:
         h_maker_df["maker_ret"] = h_maker_rets.values
 
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_maker_df, "maker_ret")
-        dsr_res = self._compute_dsr(h_maker_rets.values)
+        dsr_res = self._compute_dsr(h_maker_df, "maker_ret")
 
         return VariantResult(
             variant_id="V1_MAKER_EXEC",
@@ -274,7 +276,7 @@ class OfflineReplayEngine:
         h_sub = filter_clean_universe(hold_df)
 
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_sub, h_col)
-        dsr_res = self._compute_dsr(h_sub[h_col].values)
+        dsr_res = self._compute_dsr(h_sub, h_col)
 
         return VariantResult(
             variant_id="V2_CLEAN_UNIVERSE",
@@ -333,7 +335,7 @@ class OfflineReplayEngine:
                 }
 
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_sub, h_col)
-        dsr_res = self._compute_dsr(h_sub[h_col].values)
+        dsr_res = self._compute_dsr(h_sub, h_col)
 
         return VariantResult(
             variant_id="V3_CONVICTION_VOL_FLOOR",
@@ -378,7 +380,7 @@ class OfflineReplayEngine:
         h_sub = filter_cost_aware(hold_df)
 
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_sub, h_col)
-        dsr_res = self._compute_dsr(h_sub[h_col].values)
+        dsr_res = self._compute_dsr(h_sub, h_col)
 
         return VariantResult(
             variant_id="V4_COST_AWARE_GATING",
@@ -428,7 +430,7 @@ class OfflineReplayEngine:
         h_sub = filter_composite(hold_df)
 
         boot_res, loco_mean, top_coin, gate = self._evaluate_holdout_scorecard(h_sub, h_col)
-        dsr_res = self._compute_dsr(h_sub[h_col].values)
+        dsr_res = self._compute_dsr(h_sub, h_col)
 
         return VariantResult(
             variant_id="V5_FROZEN_HOLDOUT",
@@ -471,13 +473,14 @@ class OfflineReplayEngine:
         if "has_ws_gap" not in eval_df.columns:
             eval_df["has_ws_gap"] = False
 
-        # Moving Block Bootstrap (30m block length)
+        # Moving Block Bootstrap (60m block length, clustered by coin)
         boot = moving_block_bootstrap_by_time(
             df=eval_df,
             horizon_col=ret_col,
-            block_duration_minutes=30.0,
+            block_duration_minutes=60.0,
             n_bootstrap=500,
             random_seed=42,
+            min_required_blocks=50,
         )
 
         # Leave-One-Coin-Out (LOCO)
@@ -510,35 +513,66 @@ class OfflineReplayEngine:
 
         return boot, round(loco_mean, 2), top_coin, gate
 
-    def _compute_dsr(self, returns: np.ndarray) -> dict:
-        """Computes Deflated Sharpe Ratio with trial budget penalty."""
-        valid_rets = returns[~np.isnan(returns)]
-        if len(valid_rets) < 5:
-            return {"dsr_stat": 0.0, "dsr_confidence_pct": 0.0}
+    def _compute_dsr(
+        self,
+        data: Union[pd.DataFrame, np.ndarray, pd.Series],
+        ret_col: Optional[str] = None,
+    ) -> dict:
+        """Computes Deflated Sharpe Ratio using per-period Sharpe and T = effective independent blocks."""
+        n_trials = self.registry.total_trials
+        trial_sharpes = self.registry.get_trial_sharpes()
 
-        mean = float(np.mean(valid_rets))
-        std = float(np.std(valid_rets, ddof=1))
-        sr = (mean / std) if std > 1e-8 else 0.0
+        if isinstance(data, pd.DataFrame):
+            col = ret_col or f"net_{self.primary_horizon}"
+            block_stats = compute_per_block_sharpe(data, horizon_col=col, block_duration_minutes=60.0)
+            eff_t = block_stats["effective_t"]
+            if eff_t < 3:
+                return {
+                    "dsr_stat": 0.0,
+                    "dsr_confidence_pct": 0.0,
+                    "effective_t": eff_t,
+                    "n_trials": n_trials,
+                    "dispersion_source": "insufficient_blocks",
+                }
+            sr = block_stats["per_period_sharpe"]
+            skew = block_stats["skewness"]
+            kurt = block_stats["kurtosis"]
+        else:
+            arr = np.asarray(data)
+            valid_rets = arr[~np.isnan(arr)]
+            eff_t = len(valid_rets)
+            if eff_t < 3:
+                return {"dsr_stat": 0.0, "dsr_confidence_pct": 0.0, "effective_t": eff_t, "n_trials": n_trials}
+            mean = float(np.mean(valid_rets))
+            std = float(np.std(valid_rets, ddof=1))
+            sr = (mean / std) if std > 1e-8 else 0.0
+            try:
+                import scipy.stats as stats
+                skew = float(stats.skew(valid_rets))
+                kurt = float(stats.kurtosis(valid_rets, fisher=False))
+            except Exception:
+                m2 = float(np.mean((valid_rets - mean) ** 2))
+                m3 = float(np.mean((valid_rets - mean) ** 3))
+                m4 = float(np.mean((valid_rets - mean) ** 4))
+                skew = float(m3 / (m2 ** 1.5 + 1e-8)) if m2 > 1e-12 else 0.0
+                kurt = float(m4 / (m2 ** 2 + 1e-8)) if m2 > 1e-12 else 3.0
 
-        try:
-            import scipy.stats as stats
-            skew = float(stats.skew(valid_rets))
-            kurt = float(stats.kurtosis(valid_rets, fisher=False))
-        except Exception:
-            skew = 0.0
-            kurt = 3.0
-
-        dsr_stat, dsr_conf = compute_deflated_sharpe_ratio(
+        dsr_res = compute_deflated_sharpe_ratio(
             observed_sr=sr,
-            n_trials=self.trial_budget,
-            effective_t=len(valid_rets),
+            n_trials=n_trials,
+            effective_t=eff_t,
+            trial_sharpes=trial_sharpes,
             skewness=skew,
             kurtosis=kurt,
         )
         return {
-            "dsr_stat": round(float(dsr_stat), 4),
-            "dsr_confidence_pct": round(float(dsr_conf) * 100.0, 1),
+            "dsr_stat": round(float(dsr_res.dsr_prob), 4),
+            "dsr_confidence_pct": round(float(dsr_res.dsr_prob) * 100.0, 1),
+            "expected_max_sr": round(float(dsr_res.expected_max_sr), 4),
             "observed_sr": round(sr, 4),
+            "effective_t": eff_t,
+            "n_trials": n_trials,
+            "dispersion_source": dsr_res.dispersion_source,
             "skewness": round(skew, 2),
             "kurtosis": round(kurt, 2),
         }
