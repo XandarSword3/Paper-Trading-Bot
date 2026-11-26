@@ -175,7 +175,7 @@ def main() -> None:
     funding = {k: v for k, v in funding.items() if not v.empty}
 
     # Consistency: production weights must reproduce the research engine.
-    from strategy.trend_portfolio import target_weights
+    from research.strategies.trend_portfolio import target_weights
 
     sig = final_signal(panel)
     res = run_backtest(panel, sig, funding, cfg=CFG)

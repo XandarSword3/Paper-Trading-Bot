@@ -2,7 +2,13 @@
 
 Regime-Gated Multi-Horizon Trend (RGMT) is the only strategy in this repo with a
 validated out-of-sample edge: Sharpe 1.22, 27.2% CAGR, -19.0% max drawdown
-(2020-10-31 to 2026-10-31), holdout Sharpe 0.71, DSR 0.999.
+(2020-10-31 to 2026-10-31), holdout Sharpe 0.71, DSR 0.659.
+
+> **DSR correction (2026-11-26):** the previously quoted DSR 0.999 was computed
+> with a bug in `research/trendlab/stats.py` — the expected-max null benchmark
+> was divided by `sqrt(365)` a second time, shrinking it ~19x and inflating DSR
+> toward 1.0 for any positive Sharpe. Fixed on branch `fix-dsr-sr0`; the honest
+> figure is **0.659**. The Sharpe/CAGR/drawdown numbers are unaffected.
 
 The gate is BTC above its 200-day EMA. **When BTC is below the EMA the correct
 position is cash.** Do not bypass this to "make something happen"; the flat
