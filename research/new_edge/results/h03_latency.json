@@ -1,0 +1,28 @@
+{
+  "period": [
+    "2025-11-01",
+    "2026-10-31"
+  ],
+  "entry": "00:01 UTC, one minute after the signal close",
+  "signals": 1921,
+  "metrics": {
+    "days": 300,
+    "total_return": -0.3744366177354661,
+    "cagr": -0.434893757359189,
+    "sharpe": -1.0795829897997802,
+    "max_drawdown": -0.3745612120597427,
+    "hit_rate": 0.4633333333333333,
+    "avg_daily_bps": -12.982505041944625,
+    "top5_share_of_positive": 0.14934251086626382
+  },
+  "by_direction": {
+    "-1": {
+      "count": 1021,
+      "mean": -0.0007112986682589001
+    },
+    "1": {
+      "count": 900,
+      "mean": -0.002357925564056635
+    }
+  }
+}

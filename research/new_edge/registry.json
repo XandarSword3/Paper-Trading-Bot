@@ -1,0 +1,227 @@
+{
+  "lab": "new_edge",
+  "created": "2026-11-26",
+  "discovery_windows": {
+    "intraday_1m": ["2025-11-01", "2026-07-31"],
+    "multi_day_1h": ["2020-01-01", "2024-12-31"],
+    "holdout_1h": ["2025-01-01", "2026-10-31"]
+  },
+  "trials": [
+    {
+      "id": "H1",
+      "name": "1-minute liquidation-cascade fade",
+      "date": "2026-11-26",
+      "primary": {"z_thresh": 3.0, "vol_thresh": 5.0, "hold_minutes": 30},
+      "universe": ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "trades": 6613,
+        "net_sharpe": -18.02,
+        "avg_trade_bps": -15.6,
+        "hit_rate": 0.344,
+        "max_drawdown": -0.644,
+        "placebo_p_value": 0.0
+      },
+      "verdict": "KILL",
+      "reason": "Gross edge approximately zero; the fade loses the 16 bps round trip. No reversion after 3-sigma 1-minute moves."
+    },
+    {
+      "id": "H2",
+      "name": "Cross-sectional funding-extreme reversal, daily rebalance",
+      "date": "2026-11-26",
+      "primary": {"z_window_days": 30, "quantile": 0.20, "hold_days": 1},
+      "universe": "36 Binance USDT perps",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "days": 1827,
+        "net_sharpe": 0.49,
+        "net_cagr": 0.106,
+        "gross_sharpe": 1.54,
+        "gross_cagr": 0.501,
+        "max_drawdown": -0.484,
+        "gross_max_drawdown": -0.238,
+        "avg_cost_bps_per_day": 8.37,
+        "avg_turnover": 1.05,
+        "beta_to_btc": -0.006,
+        "placebo_p_value": 0.0
+      },
+      "verdict": "KILL",
+      "reason": "Real gross signal, but 105% daily turnover costs ~30% annualized. Net Sharpe and -48% drawdown fail the gates. 2021-dependent, 2024 negative."
+    },
+    {
+      "id": "H2b",
+      "name": "Funding-extreme reversal, lower-turnover holding periods",
+      "date": "2026-11-26",
+      "primary": {"hold_days": 3},
+      "universe": "36 Binance USDT perps",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "hold_1d_net_sharpe": 0.49,
+        "hold_3d_net_sharpe": 0.28,
+        "hold_3d_gross_sharpe": 0.70,
+        "hold_5d_net_sharpe": -0.08,
+        "hold_7d_net_sharpe": -0.28,
+        "hold_3d_max_drawdown": -0.400
+      },
+      "verdict": "KILL",
+      "reason": "The funding reversal decays within a day. Holding longer cuts costs but loses more signal than it saves. Daily remains the best version and still fails."
+    },
+    {
+      "id": "H3",
+      "name": "Volatility-compression range breakout",
+      "date": "2026-11-26",
+      "primary": {"range_hours": 24, "vol_hours": 24, "vol_window_hours": 720, "compression": 0.75},
+      "universe": "36 Binance USDT perps, 1h",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "signals": 19139,
+        "discovery_net_sharpe": 4.68,
+        "discovery_cagr": 9.43,
+        "discovery_max_drawdown": -0.351,
+        "holdout_net_sharpe": 5.35,
+        "holdout_max_drawdown": -0.111,
+        "delayed_1h_sharpe": -0.73,
+        "delayed_1m_sharpe": -1.08,
+        "delayed_1m_avg_daily_bps": -13.0
+      },
+      "verdict": "KILL",
+      "reason": "Fake edge. The entire return is captured by filling at the signal bar's close. A one-hour delay turns Sharpe -0.73; a one-minute delay turns it -1.08. Not deployable."
+    },
+    {
+      "id": "H4",
+      "name": "Cross-sectional beta overshoot after BTC shocks, 5m",
+      "date": "2026-11-26",
+      "primary": {"event_sigma": 3.0, "hold_bars": 6, "names": 3, "beta_window": 864, "sigma_window": 288},
+      "universe": "20 Binance USDT perps, 5m resampled from 1m",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "events": 974,
+        "net_sharpe": -19.03,
+        "avg_event_bps": -14.54,
+        "avg_gross_bps": 1.46,
+        "hit_rate": 0.195,
+        "max_drawdown": -0.758,
+        "no_beta_control_sharpe": -15.37,
+        "no_beta_control_gross_bps": 1.31,
+        "placebo_p_value": 0.015
+      },
+      "verdict": "KILL",
+      "reason": "Gross residual reversal is +1.5 bps per event, far below the 16 bps round trip. Ranking on beta residuals adds nothing over ranking on raw returns. Signal exists but is not monetizable at this horizon/cost."
+    },
+    {
+      "id": "H5",
+      "name": "Cross-sectional momentum, weekly rebalance, long winners / short losers",
+      "date": "2026-11-26",
+      "primary": {"lookback_days": 28, "skip_days": 1, "quantile": 0.20, "rebalance": "weekly"},
+      "universe": "36 Binance USDT perps",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "discovery_net_sharpe": 0.81,
+        "discovery_cagr": 0.258,
+        "discovery_max_drawdown": -0.362,
+        "discovery_gross_sharpe": 0.91,
+        "discovery_placebo_p_value": 0.005,
+        "discovery_positive_years": ["2020", "2021", "2023", "2024"],
+        "holdout_net_sharpe": -0.43,
+        "holdout_cagr": -0.122,
+        "holdout_max_drawdown": -0.382,
+        "holdout_2025_sharpe": 0.14,
+        "holdout_2026_sharpe": -1.11
+      },
+      "verdict": "KILL",
+      "reason": "Best discovery result in the lab (0.81 net Sharpe, p=0.005 placebo) but the edge dies out of sample: holdout Sharpe -0.43, 2026 -1.11. Classic regime dependence on the 2021/2023 alt seasons. The first implementation had a sign bug and tested the reversal book; the corrected book is the number reported here."
+    },
+    {
+      "id": "H6",
+      "name": "Funding-crowding reversal including funding cash flow",
+      "date": "2026-11-26",
+      "primary": {"z_window_days": 30, "quantile": 0.20, "hold_days": 1, "funding_prints": [8, 16]},
+      "universe": "36 Binance USDT perps",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "days": 1827,
+        "net_sharpe": 0.70,
+        "net_cagr": 0.175,
+        "max_drawdown": -0.415,
+        "price_only_net_sharpe": 0.49,
+        "gross_sharpe": 1.54,
+        "funding_pnl_ann": 0.061,
+        "funding_pnl_bps_per_day": 1.67,
+        "avg_cost_bps_per_day": 8.37,
+        "subperiod_sharpes": {"2020_2021": 1.79, "2022_2023": -0.07, "2024": -1.28}
+      },
+      "verdict": "KILL",
+      "reason": "Adding the funding cash flow lifts net Sharpe from 0.49 to 0.70 but cannot fix the economics. The signal is positive in 2020-2021, flat in 2022-2023 and negative in 2024, so it fails the sub-period gate even before the drawdown gate."
+    },
+    {
+      "id": "H7",
+      "name": "12-month time-series momentum, monthly rebalance, vol-scaled",
+      "date": "2026-11-26",
+      "primary": {"lookback_days": 365, "skip_days": 5, "vol_window": 30, "cap": 0.10, "rebalance": "monthly"},
+      "universe": "36 Binance USDT perps",
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "days": 1827,
+        "net_sharpe": 0.36,
+        "net_cagr": 0.033,
+        "max_drawdown": -0.721,
+        "gross_sharpe": 0.36,
+        "avg_cost_bps_per_day": 0.08,
+        "yearly_sharpes": {"2021": 1.34, "2022": 0.31, "2023": -0.91, "2024": -0.25},
+        "long_flat_sharpe": 0.62,
+        "placebo_p_value": 0.165
+      },
+      "verdict": "KILL",
+      "reason": "Costs are negligible at a monthly cadence, so the failure is the signal: gross Sharpe 0.36 and a -72% drawdown. Trend did not pay on this basket in 2023-2024 and the placebo is not significant."
+    },
+    {
+      "id": "H8",
+      "name": "Weekend alt-bleed relative value (long BTC / short alt basket, Fri 00:00 -> Mon 00:00)",
+      "date": "2026-11-26",
+      "primary": {
+        "universe": "12 long-history alts",
+        "position": "long 0.5 BTC / short 0.5 alt basket",
+        "window": "Fri 00:00 -> Mon 00:00 UTC",
+        "cost_per_side_bps": 8.0
+      },
+      "result": {
+        "discovery_net_sharpe": -1.64,
+        "discovery_gross_bps_per_week": -31.2,
+        "discovery_cost_bps_per_week": 16.0,
+        "discovery_mirror_net_sharpe": 0.52,
+        "holdout_gross_bps_per_week": -8.2,
+        "holdout_mirror_net_bps_per_week": -7.8,
+        "placebo_p_value_mirror": 0.0,
+        "mirror_gross_positive_all_years": true,
+        "mirror_net_positive_years": ["2020", "2021", "2022", "2023", "2024"],
+        "mirror_holdout_net_bps_per_week": -7.8
+      },
+      "verdict": "KILL",
+      "reason": "The pre-registered direction was backwards: alts outperform BTC over the weekend, not the other way round. The mirror trade is real in 2020-2024 (t=4.0) but the gross edge is only ~31-39 bps/week against 16 bps of weekly cost, and it disappears in the 2025-2026 holdout (gross -8 to +1 bps/week). Dead on both counts."
+    }
+  ],
+  "cost_model": {
+    "primary_bps_per_side": 8.0,
+    "best_case_bps_per_side": 4.0,
+    "maker_case_bps_per_side": 2.0,
+    "note": "8 bps/side = Binance taker 4.5 bps + 3.5 bps slippage. Every trial reports the primary cost; low-turnover ideas are additionally checked at 4 bps. No candidate became viable at 4 bps either."
+  },
+  "conclusion": {
+    "status": "NO_DEPLOYABLE_EDGE_FOUND",
+    "tested": 8,
+    "survivors": 0,
+    "key_lessons": [
+      "Same-bar fills create fake edges: H3 looked like Sharpe 4.7 until a one-minute entry delay turned it negative.",
+      "The only strong gross signals (funding crowding 1.54, cross-sectional momentum 0.91) are regime bets that died in the 2025-2026 holdout.",
+      "Intraday signals (H1, H4) have gross edges of 1-2 bps, an order of magnitude below realistic round-trip costs.",
+      "Calendar effects (H8) are real but too small to pay for weekly turnover and did not survive the holdout.",
+      "The 36-symbol universe is survivorship-biased: every coin still listed in 2026 is in the sample, which flatters long-loser and short-alt books."
+    ],
+    "next_data_needed": [
+      "Order-book / L2 snapshots (only one month of low-quality flow bars exists; trade_count is zero and buy/sell volume is inconsistent)",
+      "Open interest and liquidation prints per symbol (to test crowding and squeeze mechanics directly)",
+      "Spot and multi-exchange perp prices (basis, funding dispersion, cross-exchange lead-lag)",
+      "Delisted-symbol history (to remove survivorship bias from cross-sectional tests)"
+    ]
+  }
+}

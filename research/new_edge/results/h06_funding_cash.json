@@ -1,0 +1,121 @@
+{
+  "hypothesis": "H6 funding-crowding reversal including funding cash flow",
+  "primary": {
+    "z_window": 90,
+    "quantile": 0.2,
+    "hold_days": 1,
+    "funding_prints": [
+      8,
+      16
+    ]
+  },
+  "discovery": [
+    "2020-01-01",
+    "2024-12-31"
+  ],
+  "cost_per_side_bps": 8.0,
+  "overall": {
+    "days": 1827,
+    "total_return": 1.2401649636115328,
+    "cagr": 0.1748415848091709,
+    "sharpe": 0.6978039460415763,
+    "max_drawdown": -0.41539630221295576,
+    "hit_rate": 0.4827586206896552,
+    "avg_daily_bps": 5.575645742955977,
+    "price_only_net_sharpe": 0.4900945738657823,
+    "price_only_net_cagr": 0.10567212357558464,
+    "gross_sharpe": 1.538796235025763,
+    "gross_cagr": 0.5005166550325311,
+    "funding_pnl_ann": 0.06082414015091093,
+    "funding_pnl_bps_per_day": 1.666414798655094,
+    "funding_pnl_sharpe": 10.402581244423315,
+    "avg_cost_bps_per_day": 8.37191336304637,
+    "avg_turnover": 1.046489170380796,
+    "beta": -0.005739870048306715,
+    "alpha_annual": 0.20787461223973505
+  },
+  "yearly": {
+    "2020": {
+      "days": 366,
+      "total_return": 0.048606376004653784,
+      "cagr": 0.04847040400553593,
+      "sharpe": 0.3063787567581618,
+      "max_drawdown": -0.1886272978931154,
+      "hit_rate": 0.4207650273224044,
+      "avg_daily_bps": 2.5808198201334234,
+      "top5_share_of_positive": 0.1942040830830368
+    },
+    "2021": {
+      "days": 365,
+      "total_return": 2.1695549124562956,
+      "cagr": 2.1695549124562956,
+      "sharpe": 2.9110522360510838,
+      "max_drawdown": -0.1992719600849724,
+      "hit_rate": 0.547945205479452,
+      "avg_daily_bps": 34.14519792625025,
+      "top5_share_of_positive": 0.12536415713593563
+    },
+    "2022": {
+      "days": 365,
+      "total_return": -0.1645366809886405,
+      "cagr": -0.1645366809886405,
+      "sharpe": -0.6803388391618049,
+      "max_drawdown": -0.30237585920246657,
+      "hit_rate": 0.4876712328767123,
+      "avg_daily_bps": -4.222122079548621,
+      "top5_share_of_positive": 0.1307549415807593
+    },
+    "2023": {
+      "days": 365,
+      "total_return": 0.1100541580279526,
+      "cagr": 0.1100541580279526,
+      "sharpe": 0.6183732827415663,
+      "max_drawdown": -0.26244874996608814,
+      "hit_rate": 0.4931506849315068,
+      "avg_daily_bps": 3.418639990206779,
+      "top5_share_of_positive": 0.11399604691638773
+    },
+    "2024": {
+      "days": 366,
+      "total_return": -0.27322886328079066,
+      "cagr": -0.2725948590397692,
+      "sharpe": -1.2758704326174173,
+      "max_drawdown": -0.33959820842477695,
+      "hit_rate": 0.4644808743169399,
+      "avg_daily_bps": -7.998911372294626,
+      "top5_share_of_positive": 0.1353721383641803
+    }
+  },
+  "subperiods": {
+    "2020_2021": {
+      "days": 731,
+      "total_return": 2.3236154902985486,
+      "cagr": 0.8215815056963571,
+      "sharpe": 1.7919522018116236,
+      "max_drawdown": -0.19927196008497228,
+      "hit_rate": 0.4842681258549932,
+      "avg_daily_bps": 18.34141901128615,
+      "top5_share_of_positive": 0.08728794893392836
+    },
+    "2022_2023": {
+      "days": 730,
+      "total_return": -0.07259046885160769,
+      "cagr": -0.036978956019967146,
+      "sharpe": -0.068366074919349,
+      "max_drawdown": -0.30237585920246657,
+      "hit_rate": 0.4904109589041096,
+      "avg_daily_bps": -0.4017410446709218,
+      "top5_share_of_positive": 0.06699426397289909
+    },
+    "2024": {
+      "days": 366,
+      "total_return": -0.27322886328079066,
+      "cagr": -0.2725948590397692,
+      "sharpe": -1.2758704326174173,
+      "max_drawdown": -0.33959820842477695,
+      "hit_rate": 0.4644808743169399,
+      "avg_daily_bps": -7.998911372294626,
+      "top5_share_of_positive": 0.1353721383641803
+    }
+  }
+}

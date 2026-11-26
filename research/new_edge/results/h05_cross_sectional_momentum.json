@@ -1,0 +1,289 @@
+{
+  "hypothesis": "H5 cross-sectional momentum, weekly rebalance",
+  "primary": {
+    "lookback": 28,
+    "skip": 1,
+    "quantile": 0.2,
+    "rebalance_weekday": 0
+  },
+  "discovery": [
+    "2020-01-01",
+    "2024-12-31"
+  ],
+  "cost_per_side_bps": 8.0,
+  "overall": {
+    "days": 1827,
+    "total_return": -0.8827637956102129,
+    "cagr": -0.34834734687563507,
+    "sharpe": -0.9983114332319721,
+    "max_drawdown": -0.9028359098494625,
+    "hit_rate": 0.4674329501915709,
+    "avg_daily_bps": -9.910224768596555,
+    "top5_share_of_positive": 0.04115157507572476,
+    "gross_sharpe": -0.9055525492006552,
+    "gross_cagr": -0.32620512194573237,
+    "avg_cost_bps_per_day": 0.916141475747387,
+    "avg_daily_turnover": 0.11451768446842338,
+    "rebalances": 356,
+    "avg_names": 10.320224719101123,
+    "beta": 0.03615753001956625,
+    "alpha_annual": -0.3887067670266865,
+    "long_leg_ann": 0.38016969675455886,
+    "short_leg_ann": -0.7084537369435534,
+    "long_leg_sharpe": 0.8011047964270008,
+    "short_leg_sharpe": -1.3986726960477045
+  },
+  "yearly": {
+    "2020": {
+      "days": 366,
+      "total_return": -0.2704820439649943,
+      "cagr": -0.2698531691716033,
+      "sharpe": -0.7370242403948659,
+      "max_drawdown": -0.41393336302543704,
+      "hit_rate": 0.40710382513661203,
+      "avg_daily_bps": -6.981520385494807,
+      "top5_share_of_positive": 0.17065740650600028
+    },
+    "2021": {
+      "days": 365,
+      "total_return": -0.5697415481663008,
+      "cagr": -0.5697415481663008,
+      "sharpe": -1.40662727961934,
+      "max_drawdown": -0.6056599768571385,
+      "hit_rate": 0.4986301369863014,
+      "avg_daily_bps": -19.516205168334572,
+      "top5_share_of_positive": 0.12613069959246787
+    },
+    "2022": {
+      "days": 365,
+      "total_return": -0.013142665741186055,
+      "cagr": -0.013142665741186055,
+      "sharpe": 0.10175636736734764,
+      "max_drawdown": -0.2792200045956885,
+      "hit_rate": 0.5013698630136987,
+      "avg_daily_bps": 0.8188844304155787,
+      "top5_share_of_positive": 0.11785124796511172
+    },
+    "2023": {
+      "days": 365,
+      "total_return": -0.4362327664444696,
+      "cagr": -0.4362327664444696,
+      "sharpe": -1.9793896872623742,
+      "max_drawdown": -0.52041236706539,
+      "hit_rate": 0.4657534246575342,
+      "avg_daily_bps": -14.678722187973714,
+      "top5_share_of_positive": 0.13471770579504888
+    },
+    "2024": {
+      "days": 366,
+      "total_return": -0.3286605795322606,
+      "cagr": -0.3279292645050077,
+      "sharpe": -0.9636865190093653,
+      "max_drawdown": -0.35878744505112203,
+      "hit_rate": 0.4644808743169399,
+      "avg_daily_bps": -9.203520555147453,
+      "top5_share_of_positive": 0.1261353537604689
+    }
+  },
+  "subperiods": {
+    "2020_2021": {
+      "days": 731,
+      "total_return": -0.6861187336514939,
+      "cagr": -0.43930471019889283,
+      "sharpe": -1.1151941754738086,
+      "max_drawdown": -0.7443851845411805,
+      "hit_rate": 0.4528043775649795,
+      "avg_daily_bps": -13.240289121112475,
+      "top5_share_of_positive": 0.08565862753182796
+    },
+    "2022_2023": {
+      "days": 730,
+      "total_return": -0.4436421707509228,
+      "cagr": -0.2541060201013302,
+      "sharpe": -0.8949422987340756,
+      "max_drawdown": -0.5788634053958818,
+      "hit_rate": 0.48356164383561645,
+      "avg_daily_bps": -6.929918878779067,
+      "top5_share_of_positive": 0.07203838431600529
+    },
+    "2024": {
+      "days": 366,
+      "total_return": -0.3286605795322606,
+      "cagr": -0.3279292645050077,
+      "sharpe": -0.9636865190093653,
+      "max_drawdown": -0.35878744505112203,
+      "hit_rate": 0.4644808743169399,
+      "avg_daily_bps": -9.203520555147453,
+      "top5_share_of_positive": 0.1261353537604689
+    }
+  },
+  "sensitivity": [
+    {
+      "lookback": 14,
+      "quantile": 0.2,
+      "days": 1827,
+      "total_return": -0.9041185698881048,
+      "cagr": -0.37400647975759105,
+      "sharpe": -1.0355881527430093,
+      "max_drawdown": -0.9213796083259195,
+      "hit_rate": 0.48659003831417624,
+      "avg_daily_bps": -10.814148298284843,
+      "top5_share_of_positive": 0.042030210047854025,
+      "gross_sharpe": -0.9154549101097533,
+      "avg_cost_bps_per_day": 1.2524200484791617
+    },
+    {
+      "lookback": 14,
+      "quantile": 0.3,
+      "days": 1827,
+      "total_return": -0.7394806119570869,
+      "cagr": -0.23564360269639972,
+      "sharpe": -0.6157019599402731,
+      "max_drawdown": -0.8164655511147336,
+      "hit_rate": 0.4723590585659551,
+      "avg_daily_bps": -5.809502584708696,
+      "top5_share_of_positive": 0.07175246543615241,
+      "gross_sharpe": -0.4974229614421108,
+      "avg_cost_bps_per_day": 1.1157314011172796
+    },
+    {
+      "lookback": 28,
+      "quantile": 0.2,
+      "days": 1827,
+      "total_return": -0.8827637956102129,
+      "cagr": -0.34834734687563507,
+      "sharpe": -0.9983114332319721,
+      "max_drawdown": -0.9028359098494625,
+      "hit_rate": 0.4674329501915709,
+      "avg_daily_bps": -9.910224768596555,
+      "top5_share_of_positive": 0.04115157507572476,
+      "gross_sharpe": -0.9055525492006552,
+      "avg_cost_bps_per_day": 0.916141475747387
+    },
+    {
+      "lookback": 28,
+      "quantile": 0.3,
+      "days": 1827,
+      "total_return": -0.8614876765130759,
+      "cagr": -0.32627037591324604,
+      "sharpe": -1.243935885217164,
+      "max_drawdown": -0.8794077548978133,
+      "hit_rate": 0.4690749863163656,
+      "avg_daily_bps": -9.698034686432523,
+      "top5_share_of_positive": 0.043728605894120254,
+      "gross_sharpe": -1.1441972957418185,
+      "avg_cost_bps_per_day": 0.7743929244750263
+    },
+    {
+      "lookback": 56,
+      "quantile": 0.2,
+      "days": 1827,
+      "total_return": -0.7930961869835543,
+      "cagr": -0.2700325359980862,
+      "sharpe": -0.7327502076592534,
+      "max_drawdown": -0.7962290630337612,
+      "hit_rate": 0.4745484400656814,
+      "avg_daily_bps": -6.9614478127759405,
+      "top5_share_of_positive": 0.03982540514025512,
+      "gross_sharpe": -0.6609584954321142,
+      "avg_cost_bps_per_day": 0.6823676597075612
+    },
+    {
+      "lookback": 56,
+      "quantile": 0.3,
+      "days": 1827,
+      "total_return": -0.8641963867034349,
+      "cagr": -0.32892338713124314,
+      "sharpe": -1.035292984534726,
+      "max_drawdown": -0.8657133839918789,
+      "hit_rate": 0.4488232074438971,
+      "avg_daily_bps": -9.33408771848351,
+      "top5_share_of_positive": 0.043794714230311754,
+      "gross_sharpe": -0.9739604922182821,
+      "avg_cost_bps_per_day": 0.5526415930356818
+    },
+    {
+      "lookback": 90,
+      "quantile": 0.2,
+      "days": 1827,
+      "total_return": -0.8320137940029073,
+      "cagr": -0.29979639649281664,
+      "sharpe": -0.6011564750338062,
+      "max_drawdown": -0.8415210627240931,
+      "hit_rate": 0.45648604269293924,
+      "avg_daily_bps": -6.885272035096773,
+      "top5_share_of_positive": 0.04665312701298886,
+      "gross_sharpe": -0.554323664395999,
+      "avg_cost_bps_per_day": 0.5356790992258973
+    },
+    {
+      "lookback": 90,
+      "quantile": 0.3,
+      "days": 1827,
+      "total_return": -0.724176515940157,
+      "cagr": -0.22687678342623296,
+      "sharpe": -0.6182518122895614,
+      "max_drawdown": -0.7316986620785622,
+      "hit_rate": 0.45648604269293924,
+      "avg_daily_bps": -5.480094657209187,
+      "top5_share_of_positive": 0.04687842661358043,
+      "gross_sharpe": -0.5678437111910448,
+      "avg_cost_bps_per_day": 0.44605867889940143
+    }
+  ],
+  "best_case_4bps": {
+    "days": 1827,
+    "total_return": -0.872536076703631,
+    "cagr": -0.3373666022524868,
+    "sharpe": -0.951940249385438,
+    "max_drawdown": -0.8946512510529532,
+    "hit_rate": 0.4701696770662288,
+    "avg_daily_bps": -9.45215403072286,
+    "top5_share_of_positive": 0.04098987922394376
+  },
+  "leave_one_symbol_out": {
+    "worst": [
+      [
+        "WIFUSDT",
+        -1.1498946571869728
+      ],
+      [
+        "XLMUSDT",
+        -1.1092504983075078
+      ],
+      [
+        "ATOMUSDT",
+        -1.0975818257741965
+      ],
+      [
+        "ICPUSDT",
+        -1.085195439645076
+      ],
+      [
+        "ARUSDT",
+        -1.0726652306650388
+      ]
+    ],
+    "best": [
+      [
+        "ADAUSDT",
+        -0.8600489545995134
+      ],
+      [
+        "ETCUSDT",
+        -0.8257603564374666
+      ],
+      [
+        "AVAXUSDT",
+        -0.7926709941112857
+      ]
+    ]
+  },
+  "placebo": {
+    "draws": 200,
+    "placebo_mean": -0.23696122054286067,
+    "placebo_p95": 0.5633672778327512,
+    "actual": -0.9983114332319721,
+    "p_value": 0.955
+  }
+}

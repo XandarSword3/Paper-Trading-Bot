@@ -1,0 +1,237 @@
+{
+  "hypothesis": "H3 volatility-compression range breakout",
+  "primary": {
+    "range_hours": 24,
+    "vol_hours": 24,
+    "vol_window_hours": 720,
+    "compression": 0.75
+  },
+  "discovery": [
+    "2020-01-01",
+    "2024-12-31"
+  ],
+  "overall": {
+    "days": 1501,
+    "total_return": 15404.044954498815,
+    "cagr": 9.430835825805291,
+    "sharpe": 4.682380442279359,
+    "max_drawdown": -0.35078223841239753,
+    "hit_rate": 0.6162558294470353,
+    "avg_daily_bps": 68.28465346881265,
+    "top5_share_of_positive": 0.030891859378283072,
+    "signals": 19139,
+    "avg_signals_per_day": 12.7508327781479
+  },
+  "yearly": {
+    "2020": {
+      "days": 275,
+      "total_return": 0.869797107567736,
+      "cagr": 1.2948029818975098,
+      "sharpe": 1.8967483159321403,
+      "max_drawdown": -0.35078223841239753,
+      "hit_rate": 0.5418181818181819,
+      "avg_daily_bps": 26.22921735134152,
+      "top5_share_of_positive": 0.14768749897000283
+    },
+    "2021": {
+      "days": 312,
+      "total_return": 29.580179959289463,
+      "cagr": 53.67318846256519,
+      "sharpe": 6.309204815821959,
+      "max_drawdown": -0.16406640036119147,
+      "hit_rate": 0.6474358974358975,
+      "avg_daily_bps": 116.34313096993499,
+      "top5_share_of_positive": 0.08921107055580993
+    },
+    "2022": {
+      "days": 297,
+      "total_return": 5.643351545287519,
+      "cagr": 9.24891554783292,
+      "sharpe": 4.821445483058475,
+      "max_drawdown": -0.19691065782671813,
+      "hit_rate": 0.6161616161616161,
+      "avg_daily_bps": 67.52999588727093,
+      "top5_share_of_positive": 0.10251812638848473
+    },
+    "2023": {
+      "days": 304,
+      "total_return": 0.9487029707673933,
+      "cagr": 1.2278471896454448,
+      "sharpe": 2.1453534007810378,
+      "max_drawdown": -0.2605596033034785,
+      "hit_rate": 0.5855263157894737,
+      "avg_daily_bps": 24.291063799396127,
+      "top5_share_of_positive": 0.1620913375237822
+    },
+    "2024": {
+      "days": 313,
+      "total_return": 19.81112547845096,
+      "cagr": 33.45954413704839,
+      "sharpe": 7.383289958204243,
+      "max_drawdown": -0.09674267439902795,
+      "hit_rate": 0.6805111821086262,
+      "avg_daily_bps": 100.77406085914785,
+      "top5_share_of_positive": 0.10880813487936483
+    }
+  },
+  "control_unconditional_breakout": {
+    "days": 1718,
+    "total_return": 98314.19732978754,
+    "cagr": 10.500426171721262,
+    "sharpe": 4.236747831148826,
+    "max_drawdown": -0.5263195453223428,
+    "hit_rate": 0.6164144353899884,
+    "avg_daily_bps": 72.58790896314508,
+    "top5_share_of_positive": 0.028947804043047504,
+    "signals": 33409
+  },
+  "sensitivity": [
+    {
+      "compression": 0.6,
+      "range_hours": 12,
+      "days": 1226,
+      "total_return": 12.295939677072147,
+      "cagr": 1.1604752983247084,
+      "sharpe": 1.735194880856777,
+      "max_drawdown": -0.42654755065067795,
+      "hit_rate": 0.5293637846655791,
+      "avg_daily_bps": 24.895807019782115,
+      "top5_share_of_positive": 0.05283673405743759,
+      "signals": 11195
+    },
+    {
+      "compression": 0.6,
+      "range_hours": 24,
+      "days": 1107,
+      "total_return": 195.91013210849718,
+      "cagr": 4.707763672171842,
+      "sharpe": 3.65533928672681,
+      "max_drawdown": -0.30681649694683033,
+      "hit_rate": 0.5817524841915086,
+      "avg_daily_bps": 51.41793951185634,
+      "top5_share_of_positive": 0.048725713237722394,
+      "signals": 9516
+    },
+    {
+      "compression": 0.6,
+      "range_hours": 48,
+      "days": 864,
+      "total_return": 1044272.3304931019,
+      "cagr": 347.87539813242654,
+      "sharpe": 12.486241717813648,
+      "max_drawdown": -0.055715403495489535,
+      "hit_rate": 0.7962962962962963,
+      "avg_daily_bps": 164.74514902351666,
+      "top5_share_of_positive": 0.04430432394618571,
+      "signals": 5584
+    },
+    {
+      "compression": 0.75,
+      "range_hours": 12,
+      "days": 1562,
+      "total_return": 27.476496699070157,
+      "cagr": 1.1871411962076182,
+      "sharpe": 1.7767258519073552,
+      "max_drawdown": -0.6316107966764564,
+      "hit_rate": 0.5262483994878361,
+      "avg_daily_bps": 25.07518675746753,
+      "top5_share_of_positive": 0.03723368980138046,
+      "signals": 21490
+    },
+    {
+      "compression": 0.75,
+      "range_hours": 24,
+      "days": 1501,
+      "total_return": 15404.044954498815,
+      "cagr": 9.430835825805291,
+      "sharpe": 4.682380442279359,
+      "max_drawdown": -0.35078223841239753,
+      "hit_rate": 0.6162558294470353,
+      "avg_daily_bps": 68.28465346881265,
+      "top5_share_of_positive": 0.030891859378283072,
+      "signals": 19139
+    },
+    {
+      "compression": 0.75,
+      "range_hours": 48,
+      "days": 1295,
+      "total_return": 19990445312.66193,
+      "cagr": 799.4249519366467,
+      "sharpe": 13.466658253863269,
+      "max_drawdown": -0.13470324850015714,
+      "hit_rate": 0.803088803088803,
+      "avg_daily_bps": 188.2742518333054,
+      "top5_share_of_positive": 0.02799892897394626,
+      "signals": 12422
+    },
+    {
+      "compression": 0.9,
+      "range_hours": 12,
+      "days": 1689,
+      "total_return": 10.58571946215934,
+      "cagr": 0.6979239506452539,
+      "sharpe": 1.2064673663268495,
+      "max_drawdown": -0.6821035376783326,
+      "hit_rate": 0.5281231497927767,
+      "avg_daily_bps": 19.27904189197043,
+      "top5_share_of_positive": 0.040442024226718505,
+      "signals": 29848
+    },
+    {
+      "compression": 0.9,
+      "range_hours": 24,
+      "days": 1659,
+      "total_return": 26756.961290209903,
+      "cagr": 8.420914006678553,
+      "sharpe": 3.928131138354415,
+      "max_drawdown": -0.5839233395940022,
+      "hit_rate": 0.6130198915009042,
+      "avg_daily_bps": 67.07847250813924,
+      "top5_share_of_positive": 0.031244226507654023,
+      "signals": 28299
+    },
+    {
+      "compression": 0.9,
+      "range_hours": 48,
+      "days": 1514,
+      "total_return": 7252185580518.447,
+      "cagr": 1259.2110898385502,
+      "sharpe": 13.297720743048782,
+      "max_drawdown": -0.12455960724284898,
+      "hit_rate": 0.7985468956406869,
+      "avg_daily_bps": 201.5518315093208,
+      "top5_share_of_positive": 0.023557477797267183,
+      "signals": 19502
+    }
+  ],
+  "placebo": {
+    "draws": 200,
+    "placebo_mean": -1.4489326354762482,
+    "placebo_p95": -0.8171449290433244,
+    "actual": 4.682380442279359,
+    "p_value": 0.0
+  },
+  "first_trades": [
+    {
+      "date": "2023-05-17 00:00:00+00:00",
+      "symbol": "1000PEPEUSDT",
+      "direction": -1,
+      "fwd": -0.07538937368828014,
+      "net_return": 0.07378937368828013
+    },
+    {
+      "date": "2023-05-19 00:00:00+00:00",
+      "symbol": "1000PEPEUSDT",
+      "direction": -1,
+      "fwd": -0.012014493674909477,
+      "net_return": 0.010414493674909476
+    },
+    {
+      "date": "2023-05-20 00:00:00+00:00",
+      "symbol": "1000PEPEUSDT",
+      "direction": 1,
+      "fwd": -0.030626688971818194,
+      "net_return": -0.03222668897181819
+    }
+  ]
+}
