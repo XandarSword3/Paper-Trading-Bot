@@ -1,6 +1,6 @@
 # New Edge Lab — Findings
 
-**Bottom line: 9 pre-registered trials, 0 deployable edges.** The full log is in
+**Bottom line: 11 pre-registered trials (plus one live pilot), 0 deployable edges.** The full log is in
 `registry.json`; raw payloads are in `results/`. Nothing here is wired into
 production, and nothing should be traded with real capital.
 
@@ -18,8 +18,10 @@ production, and nothing should be traded with real capital.
 | H7 | 12-month TSMOM, monthly | Sharpe 0.36, DD -72% | placebo p=0.17 | KILL |
 | H8 | Weekend alt/BTC relative value | -1.64 (mirror +0.52) | holdout gross ~0 | KILL |
 | H9 | OI crowding, live 21-day pilot | gross +12.4 bps/event | net -3.6 bps after cost | PILOT KILL |
+| H10 | Perp/index premium fade, 8h | gross +7.4 bps/event | holdout +1.6 bps; net -8.6 | KILL |
+| H11 | Same 72h basis fade on held-out SOL | net -56 bps/event, Sharpe -0.43 | placebo p=0.61 | KILL |
 
-## The five things this lab actually established
+## The seven things this lab actually established
 
 1. **Same-bar fills manufacture edges.** H3 looked like the best strategy in the
    repository (Sharpe 4.68 discovery, 5.35 holdout, 943% CAGR) and was entirely
@@ -47,6 +49,21 @@ production, and nothing should be traded with real capital.
    `data/binance/klines` is still listed in 2026. Any book that buys losers or
    shorts alts is flattered by the coins that are missing because they died.
    H5 and H8 should be read with that discount.
+
+6. **Basis reversion is real but sub-scale.** H10 faded a 2-sigma perp/index
+   premium and found a genuine +7.4 bps gross edge per 8h event (t=1.38),
+   rising to +11.8 bps (t=2.23) on the smoother mark/index premium. Both are
+   below the 16 bps round trip, and the holdout gross fell to +1.6 / -3.9 bps.
+   The only positive-net version is a 72h mark/index hold (+9.3 bps discovery,
+   +5.5 bps holdout) with a -62% drawdown and t<1. That is a diagnostic, not a
+   strategy.
+
+7. **A single-asset positive is not an edge.** The 72h basis fade was the only
+   variant in the lab with positive net expectancy in both discovery and
+   holdout. Frozen and re-run on held-out SOL (H11), it lost -56 bps net per
+   event, Sharpe -0.43, drawdown -99%, placebo p=0.61. The BTC/ETH result was
+   asset-specific noise. Every candidate here has now been checked on data
+   that did not choose it.
 
 ## What the data cannot answer
 
@@ -93,7 +110,14 @@ python research/new_edge/h05b_csm_momentum.py
 python research/new_edge/h06_funding_cash.py
 python research/new_edge/h07_tsmom.py
 python research/new_edge/h08_weekend_alt_bleed.py
+python research/new_edge/h10_premium_fade.py
+python research/new_edge/h11_sol_basis_check.py
 ```
+
+H10 uses the deeper `v4_system/data/` mark, index and perp parquet files
+(spot/perp/index 1h from 2019-12). SOL is excluded there because its index
+series is corrupted around the 2022-11-09 FTX crash. H11 is the held-out-asset
+check of H10's 72h variant and uses SOL from 2021-04-01, excluding the FTX week.
 
 `h05_cross_sectional_momentum.py` is the first (sign-bugged) H5 implementation;
 its payload is kept for the audit trail. `h05b` is the corrected test and the
