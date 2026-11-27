@@ -348,6 +348,15 @@ def test_ping_pong_keepalive_reconnects_when_no_pong(tmp_path, monkeypatch):
 
 # -- fix 2 (round 2): Bybit staleness ~60s, pongs count as activity --------
 
+def test_ping_interval_must_be_shorter_than_pong_timeout():
+    # Otherwise the pong timeout fires before the first ping is even sent.
+    rec = [r for r in lr.build_recorders(60.0) if r.name == "binance_liquidations"][0]
+    assert rec.ws_ping_interval is not None
+    assert rec.ws_ping_timeout is not None
+    assert rec.ws_ping_interval < rec.ws_ping_timeout, \
+        f"ping every {rec.ws_ping_interval}s but pong timeout {rec.ws_ping_timeout}s"
+
+
 def test_bybit_staleness_timeout_is_about_60s():
     rec = [r for r in lr.build_recorders(60.0) if r.name == "bybit_liquidations"][0]
     assert rec.staleness_timeout is not None

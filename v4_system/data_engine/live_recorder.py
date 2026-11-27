@@ -509,7 +509,7 @@ def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
         # protocol ping/pong detects a dead socket instead.
         StreamRecorder("binance_liquidations", BINANCE_LIQ_URL,
                        parse_binance_liquidation, flush_seconds=flush_seconds,
-                       ws_ping_interval=20.0, ws_ping_timeout=10.0),
+                       ws_ping_interval=20.0, ws_ping_timeout=30.0),
         # bookTicker is high-frequency: a few seconds of silence means a dead
         # socket, so use a data-staleness timeout.
         StreamRecorder("binance_bookticker", BINANCE_BOOK_URL,
