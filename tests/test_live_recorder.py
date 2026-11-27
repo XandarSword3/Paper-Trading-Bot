@@ -501,6 +501,36 @@ def test_bybit_subscribe_confirmed_is_logged(tmp_path, monkeypatch, caplog):
                for rec in caplog.records), "subscribe confirmation was not logged"
 
 
+def test_bybit_subscribe_rejected_persists_error_state(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
+                          flush_seconds=9999)
+    payload = {"op": "subscribe", "success": False, "ret_msg": "invalid topic"}
+    ws = FakeWS([("msg", json.dumps(payload)), ("timeout",)])
+    r._receive_loop(ws, time.time() + 0.3)
+    r._flush()
+    state = json.loads((tmp_path / "_state" / "bybit_liquidations.json").read_text())
+    assert "subscribe rejected" in state.get("error", ""), state
+
+
+def test_bybit_subscribe_rejections_back_off(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    payload = {"op": "subscribe", "success": False, "ret_msg": "invalid topic"}
+    sleeps = []
+    monkeypatch.setattr(lr.time, "sleep", lambda s: sleeps.append(s))
+
+    def factory(url, timeout=20):
+        return FakeWS([("msg", json.dumps(payload)), ("timeout",)])
+
+    monkeypatch.setattr(lr.websocket, "create_connection", factory)
+    r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
+                          flush_seconds=9999)
+    r.run(duration=3.5)
+    assert len(sleeps) >= 3, f"expected several reconnects, got sleeps={sleeps}"
+    assert sleeps[1] > sleeps[0], \
+        f"reconnect backoff did not grow: {sleeps}"
+
+
 def test_bybit_unrecognised_topic_is_logged(tmp_path, monkeypatch, caplog):
     monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
     r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,

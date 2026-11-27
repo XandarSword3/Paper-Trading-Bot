@@ -137,6 +137,23 @@ def test_send_telegram_posts_to_bot_api(monkeypatch):
     assert "hello" in captured["body"]
 
 
+def test_send_telegram_logs_http_error_body(monkeypatch, caplog):
+    import urllib.error
+
+    def fake_urlopen(req, timeout=10):
+        raise urllib.error.HTTPError(
+            req.full_url, 403, "Forbidden",
+            hdrs=None, fp=__import__("io").BytesIO(
+                b'{"ok":false,"description":"Forbidden: bot was blocked by the user"}'))
+
+    monkeypatch.setattr(lw.urllib.request, "urlopen", fake_urlopen)
+    with caplog.at_level("WARNING", logger="live_watchdog"):
+        assert lw.send_telegram("hello", config=("tok", "42")) is False
+    assert any("bot was blocked by the user" in rec.message for rec in caplog.records), \
+        "Telegram's error description was not logged"
+    assert all("tok" not in rec.message for rec in caplog.records), "token leaked into logs"
+
+
 def test_emit_sends_telegram_alert(monkeypatch, tmp_path):
     monkeypatch.setattr(lw, "ALERTS_FILE", tmp_path / "_alerts.jsonl")
     sent = []
@@ -144,3 +161,50 @@ def test_emit_sends_telegram_alert(monkeypatch, tmp_path):
     lw.emit([{"stream": "binance_bookticker", "kind": "no_rows"}])
     assert len(sent) == 1
     assert "no_rows" in sent[0]
+
+
+# -- fix 3 (round 4): alert once, hourly reminder, once on recovery ---------
+
+def test_recorder_reported_error_alerts(tmp_path):
+    # A rejected Bybit subscription is persisted by the recorder as state.error;
+    # the watchdog must raise an alert for it.
+    for stream in lw.STREAM_THRESHOLDS:
+        _write_state(tmp_path, stream, age_seconds=10)
+    _write_rows(tmp_path)
+    state_dir = tmp_path / "_state"
+    state = json.loads((state_dir / "bybit_liquidations.json").read_text())
+    state["error"] = "subscribe rejected: invalid topic"
+    (state_dir / "bybit_liquidations.json").write_text(json.dumps(state))
+    alerts = lw.check_once(tmp_path)
+    kinds = {(a["stream"], a["kind"]) for a in alerts}
+    assert ("bybit_liquidations", "error") in kinds, alerts
+
+
+def test_alert_state_sends_once_on_start():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "no_rows"}
+    first = st.process([alert], now_ts=1000.0)
+    assert len(first) == 1 and first[0]["event"] == "start"
+    second = st.process([alert], now_ts=1060.0)
+    assert second == [], "same problem alerted twice within the hour"
+
+
+def test_alert_state_reminds_hourly():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "no_rows"}
+    st.process([alert], now_ts=1000.0)   # start
+    assert st.process([alert], now_ts=2000.0) == []   # 1000s later: no reminder
+    reminder = st.process([alert], now_ts=4601.0)     # 3601s after last send
+    assert len(reminder) == 1 and reminder[0]["event"] == "reminder", reminder
+    assert st.process([alert], now_ts=5000.0) == []   # reminder resets the clock
+
+
+def test_alert_state_sends_once_on_recovery():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "no_rows"}
+    st.process([alert], now_ts=1000.0)
+    recovery = st.process([], now_ts=1060.0)
+    assert len(recovery) == 1
+    assert recovery[0]["event"] == "recovery"
+    assert recovery[0]["stream"] == "binance_bookticker"
+    assert st.process([], now_ts=1120.0) == [], "recovery sent twice"

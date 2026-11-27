@@ -125,6 +125,7 @@ class StreamRecorder:
         self._last_close: dict | None = None
         self._last_error: str | None = None
         self._flush_seq = 0
+        self._subscribe_failures = 0
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
@@ -162,15 +163,19 @@ class StreamRecorder:
         return DATA_DIR / "_state" / f"{self.name}.json"
 
     def _persist_state(self) -> None:
-        """Persist last-message time so restarts/crashes are visible."""
-        if self.last_msg_ts is None:
+        """Persist last-message time (and any error) so restarts/crashes and
+        subscribe rejections are visible to the watchdog."""
+        if self.last_msg_ts is None and not self._last_error:
             return
         path = self._state_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         state = {
-            "last_msg_ts": _iso(datetime.fromtimestamp(self.last_msg_ts, tz=timezone.utc)),
+            "last_msg_ts": (_iso(datetime.fromtimestamp(self.last_msg_ts, tz=timezone.utc))
+                            if self.last_msg_ts is not None else None),
             "updated": _iso(_utcnow()),
         }
+        if self._last_error:
+            state["error"] = self._last_error
         tmp = path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(state), encoding="utf-8")
         os.replace(tmp, path)
@@ -183,6 +188,10 @@ class StreamRecorder:
             return
         try:
             state = json.loads(path.read_text(encoding="utf-8"))
+            if state.get("last_msg_ts") is None:
+                logger.info("%s: previous state has no messages yet (error: %s)",
+                            self.name, state.get("error", "none"))
+                return
             last = datetime.fromisoformat(state["last_msg_ts"])
         except Exception as exc:  # noqa: BLE001
             logger.warning("%s: unreadable state file: %s", self.name, exc)
@@ -256,7 +265,9 @@ class StreamRecorder:
                 if self.subscribe_msg:
                     ws.send(self.subscribe_msg)
                 connected = True
-                delay = RECONNECT_BASE_DELAY
+                # Back off harder when subscriptions keep getting rejected.
+                delay = min(RECONNECT_BASE_DELAY * (2 ** self._subscribe_failures),
+                            RECONNECT_MAX_DELAY)
                 logger.info("%s: connected to %s", self.name, self.url)
                 if self._pending_gap_start is not None:
                     gap_end = _utcnow()
@@ -411,9 +422,11 @@ class StreamRecorder:
             # subscription is broken, so reconnect instead of sitting idle.
             if isinstance(msg, dict) and msg.get("op") == "subscribe":
                 if msg.get("success"):
+                    self._subscribe_failures = 0
                     logger.info("%s: subscribe confirmed (%s)", self.name,
                                 msg.get("req_id", "?"))
                 else:
+                    self._subscribe_failures += 1
                     logger.error("%s: subscribe REJECTED: %s", self.name, msg)
                     self._last_error = f"subscribe rejected: {msg.get('ret_msg')}"
                     return

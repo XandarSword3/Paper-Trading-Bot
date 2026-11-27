@@ -92,6 +92,12 @@ def check_once(data_dir: Path = DATA_DIR,
             })
             continue
         age = (now - updated).total_seconds()
+        if state.get("error"):
+            alerts.append({
+                "stream": stream,
+                "kind": "error",
+                "detail": f"recorder reported error: {state['error']}",
+            })
         if age > threshold:
             alerts.append({
                 "stream": stream,
@@ -169,9 +175,52 @@ def send_telegram(text: str, config: tuple[str, str] | None = None) -> bool:
             logger.warning("Telegram API error: %s", body)
             return False
         return True
+    except urllib.error.HTTPError as exc:
+        # Telegram's error body carries the human-readable description
+        # (e.g. "Forbidden: bot was blocked by the user"). Never contains the token.
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")
+        except Exception:  # noqa: BLE001
+            detail = "<unreadable body>"
+        logger.warning("Telegram HTTP %s: %s", exc.code, detail)
+        return False
     except Exception as exc:  # noqa: BLE001
         logger.warning("Telegram send failed: %s", exc)
         return False
+
+
+REMINDER_INTERVAL = 3600.0  # remind at most hourly while a problem persists
+
+
+class AlertState:
+    """Dedup alerting: send once when a problem starts, remind at most
+    hourly, and send once when it recovers."""
+
+    def __init__(self, reminder_interval: float = REMINDER_INTERVAL):
+        self.reminder_interval = reminder_interval
+        self.active: dict[tuple[str, str], float] = {}  # (stream, kind) -> last sent ts
+
+    def process(self, alerts: list[dict], now_ts: float) -> list[dict]:
+        current = {(a["stream"], a["kind"]) for a in alerts}
+        to_send: list[dict] = []
+        for alert in alerts:
+            key = (alert["stream"], alert["kind"])
+            last = self.active.get(key)
+            if last is None:
+                to_send.append({**alert, "event": "start"})
+                self.active[key] = now_ts
+            elif now_ts - last >= self.reminder_interval:
+                to_send.append({**alert, "event": "reminder"})
+                self.active[key] = now_ts
+        for key in list(self.active):
+            if key not in current:
+                stream, kind = key
+                to_send.append({
+                    "stream": stream, "kind": kind, "event": "recovery",
+                    "detail": "problem resolved",
+                })
+                del self.active[key]
+        return to_send
 
 
 def emit(alerts: list[dict]) -> None:
@@ -200,9 +249,10 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
     logger.info("live watchdog started (data dir %s)", DATA_DIR)
+    state = AlertState()
     while True:
         try:
-            emit(check_once())
+            emit(state.process(check_once(), time.time()))
         except Exception:  # noqa: BLE001 — watchdog must never die
             logger.exception("watchdog check failed")
         time.sleep(CHECK_INTERVAL)
