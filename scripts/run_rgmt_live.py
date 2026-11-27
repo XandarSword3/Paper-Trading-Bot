@@ -138,7 +138,7 @@ def dsr_gate_allows_mainnet(path: Path = DSR_GATE_PATH,
     Reads the committed gate file ``data/RGMT_DSR_GATE.json``. Returns True
     only if it parses and ``dsr >= threshold``. Missing, unreadable, or
     malformed files all return False — mainnet must never open new risk on an
-    absent or stale gate.
+    absent gate.
     """
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -524,9 +524,11 @@ def main() -> None:
 
     # DSR gate: mainnet may only de-risk while the committed gate file shows
     # DSR below threshold (or is missing/unreadable). Testnet is unaffected.
+    dsr_blocked = False
     if not testnet:
         dsr_ok = dsr_gate_allows_mainnet()
         if not dsr_ok:
+            dsr_blocked = True
             logger.error(
                 "DSR GATE BLOCKED mainnet new exposure (need DSR >= %.2f in %s); "
                 "only reduce-only orders will be sent",
@@ -607,6 +609,7 @@ def main() -> None:
         f"• Equity: *${equity:,.2f}*\n"
         f"• Orders filled: *{len(filled)}/{len(orders)}*\n"
         f"• Gross target: *{gross:.2f}x*"
+        + ("\n• ⚠️ *DSR GATE BLOCKED* — reduce-only orders only" if dsr_blocked else "")
     )
     print(json.dumps({"executed": True, "filled": len(filled), "planned": len(orders)}, indent=2))
 

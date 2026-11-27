@@ -141,6 +141,9 @@ def _fetch_kline_month(symbol: str, interval: str, ym: tuple[int, int]) -> tuple
            f"{symbol}-{interval}-{_month_key(*ym)}.zip")
     payload, status = _fetch_status(url)
     if status == "missing":
+        # 404 = permanent absence; clear any stale failure entry (e.g. one
+        # recorded by an older downloader that treated 404 as an error).
+        _clear_failure("klines", f"{symbol}_{interval}", ym)
         return symbol, _month_key(*ym), None, False
     if status == "neterr":
         return symbol, _month_key(*ym), f"network failure: {url}", True
@@ -162,6 +165,7 @@ def _fetch_funding_month(symbol: str, ym: tuple[int, int]) -> tuple[str, str, st
     url = f"{VISION}/monthly/fundingRate/{symbol}/{symbol}-fundingRate-{_month_key(*ym)}.zip"
     payload, status = _fetch_status(url)
     if status == "missing":
+        _clear_failure("funding", symbol, ym)
         return symbol, _month_key(*ym), None, False
     if status == "neterr":
         return symbol, _month_key(*ym), f"network failure: {url}", True
@@ -183,10 +187,13 @@ def _fetch_funding_month(symbol: str, ym: tuple[int, int]) -> tuple[str, str, st
 
 
 def _assemble(kind_dir: Path, out_path: Path, key: str, label: str,
-              months: list[tuple[int, int]]) -> tuple[Path | None, str | None]:
-    """Assemble cached month parquets into one combined parquet.
+              months: list[tuple[int, int]]) -> tuple[pd.DataFrame | None, Path, str | None]:
+    """Assemble cached month parquets into one combined frame (not written).
 
-    Returns ``(path, None)`` on success or ``(None, error)``. Fatal conditions:
+    Returns ``(frame, out_path, None)`` on success, ``(None, out_path, None)``
+    when nothing is cached, or ``(None, out_path, error)`` on a fatal
+    condition. The caller writes NOTHING unless every symbol assembles
+    cleanly. Fatal conditions:
 
     * interior missing months — a gap BETWEEN the first and last cached month
       means the series has a hole, not just pre-listing absence;
@@ -202,14 +209,14 @@ def _assemble(kind_dir: Path, out_path: Path, key: str, label: str,
         else:
             missing.append(ym)
     if not frames:
-        return None, None
+        return None, out_path, None
 
     first_c, last_c = cached[0], cached[-1]
     interior = [m for m in missing if first_c <= m <= last_c]
     if interior:
         keys = [_month_key(*m) for m in interior[:5]]
-        return None, (f"{label}: {len(interior)} interior missing months "
-                      f"{keys} (between {_month_key(*first_c)} and {_month_key(*last_c)})")
+        return None, out_path, (f"{label}: {len(interior)} interior missing months "
+                                f"{keys} (between {_month_key(*first_c)} and {_month_key(*last_c)})")
 
     frame = (pd.concat(frames, ignore_index=True)
              .sort_values("timestamp").drop_duplicates("timestamp").reset_index(drop=True))
@@ -218,22 +225,21 @@ def _assemble(kind_dir: Path, out_path: Path, key: str, label: str,
         old = pd.read_parquet(out_path)
         lost = set(old["timestamp"]) - set(frame["timestamp"])
         if lost:
-            return None, (f"{label}: refusing to overwrite {out_path.name}; new data "
-                          f"misses {len(lost)} timestamps the old file had")
+            return None, out_path, (f"{label}: refusing to overwrite {out_path.name}; new data "
+                                    f"misses {len(lost)} timestamps the old file had")
 
-    _atomic_write_parquet(frame, out_path)
     if missing:
         logger.warning("%s assembled with %d missing months (pre-listing/tail): %s",
                        label, len(missing), [_month_key(*m) for m in missing[:10]])
-    return out_path, None
+    return frame, out_path, None
 
 
-def _assemble_klines(symbol: str, interval: str, months: list[tuple[int, int]]) -> tuple[Path | None, str | None]:
+def _assemble_klines(symbol: str, interval: str, months: list[tuple[int, int]]) -> tuple[pd.DataFrame | None, Path, str | None]:
     return _assemble(KLINE_MONTHS, KLINE_DIR / f"{symbol}_{interval}.parquet",
                      f"{symbol}_{interval}", f"{symbol} {interval}", months)
 
 
-def _assemble_funding(symbol: str, months: list[tuple[int, int]]) -> tuple[Path | None, str | None]:
+def _assemble_funding(symbol: str, months: list[tuple[int, int]]) -> tuple[pd.DataFrame | None, Path, str | None]:
     return _assemble(FUNDING_MONTHS, FUNDING_DIR / f"{symbol}.parquet",
                      symbol, f"{symbol} funding", months)
 
@@ -300,26 +306,51 @@ def run(symbols: list[str] | None = None, interval: str = "1h",
               f"missing months (see {FAILED_PATH}).")
         return 2
 
+    # --assemble-only refuses to build combined files while FAILED.json still
+    # lists any month for the requested symbols and range: those months are
+    # holes, and a combined file must never contain one.
+    if assemble_only:
+        month_keys = {_month_key(*ym) for ym in months}
+        wanted = {"klines": {f"{s}_{interval}" for s in symbols},
+                  "funding": set(symbols)}
+        hits = []
+        for kind, keys in wanted.items():
+            for entry in _load_failed().get(kind, {}):
+                k, _, mk = entry.partition("/")
+                if k in keys and mk in month_keys:
+                    hits.append(f"{kind}:{entry}")
+        if hits:
+            print(f"\nABORT: --assemble-only refused; FAILED.json lists "
+                  f"{len(hits)} failed months in range, e.g. {hits[:5]}. "
+                  f"Rerun without --assemble-only to retry them first.")
+            return 2
+
     # Assemble combined parquets. Interior gaps or regressions are fatal even
     # in --assemble-only mode: a combined file must never contain a hole.
+    # NOTHING is written unless every symbol assembles cleanly.
+    pending = []
     assemble_errors = 0
     for sym in symbols:
-        kp, kerr = _assemble_klines(sym, interval, months)
-        fp, ferr = _assemble_funding(sym, months)
+        kf, kp, kerr = _assemble_klines(sym, interval, months)
+        ff, fp, ferr = _assemble_funding(sym, months)
         for err in (kerr, ferr):
             if err:
                 assemble_errors += 1
                 print(f"  ABORT {err}")
-        if kp:
-            df = pd.read_parquet(kp)
-            print(f"  {sym:12s} klines {len(df):8d} rows  {df.timestamp.iloc[0].date()} -> {df.timestamp.iloc[-1].date()}")
-        if fp:
-            print(f"  {sym:12s} funding {len(pd.read_parquet(fp)):6d} rows")
+        pending.append((sym, kf, kp, ff, fp))
 
     if assemble_errors:
         print(f"\nABORT: {assemble_errors} assembly errors (interior gaps or "
-              f"regressions). Combined parquets were NOT overwritten.")
+              f"regressions). NO combined parquets were written.")
         return 2
+
+    for sym, kf, kp, ff, fp in pending:
+        if kf is not None:
+            _atomic_write_parquet(kf, kp)
+            print(f"  {sym:12s} klines {len(kf):8d} rows  {kf.timestamp.iloc[0].date()} -> {kf.timestamp.iloc[-1].date()}")
+        if ff is not None:
+            _atomic_write_parquet(ff, fp)
+            print(f"  {sym:12s} funding {len(ff):6d} rows")
 
     failed = _load_failed()
     if failed:

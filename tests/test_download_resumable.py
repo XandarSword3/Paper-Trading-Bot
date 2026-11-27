@@ -136,18 +136,47 @@ def test_interior_404_is_fatal_in_assemble_only(sandbox, monkeypatch):
 
 def test_assemble_only_recovers_after_network_failure(sandbox, monkeypatch):
     """After a neterr abort, --assemble-only is the recovery path — but only
-    when the cached months are complete (no interior gaps)."""
+    once FAILED.json is clear (i.e. the failed months were retried) and the
+    cached months are complete (no interior gaps)."""
     _seed_kline_month(sandbox, "2020-01", "2020-01-01")
     _seed_kline_month(sandbox, "2020-02", "2020-02-01")
     monkeypatch.setattr(dr, "_fetch_status", lambda url, **kw: (None, "neterr"))
     assert dr.run(symbols=["BTCUSDT"], start="2020-01", workers=4) == 2
     assert not (sandbox["klines"] / "BTCUSDT_1h.parquet").exists()
 
-    # Recovery: assemble-only with the two cached months (rest are tail).
+    # FAILED.json still lists the failed months -> assemble-only refuses.
+    assert dr.run(symbols=["BTCUSDT"], start="2020-01", workers=1, assemble_only=True) == 2
+
+    # Retry succeeds (simulated by clearing the failure log), then assemble.
+    sandbox["failed"].unlink()
     rc = dr.run(symbols=["BTCUSDT"], start="2020-01", workers=1, assemble_only=True)
     assert rc == 0
     out = pd.read_parquet(sandbox["klines"] / "BTCUSDT_1h.parquet")
     assert len(out) == 2
+
+
+def test_assemble_only_refuses_failed_newest_month(sandbox, monkeypatch):
+    """FAILED.json listing the newest month in range must block --assemble-only."""
+    _seed_kline_month(sandbox, "2020-01", "2020-01-01")
+    sandbox["failed"].parent.mkdir(parents=True, exist_ok=True)
+    sandbox["failed"].write_text(json.dumps(
+        {"funding": {"BTCUSDT/2026-11": "network failure: ..."}}), encoding="utf-8")
+    rc = dr.run(symbols=["BTCUSDT"], start="2020-01", workers=1, assemble_only=True)
+    assert rc == 2
+    assert not (sandbox["klines"] / "BTCUSDT_1h.parquet").exists()
+
+
+def test_assemble_only_ignores_failed_months_outside_scope(sandbox, monkeypatch):
+    """Failed months for other symbols or outside the requested range are fine."""
+    _seed_kline_month(sandbox, "2020-01", "2020-01-01")
+    sandbox["failed"].parent.mkdir(parents=True, exist_ok=True)
+    sandbox["failed"].write_text(json.dumps({"funding": {
+        "ETHUSDT/2026-11": "network failure",   # other symbol
+        "BTCUSDT/2019-01": "network failure",   # before --start 2020-01
+    }}), encoding="utf-8")
+    rc = dr.run(symbols=["BTCUSDT"], start="2020-01", workers=1, assemble_only=True)
+    assert rc == 0
+    assert (sandbox["klines"] / "BTCUSDT_1h.parquet").exists()
 
 
 def test_combined_file_never_loses_timestamps(sandbox, monkeypatch):
