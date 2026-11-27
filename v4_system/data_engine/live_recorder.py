@@ -95,7 +95,8 @@ class StreamRecorder:
                  ping_interval: float = 20.0,
                  staleness_timeout: float | None = None,
                  ws_ping_interval: float | None = None,
-                 ws_ping_timeout: float | None = None) -> None:
+                 ws_ping_timeout: float | None = None,
+                 ws_recv_timeout: float = 5.0) -> None:
         self.name = name
         self.url = url
         self.parse = parse            # raw json dict -> list[dict]
@@ -103,8 +104,12 @@ class StreamRecorder:
         self.ping_msg = ping_msg      # app-level keepalive (Bybit requires it)
         self.ping_interval = ping_interval
         self.staleness_timeout = staleness_timeout  # None = quiet is normal
-        self.ws_ping_interval = ws_ping_interval    # protocol ping/pong
+        # Protocol-level ping/pong (websocket-client has no built-in keepalive:
+        # create_connection ignores ping_interval/ping_timeout).
+        self.ws_ping_interval = ws_ping_interval
         self.ws_ping_timeout = ws_ping_timeout
+        self.ws_recv_timeout = ws_recv_timeout
+        self._last_pong_ts: float | None = None
         self.flush_seconds = flush_seconds
         self.sample_seconds = sample_seconds
         self.sample_key = sample_key  # rec -> hashable key for sampling
@@ -122,9 +127,9 @@ class StreamRecorder:
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
-        # One file per flush (second precision): consecutive flushes inside the
-        # same minute must never overwrite each other.
-        return _utcnow().strftime("%Y-%m-%d/%H-%M-%S")
+        # Unique per flush (microsecond precision): a data file is NEVER
+        # overwritten, even by two flushes inside the same second.
+        return _utcnow().strftime("%Y-%m-%d/%H-%M-%S-%f")
 
     def _flush(self) -> None:
         with self.buffer_lock:
@@ -178,8 +183,27 @@ class StreamRecorder:
         age = (_utcnow() - last).total_seconds()
         logger.info("%s: last recorded message at %s (%.0fs ago)",
                     self.name, state["last_msg_ts"], age)
-        if age > 60:
-            self._log_gap(last, _utcnow(), "restart_or_crash")
+        # Any restart gap is logged, however short.
+        self._log_gap(last, _utcnow(), "restart_or_crash")
+
+    def _sample_emit(self, rec: dict) -> bool:
+        """Sample at most once per clock bucket per key; append to buffer.
+
+        Returns True if the record was emitted. Clock-second buckets mean
+        bookTicker yields exactly one row per symbol per clock second.
+        """
+        if not (self.sample_seconds and self.sample_key):
+            with self.buffer_lock:
+                self.buffer.append(rec)
+            return True
+        key = self.sample_key(rec)
+        bucket = int(time.time() // self.sample_seconds)
+        with self.buffer_lock:
+            if self._last_emit.get(key) == bucket:
+                return False
+            self._last_emit[key] = bucket
+            self.buffer.append(rec)
+        return True
 
     def _maybe_flush(self) -> None:
         if time.time() - self.last_flush >= self.flush_seconds:
@@ -220,12 +244,8 @@ class StreamRecorder:
             attempt_start = _utcnow()
             connected = False
             try:
-                conn_kwargs = {"timeout": 20}
-                if self.ws_ping_interval:
-                    conn_kwargs["ping_interval"] = self.ws_ping_interval
-                    conn_kwargs["ping_timeout"] = self.ws_ping_timeout
-                ws = websocket.create_connection(self.url, **conn_kwargs)
-                ws.settimeout(5.0)
+                ws = websocket.create_connection(self.url, timeout=20)
+                ws.settimeout(self.ws_recv_timeout)
                 if self.subscribe_msg:
                     ws.send(self.subscribe_msg)
                 connected = True
@@ -245,6 +265,7 @@ class StreamRecorder:
                     self._pending_gap_start = None
                     self._last_close = None
                     self._last_error = None
+                self._last_pong_ts = time.time()  # grace period after connect
                 pinger_stop = threading.Event()
                 pinger = None
                 if self.ping_msg:
@@ -252,17 +273,28 @@ class StreamRecorder:
                         target=self._ping_loop, args=(ws, pinger_stop),
                         name=f"{self.name}-ping", daemon=True)
                     pinger.start()
+                ws_pinger_stop = threading.Event()
+                ws_pinger = None
+                if self.ws_ping_interval:
+                    ws_pinger = threading.Thread(
+                        target=self._ws_ping_loop, args=(ws, ws_pinger_stop),
+                        name=f"{self.name}-ws-ping", daemon=True)
+                    ws_pinger.start()
                 try:
                     self._receive_loop(ws, deadline)
                 finally:
                     pinger_stop.set()
+                    ws_pinger_stop.set()
                     if pinger:
                         pinger.join(timeout=2)
+                    if ws_pinger:
+                        ws_pinger.join(timeout=2)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("%s: connection error: %s", self.name, exc)
             finally:
                 try:
-                    ws.close()  # type: ignore[name-defined]
+                    # Short timeout: a silent peer must not stall the reconnect.
+                    ws.close(timeout=1)  # type: ignore[name-defined]
                 except Exception:  # noqa: BLE001
                     pass
             # Gap starts at the last received message (not at disconnect);
@@ -279,6 +311,16 @@ class StreamRecorder:
             time.sleep(delay)
             delay = min(delay * 2, RECONNECT_MAX_DELAY)
         self._flush()
+
+    def _ws_ping_loop(self, ws, stop: threading.Event) -> None:
+        """Protocol-level keepalive: ws.ping() every ws_ping_interval."""
+        while not stop.wait(self.ws_ping_interval):
+            if stop.is_set():
+                return
+            try:
+                ws.ping()
+            except Exception:  # noqa: BLE001 — connection already gone
+                return
 
     def _ping_loop(self, ws, stop: threading.Event) -> None:
         while not stop.is_set():
@@ -308,13 +350,18 @@ class StreamRecorder:
                 self._forced_disconnect_at = None
                 return
             try:
-                opcode, data = ws.recv_data()
+                opcode, data = ws.recv_data(control_frame=True)
             except websocket.WebSocketTimeoutException:
                 self._maybe_flush()
                 if (self.staleness_timeout and conn_last_msg
                         and time.time() - conn_last_msg > self.staleness_timeout):
                     logger.warning("%s: stale (no message for %.1fs), reconnecting",
                                    self.name, time.time() - conn_last_msg)
+                    return
+                if (self.ws_ping_timeout and self._last_pong_ts
+                        and time.time() - self._last_pong_ts > self.ws_ping_timeout):
+                    logger.warning("%s: no pong for %.1fs, reconnecting",
+                                   self.name, time.time() - self._last_pong_ts)
                     return
                 continue
             except Exception as exc:  # noqa: BLE001
@@ -330,12 +377,16 @@ class StreamRecorder:
                 self._last_close = {"code": code, "reason": reason}
                 logger.warning("%s: close frame code=%s reason=%r", self.name, code, reason)
                 return
-            if opcode in (0x9, 0xA):  # ping / pong
-                if opcode == 0x9:
-                    try:
-                        ws.pong(data)
-                    except Exception:  # noqa: BLE001
-                        pass
+            if opcode == 0xA:  # pong: proof of life for the ping keepalive
+                self._last_pong_ts = time.time()
+                conn_last_msg = time.time()
+                continue
+            if opcode in (0x9,):  # ping
+                try:
+                    ws.pong(data)
+                except Exception:  # noqa: BLE001
+                    pass
+                conn_last_msg = time.time()
                 continue
             if not data:
                 continue
@@ -364,18 +415,7 @@ class StreamRecorder:
                 continue
             for rec in recs:
                 rec["_recv_ts"] = _iso(_utcnow())
-                if self.sample_seconds and self.sample_key:
-                    # Sample at most once per sample_seconds per key, in the
-                    # receive loop — independent of the flush timer.
-                    key = self.sample_key(rec)
-                    now = time.time()
-                    with self.buffer_lock:
-                        if now - self._last_emit.get(key, 0.0) >= self.sample_seconds:
-                            self.buffer.append(rec)
-                            self._last_emit[key] = now
-                else:
-                    with self.buffer_lock:
-                        self.buffer.append(rec)
+                self._sample_emit(rec)
                 self.msg_count += 1
             self._maybe_flush()
 
@@ -477,7 +517,8 @@ def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
         StreamRecorder("bybit_liquidations", BYBIT_LIQ_URL,
                        parse_bybit_liquidation, BYBIT_SUBSCRIBE,
                        flush_seconds=flush_seconds,
-                       ping_msg=BYBIT_PING, ping_interval=20.0),
+                       ping_msg=BYBIT_PING, ping_interval=20.0,
+                       staleness_timeout=60.0),
     ]
 
 

@@ -42,6 +42,9 @@ class FakeWS:
     def pong(self, _data):
         pass
 
+    def ping(self, _data=b""):
+        pass
+
     def close(self):
         self.closed = True
 
@@ -54,6 +57,10 @@ class FakeWS:
                 continue
             if kind == "msg":
                 return (0x1, item[1].encode("utf-8"))
+            if kind == "ping":
+                return (0x9, item[1] if len(item) > 1 else b"")
+            if kind == "pong":
+                return (0xA, item[1] if len(item) > 1 else b"")
             if kind == "timeout":
                 raise websocket.WebSocketTimeoutException("timed out")
             if kind == "close":
@@ -65,7 +72,7 @@ class FakeWS:
             raise AssertionError(f"unknown script item {item!r}")
         raise websocket.WebSocketTimeoutException("timed out")
 
-    def recv_data(self):
+    def recv_data(self, control_frame=False):
         return self._next()
 
     def recv(self):
@@ -213,13 +220,16 @@ def test_staleness_timeout_reconnects_silent_socket(tmp_path, monkeypatch):
         f"silent socket never reconnected ({len(connections)} connection(s))"
 
 
-def test_liquidation_stream_has_no_data_staleness_timeout():
-    # Quiet is normal for liquidation feeds: they rely on ping/pong, not data.
-    for rec in lr.build_recorders(60.0):
-        if rec.name in ("binance_liquidations", "bybit_liquidations"):
-            assert rec.staleness_timeout is None, rec.name
-        else:
-            assert rec.staleness_timeout is not None, rec.name
+def test_liquidation_stream_staleness_policy():
+    # Binance liquidations are quiet by nature: no data-staleness timeout;
+    # protocol ping/pong detects a dead socket instead.
+    # Bybit reconnects after ~60s with no message (pongs count as activity).
+    # bookTicker is high-frequency: a few seconds of silence means a dead socket.
+    recs = {r.name: r for r in lr.build_recorders(60.0)}
+    assert recs["binance_liquidations"].staleness_timeout is None
+    assert recs["bybit_liquidations"].staleness_timeout == 60.0
+    assert recs["binance_bookticker"].staleness_timeout is not None
+    assert recs["binance_bookticker"].staleness_timeout <= 10.0
 
 
 # -- fix 5: gaps start at last message, close codes, persisted state --------
@@ -265,6 +275,156 @@ def test_last_message_time_persisted_for_restart_detection(tmp_path, monkeypatch
     assert state_file.exists(), "last-message time was not persisted"
     state = json.loads(state_file.read_text())
     assert state.get("last_msg_ts"), f"state missing last_msg_ts: {state}"
+
+
+# -- fix 1 (round 2): real protocol ping/pong keepalive --------------------
+
+def _silent_ws_server():
+    """Minimal WebSocket server that completes the handshake then stays silent."""
+    import base64
+    import hashlib
+    import socket
+    import threading
+
+    srv = socket.socket()
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(5)
+    port = srv.getsockname()[1]
+    count = [0]
+
+    def serve():
+        while True:
+            try:
+                conn, _ = srv.accept()
+            except OSError:
+                return
+            count[0] += 1
+            try:
+                req = b""
+                while b"\r\n\r\n" not in req:
+                    chunk = conn.recv(4096)
+                    if not chunk:
+                        break
+                    req += chunk
+                key = ""
+                for line in req.decode("utf-8", "replace").split("\r\n"):
+                    if line.lower().startswith("sec-websocket-key:"):
+                        key = line.split(":", 1)[1].strip()
+                accept = base64.b64encode(hashlib.sha1(
+                    (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()
+                ).digest()).decode()
+                conn.sendall((
+                    "HTTP/1.1 101 Switching Protocols\r\n"
+                    "Upgrade: websocket\r\nConnection: Upgrade\r\n"
+                    f"Sec-WebSocket-Accept: {accept}\r\n\r\n").encode())
+                conn.settimeout(30)
+                while True:  # silent: read and discard everything
+                    if not conn.recv(4096):
+                        break
+            except Exception:  # noqa: BLE001
+                pass
+            finally:
+                try:
+                    conn.close()
+                except Exception:  # noqa: BLE001
+                    pass
+
+    threading.Thread(target=serve, daemon=True).start()
+    return port, count
+
+
+def test_ping_pong_keepalive_reconnects_when_no_pong(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    port, count = _silent_ws_server()
+    r = lr.StreamRecorder("binance_liquidations", f"ws://127.0.0.1:{port}",
+                          lr.parse_binance_liquidation, flush_seconds=9999,
+                          ws_ping_interval=0.2, ws_ping_timeout=0.5,
+                          ws_recv_timeout=0.1)
+    r.run(duration=4.0)
+    assert count[0] >= 2, \
+        f"silent server never triggered a pong-timeout reconnect ({count[0]} connection(s))"
+
+
+# -- fix 2 (round 2): Bybit staleness ~60s, pongs count as activity --------
+
+def test_bybit_staleness_timeout_is_about_60s():
+    rec = [r for r in lr.build_recorders(60.0) if r.name == "bybit_liquidations"][0]
+    assert rec.staleness_timeout is not None
+    assert 30.0 <= rec.staleness_timeout <= 90.0, rec.staleness_timeout
+
+
+def test_pong_frames_count_as_activity_for_staleness(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
+                          flush_seconds=9999, staleness_timeout=0.3)
+    # Pongs every 0.2s with recv timeouts in between: if pongs count as
+    # activity the loop survives to the deadline; otherwise it goes stale.
+    script = []
+    for _ in range(8):
+        script.append(("pong", b""))
+        script.append(("sleep", 0.2))
+        script.append(("timeout",))
+    ws = FakeWS(script)
+    start = time.time()
+    r._receive_loop(ws, time.time() + 1.2)
+    elapsed = time.time() - start
+    assert elapsed > 1.0, \
+        f"pongs did not count as activity; loop exited after {elapsed:.2f}s"
+
+
+# -- fix 3 (round 2): never overwrite a data file ---------------------------
+
+def test_flush_never_overwrites_a_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("binance_liquidations", "ws://x", lr.parse_binance_liquidation,
+                          flush_seconds=9999)
+    r.buffer.append({"symbol": "BTCUSDT", "n": 1})
+    r._flush()
+    r.buffer.append({"symbol": "BTCUSDT", "n": 2})
+    r._flush()
+    files = _jsonl_files(tmp_path, "binance_liquidations")
+    assert len(files) == 2, f"second flush overwrote the first ({len(files)} file(s))"
+    rows = _rows_on_disk(tmp_path, "binance_liquidations")
+    assert [row["n"] for row in rows] == [1, 2]
+
+
+# -- fix 4 (round 2): restart gaps of any length ----------------------------
+
+def test_restart_gap_logged_for_any_length(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    state_dir = tmp_path / "_state"
+    state_dir.mkdir(parents=True)
+    last = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
+    (state_dir / "binance_liquidations.json").write_text(
+        json.dumps({"last_msg_ts": last}), encoding="utf-8")
+    r = lr.StreamRecorder("binance_liquidations", "ws://x", lr.parse_binance_liquidation,
+                          flush_seconds=9999)
+    ws = FakeWS([("timeout",)])
+    monkeypatch.setattr(lr.websocket, "create_connection", lambda *a, **k: ws)
+    r.run(duration=0.3)
+    gaps = _gap_rows(tmp_path)
+    assert any(g["reason"] == "restart_or_crash" for g in gaps), \
+        f"5s restart gap was not logged: {gaps}"
+
+
+# -- fix 5 (round 2): bookTicker sampled once per clock second --------------
+
+def test_bookticker_sampling_is_per_clock_second(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("binance_bookticker", "ws://x", lr.parse_binance_bookticker,
+                          flush_seconds=9999, sample_seconds=1.0,
+                          sample_key=lambda rec: rec.get("symbol"))
+    # 100.9 and 100.95 are the same clock second -> one row.
+    # 101.0 is the next clock second (only 0.1s later) -> a sliding 1s window
+    # would drop it, clock-second sampling must keep it.
+    times = iter([100.9, 100.95, 101.0])
+    monkeypatch.setattr(lr.time, "time", lambda: next(times, 101.0))
+    assert r._sample_emit({"symbol": "BTCUSDT", "bid_price": "1"}) is True
+    assert r._sample_emit({"symbol": "BTCUSDT", "bid_price": "2"}) is False
+    assert r._sample_emit({"symbol": "BTCUSDT", "bid_price": "3"}) is True
+    assert [row["bid_price"] for row in r.buffer] == ["1", "3"]
 
 
 def test_bybit_unrecognised_topic_is_logged(tmp_path, monkeypatch, caplog):
