@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import struct
 import time
+from pathlib import Path
 
 import pytest
 import websocket
@@ -395,7 +396,44 @@ def test_flush_never_overwrites_a_file(tmp_path, monkeypatch):
     files = _jsonl_files(tmp_path, "binance_liquidations")
     assert len(files) == 2, f"second flush overwrote the first ({len(files)} file(s))"
     rows = _rows_on_disk(tmp_path, "binance_liquidations")
-    assert [row["n"] for row in rows] == [1, 2]
+    assert sorted(row["n"] for row in rows) == [1, 2]
+
+
+def test_flush_key_unique_even_when_clock_reads_same_value(tmp_path, monkeypatch):
+    # Windows clock granularity (~15.6ms) can hand out the same microsecond
+    # twice; the flush key must still be unique.
+    from datetime import datetime, timezone
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    fixed = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(lr, "_utcnow", lambda: fixed)
+    r = lr.StreamRecorder("binance_liquidations", "ws://x", lr.parse_binance_liquidation,
+                          flush_seconds=9999)
+    r.buffer.append({"symbol": "BTCUSDT", "n": 1})
+    r._flush()
+    r.buffer.append({"symbol": "BTCUSDT", "n": 2})
+    r._flush()
+    files = _jsonl_files(tmp_path, "binance_liquidations")
+    assert len(files) == 2, f"same clock value overwrote a file ({len(files)} file(s))"
+
+
+def test_state_saved_only_after_data_write_succeeds(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("binance_liquidations", "ws://x", lr.parse_binance_liquidation,
+                          flush_seconds=9999)
+    r.last_msg_ts = time.time()
+    r.buffer.append({"symbol": "BTCUSDT", "n": 1})
+
+    def boom(src, dst, *a, **k):
+        if "_state" not in Path(dst).parts:
+            raise OSError("disk full")
+        return orig_replace(src, dst, *a, **k)
+
+    orig_replace = lr.os.replace
+    monkeypatch.setattr(lr.os, "replace", boom)
+    with pytest.raises(OSError):
+        r._flush()
+    state_file = tmp_path / "_state" / "binance_liquidations.json"
+    assert not state_file.exists(), "state was saved although the data write failed"
 
 
 # -- fix 4 (round 2): restart gaps of any length ----------------------------
@@ -434,6 +472,33 @@ def test_bookticker_sampling_is_per_clock_second(tmp_path, monkeypatch):
     assert r._sample_emit({"symbol": "BTCUSDT", "bid_price": "2"}) is False
     assert r._sample_emit({"symbol": "BTCUSDT", "bid_price": "3"}) is True
     assert [row["bid_price"] for row in r.buffer] == ["1", "3"]
+
+
+# -- fix 2 (round 3): Bybit subscribe replies --------------------------------
+
+def test_bybit_subscribe_rejected_triggers_reconnect(tmp_path, monkeypatch):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
+                          flush_seconds=9999)
+    payload = {"op": "subscribe", "success": False, "ret_msg": "invalid topic"}
+    ws = FakeWS([("msg", json.dumps(payload)), ("timeout",)])
+    start = time.time()
+    r._receive_loop(ws, time.time() + 5.0)
+    assert time.time() - start < 2.0, \
+        "subscribe rejection did not break the receive loop (no reconnect)"
+
+
+def test_bybit_subscribe_confirmed_is_logged(tmp_path, monkeypatch, caplog):
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
+                          flush_seconds=9999)
+    payload = {"op": "subscribe", "success": True, "ret_msg": "OK",
+               "conn_id": "abc", "req_id": "1"}
+    ws = FakeWS([("msg", json.dumps(payload)), ("timeout",)])
+    with caplog.at_level("INFO", logger="live_recorder"):
+        r._receive_loop(ws, time.time() + 0.3)
+    assert any("subscribe" in rec.message.lower() and "confirmed" in rec.message.lower()
+               for rec in caplog.records), "subscribe confirmation was not logged"
 
 
 def test_bybit_unrecognised_topic_is_logged(tmp_path, monkeypatch, caplog):

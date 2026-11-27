@@ -124,21 +124,24 @@ class StreamRecorder:
         self._pending_gap_start: datetime | None = None
         self._last_close: dict | None = None
         self._last_error: str | None = None
+        self._flush_seq = 0
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
-        # Unique per flush (microsecond precision): a data file is NEVER
-        # overwritten, even by two flushes inside the same second.
-        return _utcnow().strftime("%Y-%m-%d/%H-%M-%S-%f")
+        # Unique per flush: timestamp + per-recorder sequence. The clock alone
+        # is NOT enough — Windows clock granularity (~15.6ms) can hand out the
+        # same microsecond twice, which would overwrite a data file.
+        self._flush_seq += 1
+        return (f"{_utcnow().strftime('%Y-%m-%d/%H-%M-%S-%f')}"
+                f"-{self._flush_seq:06d}")
 
     def _flush(self) -> None:
         with self.buffer_lock:
             records = list(self.buffer)
             self.buffer = []
-        # Persist liveness state even when there is nothing to write: the
-        # watchdog uses it to tell "connected but quiet" from "disconnected".
-        self._persist_state()
         if not records:
+            # No data to write; still persist liveness for the watchdog.
+            self._persist_state()
             return
         flush_key = self._flush_key()
         out_dir = DATA_DIR / self.name
@@ -151,6 +154,8 @@ class StreamRecorder:
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, final)
+        # State is saved only AFTER the data write succeeded.
+        self._persist_state()
         logger.debug("%s: flushed %d records -> %s", self.name, len(records), final)
 
     def _state_path(self) -> Path:
@@ -401,6 +406,17 @@ class StreamRecorder:
             try:
                 msg = json.loads(raw)
             except Exception:  # noqa: BLE001
+                continue
+            # Bybit subscribe replies: log them; a rejection means the
+            # subscription is broken, so reconnect instead of sitting idle.
+            if isinstance(msg, dict) and msg.get("op") == "subscribe":
+                if msg.get("success"):
+                    logger.info("%s: subscribe confirmed (%s)", self.name,
+                                msg.get("req_id", "?"))
+                else:
+                    logger.error("%s: subscribe REJECTED: %s", self.name, msg)
+                    self._last_error = f"subscribe rejected: {msg.get('ret_msg')}"
+                    return
                 continue
             # Binance combined streams wrap payloads in {"stream": ..., "data": {...}}.
             # Bybit messages carry topic/ts/data themselves and must be passed whole.
