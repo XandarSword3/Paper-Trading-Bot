@@ -48,6 +48,7 @@ import argparse
 import json
 import logging
 import os
+import struct
 import sys
 import threading
 import time
@@ -91,18 +92,24 @@ class StreamRecorder:
     def __init__(self, name: str, url: str, parse, subscribe_msg: str | None = None,
                  flush_seconds: float = 60.0, sample_seconds: float | None = None,
                  sample_key=None, ping_msg: str | None = None,
-                 ping_interval: float = 20.0) -> None:
+                 ping_interval: float = 20.0,
+                 staleness_timeout: float | None = None,
+                 ws_ping_interval: float | None = None,
+                 ws_ping_timeout: float | None = None) -> None:
         self.name = name
         self.url = url
-        self.parse = parse            # raw json dict -> record dict | None
+        self.parse = parse            # raw json dict -> list[dict]
         self.subscribe_msg = subscribe_msg
         self.ping_msg = ping_msg      # app-level keepalive (Bybit requires it)
         self.ping_interval = ping_interval
+        self.staleness_timeout = staleness_timeout  # None = quiet is normal
+        self.ws_ping_interval = ws_ping_interval    # protocol ping/pong
+        self.ws_ping_timeout = ws_ping_timeout
         self.flush_seconds = flush_seconds
         self.sample_seconds = sample_seconds
         self.sample_key = sample_key  # rec -> hashable key for sampling
-        self._pending: dict = {}
         self._last_emit: dict = {}
+        self.last_flush = time.time()  # stream-level: survives reconnects
         self.buffer: list[dict] = []
         self.buffer_lock = threading.Lock()
         self.stop_event = threading.Event()
@@ -110,6 +117,8 @@ class StreamRecorder:
         self.last_msg_ts: float | None = None
         self._forced_disconnect_at: float | None = None
         self._pending_gap_start: datetime | None = None
+        self._last_close: dict | None = None
+        self._last_error: str | None = None
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
@@ -121,13 +130,6 @@ class StreamRecorder:
         with self.buffer_lock:
             records = list(self.buffer)
             self.buffer = []
-            if self.sample_seconds and self._pending:
-                now = time.time()
-                for key, rec in self._pending.items():
-                    if now - self._last_emit.get(key, 0.0) >= self.sample_seconds:
-                        records.append(rec)
-                        self._last_emit[key] = now
-                self._pending = {}
             if not records:
                 return
         flush_key = self._flush_key()
@@ -141,9 +143,51 @@ class StreamRecorder:
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, final)
+        self._persist_state()
         logger.debug("%s: flushed %d records -> %s", self.name, len(records), final)
 
-    def _log_gap(self, gap_start: datetime, gap_end: datetime, reason: str) -> None:
+    def _state_path(self) -> Path:
+        return DATA_DIR / "_state" / f"{self.name}.json"
+
+    def _persist_state(self) -> None:
+        """Persist last-message time so restarts/crashes are visible."""
+        if self.last_msg_ts is None:
+            return
+        path = self._state_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        state = {
+            "last_msg_ts": _iso(datetime.fromtimestamp(self.last_msg_ts, tz=timezone.utc)),
+            "updated": _iso(_utcnow()),
+        }
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(state), encoding="utf-8")
+        os.replace(tmp, path)
+
+    def _report_startup(self) -> None:
+        """Log the last recorded message time (docstring startup claim)."""
+        path = self._state_path()
+        if not path.exists():
+            logger.info("%s: no previous state (first run)", self.name)
+            return
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+            last = datetime.fromisoformat(state["last_msg_ts"])
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("%s: unreadable state file: %s", self.name, exc)
+            return
+        age = (_utcnow() - last).total_seconds()
+        logger.info("%s: last recorded message at %s (%.0fs ago)",
+                    self.name, state["last_msg_ts"], age)
+        if age > 60:
+            self._log_gap(last, _utcnow(), "restart_or_crash")
+
+    def _maybe_flush(self) -> None:
+        if time.time() - self.last_flush >= self.flush_seconds:
+            self._flush()
+            self.last_flush = time.time()
+
+    def _log_gap(self, gap_start: datetime, gap_end: datetime, reason: str,
+                 details: dict | None = None) -> None:
         gaps_dir = DATA_DIR / "_gaps"
         gaps_dir.mkdir(parents=True, exist_ok=True)
         rec = {
@@ -153,6 +197,8 @@ class StreamRecorder:
             "seconds": round((gap_end - gap_start).total_seconds(), 3),
             "reason": reason,
         }
+        if details:
+            rec.update(details)
         path = gaps_dir / f"{_utcnow().strftime('%Y-%m-%d')}.jsonl"
         with open(path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec, separators=(",", ":")) + "\n")
@@ -163,6 +209,7 @@ class StreamRecorder:
 
     # -- main loop -------------------------------------------------------
     def run(self, duration: float | None = None, self_test: bool = False) -> None:
+        self._report_startup()
         deadline = time.time() + duration if duration else None
         if self_test and duration:
             self._forced_disconnect_at = time.time() + duration * 0.25
@@ -173,7 +220,11 @@ class StreamRecorder:
             attempt_start = _utcnow()
             connected = False
             try:
-                ws = websocket.create_connection(self.url, timeout=20)
+                conn_kwargs = {"timeout": 20}
+                if self.ws_ping_interval:
+                    conn_kwargs["ping_interval"] = self.ws_ping_interval
+                    conn_kwargs["ping_timeout"] = self.ws_ping_timeout
+                ws = websocket.create_connection(self.url, **conn_kwargs)
                 ws.settimeout(5.0)
                 if self.subscribe_msg:
                     ws.send(self.subscribe_msg)
@@ -183,8 +234,17 @@ class StreamRecorder:
                 if self._pending_gap_start is not None:
                     gap_end = _utcnow()
                     if (gap_end - self._pending_gap_start).total_seconds() > 1.0:
-                        self._log_gap(self._pending_gap_start, gap_end, "disconnect")
+                        details = {}
+                        if self._last_close:
+                            details["close_code"] = self._last_close.get("code")
+                            details["close_reason"] = self._last_close.get("reason")
+                        if self._last_error:
+                            details["error"] = self._last_error
+                        self._log_gap(self._pending_gap_start, gap_end, "disconnect",
+                                      details or None)
                     self._pending_gap_start = None
+                    self._last_close = None
+                    self._last_error = None
                 pinger_stop = threading.Event()
                 pinger = None
                 if self.ping_msg:
@@ -205,10 +265,12 @@ class StreamRecorder:
                     ws.close()  # type: ignore[name-defined]
                 except Exception:  # noqa: BLE001
                     pass
-            # Gap starts at disconnect (or failed connect attempt) and ends at
-            # the next successful connect. A healthy connection's lifetime is
-            # NOT a gap.
-            if connected:
+            # Gap starts at the last received message (not at disconnect);
+            # a healthy connection's lifetime is NOT a gap.
+            if self.last_msg_ts is not None:
+                self._pending_gap_start = datetime.fromtimestamp(
+                    self.last_msg_ts, tz=timezone.utc)
+            elif connected:
                 self._pending_gap_start = _utcnow()
             elif self._pending_gap_start is None:
                 self._pending_gap_start = attempt_start
@@ -229,7 +291,15 @@ class StreamRecorder:
                 return
 
     def _receive_loop(self, ws, deadline: float | None) -> None:
-        last_flush = time.time()
+        try:
+            self._receive_loop_inner(ws, deadline)
+        finally:
+            # Flush on ANY exit (error, close frame, forced disconnect,
+            # deadline) so buffered rows are never stranded across a reconnect.
+            self._flush()
+
+    def _receive_loop_inner(self, ws, deadline: float | None) -> None:
+        conn_last_msg = time.time()  # per-connection: staleness grace period
         while not self.stop_event.is_set():
             if deadline and time.time() >= deadline:
                 return
@@ -238,50 +308,86 @@ class StreamRecorder:
                 self._forced_disconnect_at = None
                 return
             try:
-                raw = ws.recv()
+                opcode, data = ws.recv_data()
             except websocket.WebSocketTimeoutException:
-                if time.time() - last_flush >= self.flush_seconds:
-                    self._flush()
-                    last_flush = time.time()
+                self._maybe_flush()
+                if (self.staleness_timeout and conn_last_msg
+                        and time.time() - conn_last_msg > self.staleness_timeout):
+                    logger.warning("%s: stale (no message for %.1fs), reconnecting",
+                                   self.name, time.time() - conn_last_msg)
+                    return
                 continue
             except Exception as exc:  # noqa: BLE001
+                self._last_error = f"{type(exc).__name__}: {exc}"
                 logger.warning("%s: recv error: %s", self.name, exc)
                 return
+            if opcode == 0x8:  # close frame: 2-byte code + reason
+                code = None
+                reason = ""
+                if isinstance(data, (bytes, bytearray)) and len(data) >= 2:
+                    code = struct.unpack(">H", data[:2])[0]
+                    reason = data[2:].decode("utf-8", errors="replace")
+                self._last_close = {"code": code, "reason": reason}
+                logger.warning("%s: close frame code=%s reason=%r", self.name, code, reason)
+                return
+            if opcode in (0x9, 0xA):  # ping / pong
+                if opcode == 0x9:
+                    try:
+                        ws.pong(data)
+                    except Exception:  # noqa: BLE001
+                        pass
+                continue
+            if not data:
+                continue
+            if isinstance(data, (bytes, bytearray)):
+                raw = data.decode("utf-8", errors="replace")
+            else:
+                raw = data
             self.last_msg_ts = time.time()
+            conn_last_msg = time.time()
             try:
                 msg = json.loads(raw)
             except Exception:  # noqa: BLE001
                 continue
-            # Combined streams wrap payloads in {"stream": ..., "data": {...}}
-            data = msg.get("data", msg) if isinstance(msg, dict) else msg
+            # Binance combined streams wrap payloads in {"stream": ..., "data": {...}}.
+            # Bybit messages carry topic/ts/data themselves and must be passed whole.
+            if isinstance(msg, dict) and "stream" in msg:
+                payload = msg.get("data", msg)
+            else:
+                payload = msg
             try:
-                rec = self.parse(data)
+                recs = self.parse(payload)
             except Exception as exc:  # noqa: BLE001 — a bad message must never kill the stream
                 logger.warning("%s: parse error (skipped): %s", self.name, exc)
                 continue
-            if rec is None:
+            if not recs:
                 continue
-            rec["_recv_ts"] = _iso(_utcnow())
-            if self.sample_seconds and self.sample_key:
-                with self.buffer_lock:
-                    self._pending[self.sample_key(rec)] = rec
-            else:
-                with self.buffer_lock:
-                    self.buffer.append(rec)
-            self.msg_count += 1
-            if time.time() - last_flush >= self.flush_seconds:
-                self._flush()
-                last_flush = time.time()
+            for rec in recs:
+                rec["_recv_ts"] = _iso(_utcnow())
+                if self.sample_seconds and self.sample_key:
+                    # Sample at most once per sample_seconds per key, in the
+                    # receive loop — independent of the flush timer.
+                    key = self.sample_key(rec)
+                    now = time.time()
+                    with self.buffer_lock:
+                        if now - self._last_emit.get(key, 0.0) >= self.sample_seconds:
+                            self.buffer.append(rec)
+                            self._last_emit[key] = now
+                else:
+                    with self.buffer_lock:
+                        self.buffer.append(rec)
+                self.msg_count += 1
+            self._maybe_flush()
 
 
 # -- parsers -------------------------------------------------------------
 
-def parse_binance_liquidation(msg: dict) -> dict | None:
+def parse_binance_liquidation(msg: dict) -> list[dict]:
     """Binance forceOrder. SAMPLED feed: largest liquidation per symbol/sec."""
-    if msg.get("e") != "forceOrder":
-        return None
+    if not isinstance(msg, dict) or msg.get("e") != "forceOrder":
+        return []
     o = msg.get("o", {})
-    return {
+    return [{
         "source": "binance",
         "sampled": True,
         "event_type": "liquidation",
@@ -297,13 +403,13 @@ def parse_binance_liquidation(msg: dict) -> dict | None:
         "last_filled_qty": o.get("l"),
         "filled_qty": o.get("z"),
         "trade_time": o.get("T"),
-    }
+    }]
 
 
-def parse_binance_bookticker(msg: dict) -> dict | None:
-    if msg.get("e") != "bookTicker":
-        return None
-    return {
+def parse_binance_bookticker(msg: dict) -> list[dict]:
+    if not isinstance(msg, dict) or msg.get("e") != "bookTicker":
+        return []
+    return [{
         "source": "binance",
         "sampled": False,
         "event_type": "book_ticker",
@@ -315,36 +421,59 @@ def parse_binance_bookticker(msg: dict) -> dict | None:
         "ask_price": msg.get("a"),
         "ask_qty": msg.get("A"),
         "transaction_time": msg.get("T"),
-    }
+    }]
 
 
-def parse_bybit_liquidation(msg: dict) -> dict | None:
-    """Bybit v5 allLiquidation.{SYMBOL} — full coverage (not sampled)."""
+def parse_bybit_liquidation(msg: dict) -> list[dict]:
+    """Bybit v5 allLiquidation.{SYMBOL} — full coverage (not sampled).
+
+    Bybit's ``data`` is a LIST of liquidation entries; one row is emitted per
+    entry. ``S`` is the POSITION side: ``Buy`` means a long was liquidated.
+    """
     if not isinstance(msg, dict):
-        return None
+        return []
     topic = msg.get("topic", "")
     if not topic.startswith("allLiquidation"):
-        return None
-    d = msg.get("data", {})
-    return {
-        "source": "bybit",
-        "sampled": False,
-        "event_type": "liquidation",
-        "event_time": msg.get("ts"),
-        "symbol": d.get("s"),
-        "side": d.get("S"),
-        "size": d.get("v"),
-        "price": d.get("p"),
-    }
+        if topic:
+            logger.info("bybit: unrecognised topic %r (skipped)", topic)
+        return []
+    data = msg.get("data", [])
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        return []
+    rows = []
+    for d in data:
+        if not isinstance(d, dict):
+            continue
+        rows.append({
+            "source": "bybit",
+            "sampled": False,
+            "event_type": "liquidation",
+            "event_time": msg.get("ts"),
+            "T": d.get("T"),
+            "s": d.get("s"),
+            "S": d.get("S"),
+            "v": d.get("v"),
+            "p": d.get("p"),
+            "ts": msg.get("ts"),
+        })
+    return rows
 
 
 def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
     return [
+        # Liquidation feeds are quiet by nature: no data-staleness timeout;
+        # protocol ping/pong detects a dead socket instead.
         StreamRecorder("binance_liquidations", BINANCE_LIQ_URL,
-                       parse_binance_liquidation, flush_seconds=flush_seconds),
+                       parse_binance_liquidation, flush_seconds=flush_seconds,
+                       ws_ping_interval=20.0, ws_ping_timeout=10.0),
+        # bookTicker is high-frequency: a few seconds of silence means a dead
+        # socket, so use a data-staleness timeout.
         StreamRecorder("binance_bookticker", BINANCE_BOOK_URL,
                        parse_binance_bookticker, flush_seconds=flush_seconds,
-                       sample_seconds=1.0, sample_key=lambda r: r.get("symbol")),
+                       sample_seconds=1.0, sample_key=lambda r: r.get("symbol"),
+                       staleness_timeout=5.0),
         StreamRecorder("bybit_liquidations", BYBIT_LIQ_URL,
                        parse_bybit_liquidation, BYBIT_SUBSCRIBE,
                        flush_seconds=flush_seconds,
