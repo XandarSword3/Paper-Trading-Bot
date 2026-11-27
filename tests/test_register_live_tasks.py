@@ -19,8 +19,9 @@ def test_registration_script_properties():
     assert "$env:USERDOMAIN\\$env:USERNAME" in text
     # Without highest privileges
     assert 'RunLevel    = "Limited"' in text or "RunLevel" in text and "Limited" in text
-    # At startup
-    assert "New-ScheduledTaskTrigger -AtStartup" in text
+    # At log on (no password required)
+    assert "New-ScheduledTaskTrigger -AtLogOn" in text
+    assert "Get-Credential" not in text and "Password" not in text
     # No execution time limit
     assert "ExecutionTimeLimit" in text and "[TimeSpan]::Zero" in text
     # Allowed on battery, keeps running on battery
@@ -28,6 +29,5 @@ def test_registration_script_properties():
     assert "DontStopIfGoingOnBatteries" in text
     # Restart on failure
     assert "RestartCount" in text and "RestartInterval" in text
-    # Password typed by the user, not hardcoded
-    assert "Get-Credential" in text
-    assert "Password" in text and "$password" in text
+    # No stored credentials
+    assert "Get-Credential" not in text

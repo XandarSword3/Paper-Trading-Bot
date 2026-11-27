@@ -1,11 +1,11 @@
 # Register the V4 live recorder + watchdog as scheduled tasks.
 # RUN THIS SCRIPT FROM AN ELEVATED POWERSHELL (Run as Administrator).
-# It will prompt for YOUR Windows password (typed by you, never stored in the repo).
+# No password is required: tasks run as you, at log on.
 #
 # Properties of the registered tasks:
 #   - Run as: your own account (not SYSTEM)
 #   - Run level: Limited (NOT highest privileges)
-#   - Trigger: At startup, whether or not you are logged on
+#   - Trigger: At log on (no password required; starts when you sign in)
 #   - Execution time limit: none (PT0S)
 #   - Battery: allowed to start and keep running on battery
 #   - Restart on failure: 3 attempts, 1 minute apart (plus the wrapper's own
@@ -16,20 +16,14 @@ $ErrorActionPreference = "Stop"
 $repo = "D:\Work\Attempts to Code\BTC Strategy\BTC Strategy"
 $user = "$env:USERDOMAIN\$env:USERNAME"
 
-$cred = Get-Credential -UserName $user `
-    -Message "Enter YOUR Windows password to register the V4 live tasks (runs whether or not you are logged on):"
-$password = $cred.GetNetworkCredential().Password
-
 $common = @{
-    Trigger     = New-ScheduledTaskTrigger -AtStartup
+    Trigger     = New-ScheduledTaskTrigger -AtLogOn -User $user
     Settings    = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
         -DontStopIfGoingOnBatteries `
         -ExecutionTimeLimit ([TimeSpan]::Zero) `
         -RestartCount 3 `
         -RestartInterval (New-TimeSpan -Minutes 1)
-    User        = $user
-    Password    = $password
     RunLevel    = "Limited"
     Force       = $true
 }
@@ -42,5 +36,5 @@ $watchdogAction = New-ScheduledTaskAction -Execute "powershell.exe" `
 Register-ScheduledTask -TaskName "V4LiveRecorder" -Action $recorderAction @common
 Register-ScheduledTask -TaskName "V4LiveWatchdog" -Action $watchdogAction @common
 
-Write-Host "Registered V4LiveRecorder and V4LiveWatchdog for $user (Limited, AtStartup)."
+Write-Host "Registered V4LiveRecorder and V4LiveWatchdog for $user (Limited, AtLogOn)."
 Write-Host "Verify with:  schtasks /query /tn V4LiveRecorder /xml"
