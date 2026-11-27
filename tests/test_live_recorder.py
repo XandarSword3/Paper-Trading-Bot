@@ -244,6 +244,11 @@ def _gap_rows(tmp_path):
 
 def test_close_frame_records_close_code_and_gap_from_last_message(tmp_path, monkeypatch):
     monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    # Deterministic jitter: random()=0.5 -> jitter factor exactly 1.0, so the
+    # first reconnect delay is exactly the 1.0s base. Without this the ±25%
+    # jitter can make the delay <1s and the gap falls under the 1s logging
+    # threshold, making the test flaky.
+    monkeypatch.setattr(lr.random, "random", lambda: 0.5)
     r = lr.StreamRecorder("binance_liquidations", "ws://x", lr.parse_binance_liquidation,
                           flush_seconds=9999)
     ws1 = FakeWS([("msg", _liq_msg()), ("sleep", 0.05), ("close", 1000, "bye")])

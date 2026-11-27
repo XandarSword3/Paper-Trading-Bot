@@ -131,7 +131,8 @@ def test_repeated_short_connections_increase_backoff(tmp_path, monkeypatch):
     assert len(sleeps) >= 5, f"expected >=5 reconnect delays, got {sleeps}"
     bases = [5, 10, 20, 40, 80, 120]
     for i, s in enumerate(sleeps[:6]):
-        lo, hi = 0.75 * bases[i], 1.25 * bases[i]
+        lo = 0.75 * bases[i]
+        hi = min(1.25 * bases[i], 120.0)  # hard cap AFTER jitter
         assert lo <= s <= hi, f"delay #{i}={s} outside [{lo}, {hi}]"
     assert r._backoff_failures == 6
 
@@ -173,19 +174,26 @@ def test_backoff_never_exceeds_max(tmp_path, monkeypatch):
     r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [script], max_attempts=12)
     _run_until_attempts(r, attempts, 12)
     assert clock.sleeps, "no reconnect delays recorded"
-    assert max(clock.sleeps) <= 120.0 * 1.25 + 1e-9
+    assert max(clock.sleeps) <= 120.0, \
+        f"delay exceeded the 120s hard cap: {max(clock.sleeps)}"
     # and it actually reaches the cap region
     assert any(s > 100 for s in clock.sleeps), clock.sleeps
 
 
-def test_jitter_within_bounds():
+def test_jitter_within_bounds_and_hard_cap():
     r = lr.StreamRecorder("s", "ws://x", lambda m: [], backoff_initial=5.0,
                           backoff_max=120.0)
     for failures, base in [(1, 5), (2, 10), (3, 20), (4, 40), (5, 80), (6, 120), (9, 120)]:
         r._backoff_failures = failures
-        for _ in range(200):
+        hi = min(1.25 * base, 120.0)
+        for _ in range(500):
             d = r._next_delay()
-            assert 0.75 * base <= d <= 1.25 * base, (failures, d)
+            assert 0.75 * base <= d <= hi, (failures, d)
+            assert d <= 120.0, f"delay {d} exceeded the hard cap"
+    # At maximum jitter the delay is clamped to exactly the cap.
+    r._backoff_failures = 9
+    monkey_vals = [r._next_delay() for _ in range(500)]
+    assert max(monkey_vals) <= 120.0
 
 
 def test_no_overlapping_reconnect_attempts(tmp_path, monkeypatch):

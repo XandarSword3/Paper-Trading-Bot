@@ -261,13 +261,15 @@ class StreamRecorder:
                        reason, rec["gap_start"], rec["gap_end"])
 
     def _next_delay(self) -> float:
-        """Exponential backoff with ±25% jitter, capped at backoff_max.
+        """Exponential backoff with ±25% jitter and a HARD cap.
 
         failures=1 (first failure) -> initial; each further failure doubles.
+        The jittered delay is clamped so it can never exceed backoff_max.
         """
         base = min(self.backoff_initial * (2 ** max(0, self._backoff_failures - 1)),
                    self.backoff_max)
-        return base * (0.75 + 0.5 * random.random())
+        jittered = base * (0.75 + 0.5 * random.random())
+        return min(jittered, self.backoff_max)
 
     def _record_attempt_outcome(self, conn_start_mono: float | None,
                                 msg_count_at_connect: int) -> None:
