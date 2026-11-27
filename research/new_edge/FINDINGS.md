@@ -1,6 +1,6 @@
 # New Edge Lab — Findings
 
-**Bottom line: 11 pre-registered trials (plus one live pilot), 0 deployable edges.** The full log is in
+**Bottom line: 12 pre-registered trials (plus one live pilot), 0 deployable edges.** The full log is in
 `registry.json`; raw payloads are in `results/`. Nothing here is wired into
 production, and nothing should be traded with real capital.
 
@@ -20,8 +20,9 @@ production, and nothing should be traded with real capital.
 | H9 | OI crowding, live 21-day pilot | gross +12.4 bps/event | net -3.6 bps after cost | PILOT KILL |
 | H10 | Perp/index premium fade, 8h | gross +7.4 bps/event | holdout +1.6 bps; net -8.6 | KILL |
 | H11 | Same 72h basis fade on held-out SOL | net -56 bps/event, Sharpe -0.43 | placebo p=0.61 | KILL |
+| H12 | BTC/ETH/SOL pairs mean-reversion | net -95 to -212 bps/event | spread trends, holdout -0.80 | KILL |
 
-## The seven things this lab actually established
+## The eight things this lab actually established
 
 1. **Same-bar fills manufacture edges.** H3 looked like the best strategy in the
    repository (Sharpe 4.68 discovery, 5.35 holdout, 943% CAGR) and was entirely
@@ -64,6 +65,12 @@ production, and nothing should be traded with real capital.
    event, Sharpe -0.43, drawdown -99%, placebo p=0.61. The BTC/ETH result was
    asset-specific noise. Every candidate here has now been checked on data
    that did not choose it.
+
+8. **Crypto pairs trend, they do not revert.** H12 faded 2-sigma BTC/ETH/SOL
+   log spreads and lost 95-212 bps net per event; the spread keeps going.
+   The momentum side was positive in-sample but mixed out of sample. This is
+   the opposite of the equity pairs prior and it kills the simplest
+   market-neutral idea available on this data.
 
 ## What the data cannot answer
 
@@ -112,6 +119,7 @@ python research/new_edge/h07_tsmom.py
 python research/new_edge/h08_weekend_alt_bleed.py
 python research/new_edge/h10_premium_fade.py
 python research/new_edge/h11_sol_basis_check.py
+python research/new_edge/h12_pairs.py
 ```
 
 H10 uses the deeper `v4_system/data/` mark, index and perp parquet files

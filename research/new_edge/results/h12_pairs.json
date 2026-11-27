@@ -1,0 +1,143 @@
+{
+  "hypothesis": "H12 BTC/ETH/SOL pairs mean-reversion, rolling-beta log spread 1h",
+  "pairs": [
+    "BTCUSDT/ETHUSDT",
+    "BTCUSDT/SOLUSDT",
+    "ETHUSDT/SOLUSDT"
+  ],
+  "params": {
+    "beta_window_hours": 720,
+    "z_window_hours": 720,
+    "z_entry": 2.0,
+    "z_exit": 0.5,
+    "max_hold_hours": 168,
+    "cost_per_side_per_leg_bps": 8.0,
+    "round_trip_bps": 32.0
+  },
+  "discovery": [
+    "2019-11-27",
+    "2024-12-31"
+  ],
+  "holdout": [
+    "2025-01-01",
+    "2026-11-26"
+  ],
+  "overall": {
+    "days": 2557,
+    "total_return": -0.7669833804367399,
+    "cagr": -0.1877356612093617,
+    "sharpe": -0.9889214647482166,
+    "max_drawdown": -0.767452833481923,
+    "hit_rate": 0.28470864294094644,
+    "avg_daily_bps": -5.1797405789662125
+  },
+  "discovery_metrics": {
+    "days": 1862,
+    "total_return": -0.7199641873287517,
+    "cagr": -0.22081674536059626,
+    "sharpe": -1.0596073884583705,
+    "max_drawdown": -0.7422883457806634,
+    "hit_rate": 0.27765843179377014,
+    "avg_daily_bps": -6.190888180537405
+  },
+  "holdout_metrics": {
+    "days": 695,
+    "total_return": -0.16790421431985547,
+    "cagr": -0.09201925882939388,
+    "sharpe": -0.8027060920514133,
+    "max_drawdown": -0.25671152459283897,
+    "hit_rate": 0.3035971223021583,
+    "avg_daily_bps": -2.4707379399366274
+  },
+  "stitched_max_drawdown": -0.767452833481923,
+  "events": [
+    {
+      "pair": "BTCUSDT/ETHUSDT",
+      "discovery": {
+        "label": "discovery",
+        "events": 86,
+        "avg_gross_bps": -63.19199547326751,
+        "median_gross_bps": -28.594226340738874,
+        "avg_net_bps": -95.19199547326751,
+        "hit_rate": 0.46511627906976744,
+        "gross_t": -0.7095428508513,
+        "avg_hold_hours": 159.56976744186048,
+        "long_a_share": 0.5697674418604651
+      },
+      "holdout": {
+        "label": "holdout",
+        "events": 29,
+        "avg_gross_bps": -98.6749480077893,
+        "median_gross_bps": 3.1890600309454014,
+        "avg_net_bps": -130.6749480077893,
+        "hit_rate": 0.5517241379310345,
+        "gross_t": -0.8191287222929109,
+        "avg_hold_hours": 156.51724137931035,
+        "long_a_share": 0.6551724137931034
+      }
+    },
+    {
+      "pair": "BTCUSDT/SOLUSDT",
+      "discovery": {
+        "label": "discovery",
+        "events": 80,
+        "avg_gross_bps": -179.76672080478204,
+        "median_gross_bps": -133.4513752481975,
+        "avg_net_bps": -211.76672080478204,
+        "hit_rate": 0.4625,
+        "gross_t": -1.9487250823991136,
+        "avg_hold_hours": 156.8,
+        "long_a_share": 0.5875
+      },
+      "holdout": {
+        "label": "holdout",
+        "events": 34,
+        "avg_gross_bps": 21.85530848706758,
+        "median_gross_bps": 29.10223318477564,
+        "avg_net_bps": -10.144691512932424,
+        "hit_rate": 0.5588235294117647,
+        "gross_t": 0.41161877389121965,
+        "avg_hold_hours": 163.08823529411765,
+        "long_a_share": 0.6470588235294118
+      }
+    },
+    {
+      "pair": "ETHUSDT/SOLUSDT",
+      "discovery": {
+        "label": "discovery",
+        "events": 72,
+        "avg_gross_bps": -149.54428303459645,
+        "median_gross_bps": -68.15353503722952,
+        "avg_net_bps": -181.54428303459648,
+        "hit_rate": 0.4444444444444444,
+        "gross_t": -1.2364103754750597,
+        "avg_hold_hours": 154.73611111111111,
+        "long_a_share": 0.5833333333333334
+      },
+      "holdout": {
+        "label": "holdout",
+        "events": 26,
+        "avg_gross_bps": -61.30710455221554,
+        "median_gross_bps": -68.72868111984502,
+        "avg_net_bps": -93.30710455221553,
+        "hit_rate": 0.38461538461538464,
+        "gross_t": -0.6834320711515048,
+        "avg_hold_hours": 168.0,
+        "long_a_share": 0.5384615384615384
+      }
+    }
+  ],
+  "placebo": {
+    "p_value": 0.0,
+    "placebo_mean_sharpe": -8.659354439311649,
+    "placebo_p95_sharpe": -7.802615795312258
+  },
+  "gates": {
+    "events>=100": true,
+    "discovery_sharpe>=0.50": false,
+    "holdout_sharpe>=0.0": false,
+    "max_dd>=-30%": false,
+    "placebo_p<=0.05": true
+  },
+  "verdict": "KILL"
+}

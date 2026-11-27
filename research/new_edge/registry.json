@@ -300,6 +300,44 @@
       },
       "verdict": "KILL",
       "reason": "The only H10 variant with positive net expectancy was the 72h mark/index fade on BTC/ETH. Frozen and tested on a held-out asset (SOL), it loses -56 bps net per event (gross -40 bps, t=-0.76), Sharpe -0.43, drawdown -99%, placebo p=0.61. The BTC/ETH 72h result was asset-specific noise, not a general basis-reversion edge. This also closes the H10 family."
+    },
+    {
+      "id": "H12",
+      "name": "BTC/ETH/SOL pairs mean-reversion, rolling-beta log spread 1h",
+      "date": "2026-11-27",
+      "primary": {
+        "beta_window_hours": 720,
+        "z_window_hours": 720,
+        "z_entry": 2.0,
+        "z_exit": 0.5,
+        "max_hold_hours": 168,
+        "entry": "next bar open",
+        "cost_per_side_per_leg_bps": 8.0,
+        "round_trip_bps": 32.0
+      },
+      "universe": ["BTCUSDT/ETHUSDT", "BTCUSDT/SOLUSDT", "ETHUSDT/SOLUSDT"],
+      "result": {
+        "overall_sharpe": -0.99,
+        "overall_total_return": -0.767,
+        "overall_max_drawdown": -0.767,
+        "discovery_sharpe": -1.06,
+        "holdout_sharpe": -0.80,
+        "discovery_events": 238,
+        "by_pair_discovery_net_bps": {
+          "BTC/ETH": -95.19,
+          "BTC/SOL": -211.77,
+          "ETH/SOL": -181.54
+        },
+        "by_pair_discovery_gross_t": {
+          "BTC/ETH": -0.71,
+          "BTC/SOL": -1.95,
+          "ETH/SOL": -1.24
+        },
+        "placebo_p_value": 0.0,
+        "placebo_mean_sharpe": -8.66
+      },
+      "verdict": "KILL",
+      "reason": "The sign is wrong: at 2 sigma the BTC/ETH/SOL log spreads trend rather than revert. Fading them loses -95 to -212 bps net per event in discovery (gross t -0.7 to -1.9), with overall Sharpe -0.99 and a -77% drawdown; the holdout is also negative (-0.80). The momentum version was positive in-sample but mixed out of sample, so it is not promoted. Statistical pairs arbitrage is not available at this cadence and cost."
     }
   ],
   "cost_model": {
@@ -310,7 +348,7 @@
   },
   "conclusion": {
     "status": "NO_DEPLOYABLE_EDGE_FOUND",
-    "tested": 11,
+    "tested": 12,
     "pilots": 1,
     "survivors": 0,
     "key_lessons": [
@@ -320,6 +358,7 @@
       "Calendar effects (H8) are real but too small to pay for weekly turnover and did not survive the holdout.",
       "Basis/premium mean-reversion (H10) is real but small: a 2-sigma perp/index premium fades ~7-12 bps per event, under the 16 bps round trip. Only a slow 72h hold clears costs, and then only with a -62% drawdown.",
       "The one positive H10 variant did not generalize: the 72h basis fade made +5 to +9 bps on BTC/ETH but lost -56 bps net per event on held-out SOL (H11). Single-asset positives are not edges.",
+      "Pairs do not mean-revert at this cadence (H12): BTC/ETH/SOL log spreads trend at 2 sigma, and fading them lost 95-212 bps net per event. Momentum was positive in-sample but mixed out of sample.",
       "The 36-symbol universe is survivorship-biased: every coin still listed in 2026 is in the sample, which flatters long-loser and short-alt books."
     ],
     "data_access_finding": "Binance's public API is reachable and serves ~21 days of open-interest history (no API key needed). OI cannot be backtested over the cached 2020-2026 window; it has to be recorded forward. The one-month flow_bars dataset is unusable (trade_count is always zero and buy/sell volume does not reconcile).",
