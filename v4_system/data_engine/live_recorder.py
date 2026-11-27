@@ -48,6 +48,7 @@ import argparse
 import json
 import logging
 import os
+import random
 import struct
 import sys
 import threading
@@ -96,7 +97,11 @@ class StreamRecorder:
                  staleness_timeout: float | None = None,
                  ws_ping_interval: float | None = None,
                  ws_ping_timeout: float | None = None,
-                 ws_recv_timeout: float = 5.0) -> None:
+                 ws_recv_timeout: float = 5.0,
+                 backoff_initial: float = RECONNECT_BASE_DELAY,
+                 backoff_max: float = RECONNECT_MAX_DELAY,
+                 healthy_reset_seconds: float = 300.0,
+                 require_data_for_reset: bool = False) -> None:
         self.name = name
         self.url = url
         self.parse = parse            # raw json dict -> list[dict]
@@ -126,6 +131,14 @@ class StreamRecorder:
         self._last_error: str | None = None
         self._flush_seq = 0
         self._subscribe_failures = 0
+        # Reconnect backoff state. A successful handshake does NOT reset
+        # this; only a connection that stays up for healthy_reset_seconds
+        # (and, when require_data_for_reset, actually receives data) does.
+        self.backoff_initial = backoff_initial
+        self.backoff_max = backoff_max
+        self.healthy_reset_seconds = healthy_reset_seconds
+        self.require_data_for_reset = require_data_for_reset
+        self._backoff_failures = 0
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
@@ -247,17 +260,49 @@ class StreamRecorder:
         logger.warning("%s: GAP %.1fs (%s) %s -> %s", self.name, rec["seconds"],
                        reason, rec["gap_start"], rec["gap_end"])
 
+    def _next_delay(self) -> float:
+        """Exponential backoff with ±25% jitter, capped at backoff_max.
+
+        failures=1 (first failure) -> initial; each further failure doubles.
+        """
+        base = min(self.backoff_initial * (2 ** max(0, self._backoff_failures - 1)),
+                   self.backoff_max)
+        return base * (0.75 + 0.5 * random.random())
+
+    def _record_attempt_outcome(self, conn_start_mono: float | None,
+                                msg_count_at_connect: int) -> None:
+        """Update backoff after a connection attempt ends.
+
+        Only a genuinely healthy connection (up for healthy_reset_seconds
+        and, if required, having received data) resets the failure counter.
+        A handshake that drops after seconds counts as a failure.
+        """
+        if conn_start_mono is None:
+            self._backoff_failures += 1  # handshake never completed
+            return
+        uptime = time.monotonic() - conn_start_mono
+        got_data = self.msg_count > msg_count_at_connect
+        if uptime >= self.healthy_reset_seconds and (
+                got_data or not self.require_data_for_reset):
+            if self._backoff_failures:
+                logger.info("%s: connection healthy for %.0fs, backoff reset",
+                            self.name, uptime)
+            self._backoff_failures = 0
+        else:
+            self._backoff_failures += 1
+
     # -- main loop -------------------------------------------------------
     def run(self, duration: float | None = None, self_test: bool = False) -> None:
         self._report_startup()
         deadline = time.time() + duration if duration else None
         if self_test and duration:
             self._forced_disconnect_at = time.time() + duration * 0.25
-        delay = RECONNECT_BASE_DELAY
         while not self.stop_event.is_set():
             if deadline and time.time() >= deadline:
                 break
             attempt_start = _utcnow()
+            conn_start_mono: float | None = None
+            msg_count_at_connect = self.msg_count
             connected = False
             try:
                 ws = websocket.create_connection(self.url, timeout=20)
@@ -265,9 +310,7 @@ class StreamRecorder:
                 if self.subscribe_msg:
                     ws.send(self.subscribe_msg)
                 connected = True
-                # Back off harder when subscriptions keep getting rejected.
-                delay = min(RECONNECT_BASE_DELAY * (2 ** self._subscribe_failures),
-                            RECONNECT_MAX_DELAY)
+                conn_start_mono = time.monotonic()
                 logger.info("%s: connected to %s", self.name, self.url)
                 if self._pending_gap_start is not None:
                     gap_end = _utcnow()
@@ -315,6 +358,8 @@ class StreamRecorder:
                     ws.close(timeout=1)  # type: ignore[name-defined]
                 except Exception:  # noqa: BLE001
                     pass
+            # Backoff accounting: a handshake alone never resets the counter.
+            self._record_attempt_outcome(conn_start_mono, msg_count_at_connect)
             # Gap starts at the last received message (not at disconnect);
             # a healthy connection's lifetime is NOT a gap.
             if self.last_msg_ts is not None:
@@ -326,8 +371,7 @@ class StreamRecorder:
                 self._pending_gap_start = attempt_start
             if deadline and time.time() >= deadline:
                 break
-            time.sleep(delay)
-            delay = min(delay * 2, RECONNECT_MAX_DELAY)
+            time.sleep(self._next_delay())
         self._flush()
 
     def _ws_ping_loop(self, ws, stop: threading.Event) -> None:
@@ -540,11 +584,16 @@ def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
                        parse_binance_liquidation, flush_seconds=flush_seconds,
                        ws_ping_interval=20.0, ws_ping_timeout=30.0),
         # bookTicker is high-frequency: a few seconds of silence means a dead
-        # socket, so use a data-staleness timeout.
+        # socket, so use a data-staleness timeout. It also gets the strict
+        # reconnect policy (5s initial, x2, cap 120s, jitter; reset only after
+        # 5 continuous healthy minutes WITH data) because Binance's
+        # /public/stream endpoint has been dropping it every few seconds.
         StreamRecorder("binance_bookticker", BINANCE_BOOK_URL,
                        parse_binance_bookticker, flush_seconds=flush_seconds,
                        sample_seconds=1.0, sample_key=lambda r: r.get("symbol"),
-                       staleness_timeout=5.0),
+                       staleness_timeout=5.0,
+                       backoff_initial=5.0, backoff_max=120.0,
+                       healthy_reset_seconds=300.0, require_data_for_reset=True),
         StreamRecorder("bybit_liquidations", BYBIT_LIQ_URL,
                        parse_bybit_liquidation, BYBIT_SUBSCRIBE,
                        flush_seconds=flush_seconds,

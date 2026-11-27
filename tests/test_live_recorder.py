@@ -525,10 +525,14 @@ def test_bybit_subscribe_rejections_back_off(tmp_path, monkeypatch):
     monkeypatch.setattr(lr.websocket, "create_connection", factory)
     r = lr.StreamRecorder("bybit_liquidations", "ws://x", lr.parse_bybit_liquidation,
                           flush_seconds=9999)
-    r.run(duration=3.5)
+    r.run(duration=0.3)
     assert len(sleeps) >= 3, f"expected several reconnects, got sleeps={sleeps}"
-    assert sleeps[1] > sleeps[0], \
-        f"reconnect backoff did not grow: {sleeps}"
+    # New policy: exponential backoff with ±25% jitter, capped at 60s.
+    # First failures: 1s, 2s, 4s (jittered); later ones cap at 60s.
+    assert 0.75 <= sleeps[0] <= 1.25, sleeps[0]
+    assert 1.5 <= sleeps[1] <= 2.5, sleeps[1]
+    assert 3.0 <= sleeps[2] <= 5.0, sleeps[2]
+    assert max(sleeps) <= 60.0 * 1.25, "backoff exceeded the cap"
 
 
 def test_bybit_unrecognised_topic_is_logged(tmp_path, monkeypatch, caplog):
