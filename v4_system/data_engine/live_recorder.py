@@ -135,8 +135,11 @@ class StreamRecorder:
         with self.buffer_lock:
             records = list(self.buffer)
             self.buffer = []
-            if not records:
-                return
+        # Persist liveness state even when there is nothing to write: the
+        # watchdog uses it to tell "connected but quiet" from "disconnected".
+        self._persist_state()
+        if not records:
+            return
         flush_key = self._flush_key()
         out_dir = DATA_DIR / self.name
         final = out_dir / f"{flush_key}.jsonl"
@@ -148,7 +151,6 @@ class StreamRecorder:
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, final)
-        self._persist_state()
         logger.debug("%s: flushed %d records -> %s", self.name, len(records), final)
 
     def _state_path(self) -> Path:
