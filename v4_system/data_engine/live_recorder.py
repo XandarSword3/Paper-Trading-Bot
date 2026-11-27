@@ -101,7 +101,8 @@ class StreamRecorder:
                  backoff_initial: float = RECONNECT_BASE_DELAY,
                  backoff_max: float = RECONNECT_MAX_DELAY,
                  healthy_reset_seconds: float = 300.0,
-                 require_data_for_reset: bool = False) -> None:
+                 require_data_for_reset: bool = False,
+                 track_health: bool = False) -> None:
         self.name = name
         self.url = url
         self.parse = parse            # raw json dict -> list[dict]
@@ -139,6 +140,16 @@ class StreamRecorder:
         self.healthy_reset_seconds = healthy_reset_seconds
         self.require_data_for_reset = require_data_for_reset
         self._backoff_failures = 0
+        # Health tracking (opt-in via track_health): a stream is UNHEALTHY
+        # from the first failure (recv error, stale timeout, close frame,
+        # connect failure) until it has received data continuously for
+        # healthy_reset_seconds. A handshake alone or a single message never
+        # clears this. Only high-frequency streams (bookTicker) enable it:
+        # quiet-by-nature feeds (liquidations) cannot prove health from data.
+        self.track_health = track_health
+        self._streak_start_mono: float | None = None
+        self._confirmed_healthy = False
+        self._unhealthy_since: str | None = None
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
@@ -178,7 +189,8 @@ class StreamRecorder:
     def _persist_state(self) -> None:
         """Persist last-message time (and any error) so restarts/crashes and
         subscribe rejections are visible to the watchdog."""
-        if self.last_msg_ts is None and not self._last_error:
+        if (self.last_msg_ts is None and not self._last_error
+                and not self._unhealthy_since):
             return
         path = self._state_path()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -186,9 +198,12 @@ class StreamRecorder:
             "last_msg_ts": (_iso(datetime.fromtimestamp(self.last_msg_ts, tz=timezone.utc))
                             if self.last_msg_ts is not None else None),
             "updated": _iso(_utcnow()),
+            "healthy": self._confirmed_healthy,
         }
         if self._last_error:
             state["error"] = self._last_error
+        if self._unhealthy_since:
+            state["unhealthy_since"] = self._unhealthy_since
         tmp = path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(state), encoding="utf-8")
         os.replace(tmp, path)
@@ -259,6 +274,32 @@ class StreamRecorder:
             os.fsync(fh.fileno())
         logger.warning("%s: GAP %.1fs (%s) %s -> %s", self.name, rec["seconds"],
                        reason, rec["gap_start"], rec["gap_end"])
+
+    def _mark_unhealthy(self, reason: str) -> None:
+        """Record a health failure. Cleared only after healthy_reset_seconds
+        of continuous connected data ingestion (see _note_message)."""
+        if not self.track_health:
+            return
+        if self._unhealthy_since is None:
+            self._unhealthy_since = _iso(_utcnow())
+            logger.info("%s: marked unhealthy (%s)", self.name, reason)
+        self._streak_start_mono = None
+        self._confirmed_healthy = False
+
+    def _note_message(self) -> None:
+        """Called on every received data message. Builds the continuous
+        healthy-ingestion streak; confirms health after healthy_reset_seconds."""
+        if not self.track_health:
+            return
+        now = time.monotonic()
+        if self._streak_start_mono is None:
+            self._streak_start_mono = now
+        if (not self._confirmed_healthy
+                and now - self._streak_start_mono >= self.healthy_reset_seconds):
+            self._confirmed_healthy = True
+            self._unhealthy_since = None
+            logger.info("%s: healthy for %.0fs, health incident cleared",
+                        self.name, self.healthy_reset_seconds)
 
     def _next_delay(self) -> float:
         """Exponential backoff with ±25% jitter and a HARD cap.
@@ -346,6 +387,10 @@ class StreamRecorder:
                 try:
                     self._receive_loop(ws, deadline)
                 finally:
+                    # A connection has ended: the healthy streak cannot span
+                    # reconnects. _confirmed_healthy is only cleared by
+                    # _mark_unhealthy (a real failure), not by a clean exit.
+                    self._streak_start_mono = None
                     pinger_stop.set()
                     ws_pinger_stop.set()
                     if pinger:
@@ -353,6 +398,7 @@ class StreamRecorder:
                     if ws_pinger:
                         ws_pinger.join(timeout=2)
             except Exception as exc:  # noqa: BLE001
+                self._mark_unhealthy(f"connect: {type(exc).__name__}: {exc}")
                 logger.warning("%s: connection error: %s", self.name, exc)
             finally:
                 try:
@@ -421,15 +467,18 @@ class StreamRecorder:
                         and time.time() - conn_last_msg > self.staleness_timeout):
                     logger.warning("%s: stale (no message for %.1fs), reconnecting",
                                    self.name, time.time() - conn_last_msg)
+                    self._mark_unhealthy("stale timeout")
                     return
                 if (self.ws_ping_timeout and self._last_pong_ts
                         and time.time() - self._last_pong_ts > self.ws_ping_timeout):
                     logger.warning("%s: no pong for %.1fs, reconnecting",
                                    self.name, time.time() - self._last_pong_ts)
+                    self._mark_unhealthy("pong timeout")
                     return
                 continue
             except Exception as exc:  # noqa: BLE001
                 self._last_error = f"{type(exc).__name__}: {exc}"
+                self._mark_unhealthy("recv error")
                 logger.warning("%s: recv error: %s", self.name, exc)
                 return
             if opcode == 0x8:  # close frame: 2-byte code + reason
@@ -439,6 +488,7 @@ class StreamRecorder:
                     code = struct.unpack(">H", data[:2])[0]
                     reason = data[2:].decode("utf-8", errors="replace")
                 self._last_close = {"code": code, "reason": reason}
+                self._mark_unhealthy("close frame")
                 logger.warning("%s: close frame code=%s reason=%r", self.name, code, reason)
                 return
             if opcode == 0xA:  # pong: proof of life for the ping keepalive
@@ -460,6 +510,7 @@ class StreamRecorder:
                 raw = data
             self.last_msg_ts = time.time()
             conn_last_msg = time.time()
+            self._note_message()
             try:
                 msg = json.loads(raw)
             except Exception:  # noqa: BLE001
@@ -475,6 +526,7 @@ class StreamRecorder:
                     self._subscribe_failures += 1
                     logger.error("%s: subscribe REJECTED: %s", self.name, msg)
                     self._last_error = f"subscribe rejected: {msg.get('ret_msg')}"
+                    self._mark_unhealthy("subscribe rejected")
                     return
                 continue
             # Binance combined streams wrap payloads in {"stream": ..., "data": {...}}.
@@ -595,7 +647,8 @@ def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
                        sample_seconds=1.0, sample_key=lambda r: r.get("symbol"),
                        staleness_timeout=5.0,
                        backoff_initial=5.0, backoff_max=120.0,
-                       healthy_reset_seconds=300.0, require_data_for_reset=True),
+                       healthy_reset_seconds=300.0, require_data_for_reset=True,
+                       track_health=True),
         StreamRecorder("bybit_liquidations", BYBIT_LIQ_URL,
                        parse_bybit_liquidation, BYBIT_SUBSCRIBE,
                        flush_seconds=flush_seconds,

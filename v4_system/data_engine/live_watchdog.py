@@ -92,11 +92,20 @@ def check_once(data_dir: Path = DATA_DIR,
             })
             continue
         age = (now - updated).total_seconds()
-        if state.get("error"):
+        # Health incident: an explicit recorder error OR an unhealthy_since
+        # marker (set on stale timeouts, close frames, connect failures —
+        # paths that previously left state.error empty and let the watchdog
+        # declare a false recovery). Both map to the SAME "error" kind so
+        # repeated failures stay one incident.
+        unhealthy_since = state.get("unhealthy_since")
+        if state.get("error") or unhealthy_since:
+            detail = (f"recorder reported error: {state['error']}"
+                      if state.get("error")
+                      else f"recorder unhealthy since {unhealthy_since}")
             alerts.append({
                 "stream": stream,
                 "kind": "error",
-                "detail": f"recorder reported error: {state['error']}",
+                "detail": detail,
             })
         if age > threshold:
             alerts.append({
@@ -240,7 +249,8 @@ class AlertState:
     def _key(stream: str, kind: str) -> str:
         return f"{stream}|{kind}"
 
-    def process(self, alerts: list[dict], now_ts: float) -> list[dict]:
+    def process(self, alerts: list[dict], now_ts: float,
+                recovery_ready: set[str] | None = None) -> list[dict]:
         current = {self._key(a["stream"], a["kind"]) for a in alerts}
         to_send: list[dict] = []
         for alert in alerts:
@@ -259,6 +269,17 @@ class AlertState:
             if key in current:
                 continue
             inc = self.incidents[key]
+            # The recorder has independently confirmed 300s of continuous
+            # healthy ingestion: recover immediately instead of waiting a
+            # second consecutive 300s alert-free period.
+            if recovery_ready and key in recovery_ready:
+                stream, kind = key.split("|", 1)
+                to_send.append({
+                    "stream": stream, "kind": kind, "event": "recovery",
+                    "detail": "recorder confirmed 300s of healthy ingestion",
+                })
+                del self.incidents[key]
+                continue
             if inc.get("healthy_since") is None:
                 inc["healthy_since"] = now_ts
             elif now_ts - inc["healthy_since"] >= self.recovery_stable_seconds:
@@ -270,6 +291,28 @@ class AlertState:
                 del self.incidents[key]
         self._save()
         return to_send
+
+
+def confirmed_healthy_streams(data_dir: Path = DATA_DIR) -> set[str]:
+    """Streams whose recorder has confirmed HEALTHY_CONFIRM_SECONDS of
+    continuous connected data ingestion (state.healthy == true).
+
+    The recorder owns the 300-second health proof; the watchdog uses this to
+    recover a health incident WITHOUT imposing a second consecutive 300s
+    wait on top of the recorder's own.
+    """
+    out = set()
+    state_dir = data_dir / "_state"
+    if not state_dir.exists():
+        return out
+    for path in sorted(state_dir.glob("*.json")):
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if state.get("healthy"):
+            out.add(path.stem)
+    return out
 
 
 def emit(alerts: list[dict]) -> None:
@@ -301,7 +344,11 @@ def main() -> None:
     state = AlertState(state_path=INCIDENTS_PATH)
     while True:
         try:
-            emit(state.process(check_once(), time.time()))
+            alerts = check_once()
+            # Streams the recorder has proven healthy for 300s may recover
+            # their health incident immediately (no second 300s wait).
+            ready = {f"{s}|error" for s in confirmed_healthy_streams()}
+            emit(state.process(alerts, time.time(), recovery_ready=ready))
         except Exception:  # noqa: BLE001 — watchdog must never die
             logger.exception("watchdog check failed")
         time.sleep(CHECK_INTERVAL)

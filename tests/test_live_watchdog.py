@@ -286,3 +286,111 @@ def test_watchdog_restart_preserves_incident(tmp_path):
     # Recovery still requires 5 stable minutes after the restart.
     out = st2.process([], now_ts=1401.0)
     assert len(out) == 1 and out[0]["event"] == "recovery"
+
+
+# -- stale-timeout observability: unhealthy_since + recorder-confirmed health
+
+def _write_state_with_health(data_dir, stream, unhealthy_since=None, healthy=False,
+                             error=None, age_seconds=10):
+    state_dir = data_dir / "_state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    updated = datetime.now(timezone.utc) - timedelta(seconds=age_seconds)
+    state = {
+        "last_msg_ts": updated.isoformat(),
+        "updated": updated.isoformat(),
+        "healthy": healthy,
+    }
+    if unhealthy_since:
+        state["unhealthy_since"] = unhealthy_since
+    if error:
+        state["error"] = error
+    (state_dir / f"{stream}.json").write_text(json.dumps(state), encoding="utf-8")
+
+
+def test_unhealthy_since_raises_error_alert(tmp_path):
+    for stream in lw.STREAM_THRESHOLDS:
+        _write_state(tmp_path, stream, age_seconds=10)
+    _write_rows(tmp_path)
+    # bookTicker stale-timeout marker, no explicit error field.
+    _write_state_with_health(tmp_path, "binance_bookticker",
+                             unhealthy_since="2026-11-27T20:00:00+00:00")
+    alerts = lw.check_once(tmp_path)
+    err = [a for a in alerts if a["stream"] == "binance_bookticker"
+           and a["kind"] == "error"]
+    assert len(err) == 1, alerts
+    assert "unhealthy since" in err[0]["detail"]
+
+
+def test_healthy_flag_alone_produces_no_alert(tmp_path):
+    for stream in lw.STREAM_THRESHOLDS:
+        _write_state(tmp_path, stream, age_seconds=10)
+    _write_rows(tmp_path)
+    _write_state_with_health(tmp_path, "binance_bookticker", healthy=True)
+    assert lw.check_once(tmp_path) == []
+
+
+def test_confirmed_healthy_streams_reads_state(tmp_path):
+    _write_state_with_health(tmp_path, "binance_bookticker", healthy=True)
+    _write_state_with_health(tmp_path, "binance_liquidations", healthy=False)
+    assert lw.confirmed_healthy_streams(tmp_path) == {"binance_bookticker"}
+
+
+def test_recovery_ready_recovers_without_second_300s_wait():
+    """Recorder confirmed 300s healthy -> recovery at once, not +300s more."""
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "error"}
+    st.process([alert], now_ts=0.0)          # incident starts
+    # Flapping continues: alert present at t=60, 120, ... (no recovery).
+    assert st.process([alert], now_ts=60.0) == []
+    # At t=300 the recorder has confirmed health: alert absent + ready.
+    out = st.process([], now_ts=300.0,
+                     recovery_ready={"binance_bookticker|error"})
+    assert len(out) == 1 and out[0]["event"] == "recovery", out
+    # Exactly one recovery.
+    assert st.process([], now_ts=360.0,
+                      recovery_ready={"binance_bookticker|error"}) == []
+
+
+def test_without_recovery_ready_old_300s_rule_still_applies():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "error"}
+    st.process([alert], now_ts=0.0)
+    assert st.process([], now_ts=300.0) == []    # healthy_since = 300
+    assert st.process([], now_ts=599.0) == []    # 299s alert-free: no recovery
+    rec = st.process([], now_ts=600.0)           # 300s alert-free: recovery
+    assert len(rec) == 1 and rec[0]["event"] == "recovery"
+
+
+def test_recovery_ready_ignored_while_alert_present():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "error"}
+    st.process([alert], now_ts=0.0)
+    # Recorder says healthy but the watchdog still sees the alert -> no recovery.
+    out = st.process([alert], now_ts=300.0,
+                     recovery_ready={"binance_bookticker|error"})
+    assert out == []
+
+
+def test_new_failure_during_recovery_period_keeps_incident():
+    st = lw.AlertState()
+    alert = {"stream": "binance_bookticker", "kind": "error"}
+    st.process([alert], now_ts=0.0)
+    st.process([], now_ts=100.0)              # healthy_since = 100
+    st.process([alert], now_ts=200.0)         # failure again: timer cancelled
+    assert st.process([], now_ts=400.0) == []  # healthy_since = 400
+    assert st.process([], now_ts=699.0) == []  # 299s stable
+    rec = st.process([], now_ts=700.0)         # 300s stable -> recovery
+    assert len(rec) == 1 and rec[0]["event"] == "recovery"
+
+
+def test_watchdog_restart_preserves_incident_for_recovery_ready(tmp_path):
+    path = tmp_path / "incidents.json"
+    st1 = lw.AlertState(state_path=path)
+    st1.process([{"stream": "binance_bookticker", "kind": "error"}], now_ts=1000.0)
+    # Restart: new AlertState loads the incident; recorder now confirms health.
+    st2 = lw.AlertState(state_path=path)
+    out = st2.process([], now_ts=1300.0,
+                      recovery_ready={"binance_bookticker|error"})
+    assert len(out) == 1 and out[0]["event"] == "recovery"
+    assert st2.process([], now_ts=1360.0,
+                       recovery_ready={"binance_bookticker|error"}) == []

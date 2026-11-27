@@ -76,6 +76,8 @@ class FakeWS:
             return (0x1, json.dumps({"e": "bookTicker", "s": "BTCUSDT"}).encode())
         if kind == "fail":
             raise websocket.WebSocketConnectionClosedException("lost")
+        if kind == "timeout":
+            raise websocket.WebSocketTimeoutException("timed out")
         if kind == "sleep":
             _REAL_SLEEP(item[1])
             return self.recv_data(control_frame=control_frame)
@@ -231,3 +233,118 @@ def test_other_streams_keep_default_policy():
         assert r.backoff_initial == lr.RECONNECT_BASE_DELAY
         assert r.backoff_max == lr.RECONNECT_MAX_DELAY
         assert r.require_data_for_reset is False
+
+
+# -- health tracking (stale-timeout observability fix) ---------------------
+
+def _health_recorder(tmp_path, monkeypatch, clock, scripts, max_attempts, **kw):
+    params = dict(track_health=True, staleness_timeout=0.02,
+                  healthy_reset_seconds=300.0, require_data_for_reset=True,
+                  flush_seconds=9999, backoff_initial=5.0, backoff_max=120.0)
+    params.update(kw)
+    return _make_recorder(tmp_path, monkeypatch, clock, scripts,
+                          max_attempts=max_attempts, **params)
+
+
+def _state_file(tmp_path):
+    p = tmp_path / "_state" / "binance_bookticker.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+
+
+def test_stale_timeout_marks_unhealthy_and_persists(tmp_path, monkeypatch):
+    clock = FakeClock()
+    # One message, then silence -> staleness timeout (0.02s real) -> reconnect.
+    script = [("msg",), ("timeout",)]
+    r, attempts = _health_recorder(tmp_path, monkeypatch, clock, [script], 2)
+    _run_until_attempts(r, attempts, 2)
+    assert r._unhealthy_since is not None, "stale timeout did not mark unhealthy"
+    assert r._confirmed_healthy is False
+    state = _state_file(tmp_path)
+    assert state is not None and state.get("unhealthy_since"), state
+    assert state.get("healthy") is False
+
+
+def test_handshake_and_single_message_do_not_clear_unhealthy(tmp_path, monkeypatch):
+    clock = FakeClock()
+    stale = [("msg",), ("timeout",)]
+    # Attempt 2: handshake OK + exactly ONE message, then dropped.
+    one_msg = [("msg",), ("fail",)]
+    r, attempts = _health_recorder(tmp_path, monkeypatch, clock, [stale, one_msg], 2)
+    _run_until_attempts(r, attempts, 2)
+    assert r._unhealthy_since is not None, "handshake/one message cleared unhealthy"
+    assert r._confirmed_healthy is False
+    # (streak is reset when the connection ends; unhealthy persists)
+
+
+def test_300s_continuous_data_confirms_health(tmp_path, monkeypatch):
+    """Unit-level: handshake and single messages never clear unhealthy;
+    only 300 continuous seconds of data does."""
+    clock = FakeClock()
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(lr.time, "monotonic", clock.monotonic)
+    r = lr.StreamRecorder("binance_bookticker", "ws://x",
+                          lambda m: [{"symbol": "BTCUSDT"}],
+                          track_health=True, healthy_reset_seconds=300.0,
+                          flush_seconds=9999)
+    r._mark_unhealthy("stale timeout")
+    assert r._unhealthy_since is not None
+    # Handshake alone (no messages) must not clear it.
+    assert r._unhealthy_since is not None and r._confirmed_healthy is False
+    # One message starts the streak but does not confirm.
+    r._note_message()
+    assert r._confirmed_healthy is False and r._unhealthy_since is not None
+    # 299 continuous seconds: still not confirmed.
+    clock.now += 299.0
+    r._note_message()
+    assert r._confirmed_healthy is False
+    # At 300s: confirmed, unhealthy cleared.
+    clock.now += 1.0
+    r._note_message()
+    assert r._confirmed_healthy is True
+    assert r._unhealthy_since is None
+    r.last_msg_ts = _time.time()  # so _persist_state does not early-return
+    r._flush()
+    state = _state_file(tmp_path)
+    assert state is not None and state.get("healthy") is True
+    assert "unhealthy_since" not in state
+
+
+def test_new_failure_after_confirmation_resets_health(tmp_path, monkeypatch):
+    clock = FakeClock()
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(lr.time, "monotonic", clock.monotonic)
+    r = lr.StreamRecorder("binance_bookticker", "ws://x",
+                          lambda m: [{"symbol": "BTCUSDT"}],
+                          track_health=True, healthy_reset_seconds=300.0,
+                          flush_seconds=9999)
+    r._note_message()
+    clock.now += 300.0
+    r._note_message()
+    assert r._confirmed_healthy is True
+    # A new stale timeout must reset the interval and re-open the incident.
+    r._mark_unhealthy("stale timeout")
+    assert r._confirmed_healthy is False
+    assert r._unhealthy_since is not None
+    assert r._streak_start_mono is None
+
+
+def test_new_stale_timeout_resets_healthy_interval(tmp_path, monkeypatch):
+    clock = FakeClock()
+    stale = [("msg",), ("timeout",)]
+    # 200s of data, then stale; then only 150s of data -> never confirmed.
+    partial = [("msgx", 200), ("timeout",)]
+    short = [("msgx", 150), ("fail",)]
+    r, attempts = _health_recorder(tmp_path, monkeypatch, clock,
+                                    [stale, partial, short], 3)
+    _run_until_attempts(r, attempts, 3)
+    assert r._confirmed_healthy is False
+    assert r._unhealthy_since is not None
+
+
+def test_repeated_stale_reconnects_keep_one_unhealthy_since(tmp_path, monkeypatch):
+    clock = FakeClock()
+    stale = [("msg",), ("timeout",)]
+    r, attempts = _health_recorder(tmp_path, monkeypatch, clock, [stale], 4)
+    _run_until_attempts(r, attempts, 4)
+    assert r._unhealthy_since is not None
+    assert r._confirmed_healthy is False
