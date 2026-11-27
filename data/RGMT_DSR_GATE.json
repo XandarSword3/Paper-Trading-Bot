@@ -1,0 +1,9 @@
+{
+  "metric": "deflated_sharpe_ratio",
+  "dsr": 0.659,
+  "threshold": 0.95,
+  "trials": 210,
+  "as_of": "2026-11-26",
+  "source": "research/trendlab/run_final.py -> logs/trendlab/final_report.json (branch fix-dsr-sr0, corrected sr0)",
+  "note": "Mainnet new exposure is blocked while dsr < threshold. Missing, unreadable, or malformed gate files also block. Flattening and reduce-only orders are never blocked. See docs/RGMT_LIVE_RUNBOOK.md."
+}

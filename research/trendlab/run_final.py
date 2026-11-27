@@ -175,7 +175,7 @@ def main() -> None:
     funding = {k: v for k, v in funding.items() if not v.empty}
 
     # Consistency: production weights must reproduce the research engine.
-    from strategy.trend_portfolio import target_weights
+    from research.strategies.trend_portfolio import target_weights
 
     sig = final_signal(panel)
     res = run_backtest(panel, sig, funding, cfg=CFG)
@@ -314,7 +314,8 @@ def main() -> None:
               f"- Holdout Sharpe {per['holdout']['sharpe']:.2f}; bootstrap CI "
               f"[{boot_ho['ci_lo']:.2f}, {boot_ho['ci_hi']:.2f}].\n"
               f"- Deflated Sharpe ratio after {N_TRIALS} trials: **{dsr:.3f}** "
-              "(probability the true Sharpe exceeds zero after selection bias).\n"
+              "(probability the true Sharpe exceeds the expected best of "
+              f"{N_TRIALS} null trials after selection bias).\n"
               f"- Monte Carlo (1-year resampled): median return {pct(mc['final_return_p50'])}, "
               f"5th percentile {pct(mc['final_return_p05'])}, median max DD {pct(mc['max_dd_p50'])}, "
               f"P(negative year) {pct(mc['p_negative'])}.\n"

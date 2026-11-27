@@ -1,8 +1,15 @@
 # RGMT Live Runbook
 
 Regime-Gated Multi-Horizon Trend (RGMT) is the only strategy in this repo with a
-validated out-of-sample edge: Sharpe 1.22, 27.2% CAGR, -19.0% max drawdown
-(2020-10-31 to 2026-10-31), holdout Sharpe 0.71, DSR 0.999.
+promising but unproven out-of-sample edge: full-period (2020-01-01 to
+2026-10-31) Sharpe 1.22, 27.2% CAGR, -19.0% max drawdown; holdout
+(2025-07 to 2026-10) Sharpe 0.71; DSR 0.659.
+
+> **DSR correction (2026-11-26):** the previously quoted DSR 0.999 was computed
+> with a bug in `research/trendlab/stats.py` — the expected-max null benchmark
+> was divided by `sqrt(365)` a second time, shrinking it ~19x and inflating DSR
+> toward 1.0 for any positive Sharpe. Fixed on branch `fix-dsr-sr0`; the honest
+> figure is **0.659**. The Sharpe/CAGR/drawdown numbers are unaffected.
 
 The gate is BTC above its 200-day EMA. **When BTC is below the EMA the correct
 position is cash.** Do not bypass this to "make something happen"; the flat
@@ -92,13 +99,16 @@ python scripts/run_rgmt_live.py --execute
   ```
 - Reduce-only orders are never blocked by notional caps, so the book can always
   be de-risked.
+- **Mainnet is blocked while DSR < 0.95** (currently 0.659). Testnet and paper
+  are unaffected. Revisit only if DSR improves on new data.
 
 ## What "ready" means
 
-The code path is ready. Actual capital deployment is blocked on two things:
+The code path is ready. Actual capital deployment is blocked on three things:
 
 1. BTC reclaiming its 200-day EMA (currently ~$75.1k).
 2. A valid Binance **Futures** API key. I cannot create or authorize one.
+3. DSR ≥ 0.95 (currently 0.659 — mainnet is blocked until then).
 
-Until both are true, the honest expected return from RGMT is 0% (cash), not a
+Until all three are true, the honest expected return from RGMT is 0% (cash), not a
 forced trade.

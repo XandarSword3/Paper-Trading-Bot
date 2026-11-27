@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from strategy.trend_portfolio import TrendConfig, momentum_score
+from research.strategies.trend_portfolio import TrendConfig, momentum_score
 
 FINAL_CONFIG = TrendConfig(
     lookbacks=(60, 120),

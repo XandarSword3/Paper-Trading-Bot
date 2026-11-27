@@ -59,6 +59,9 @@ Thumbs.db
 quant_research/data/
 quant_research/results/*.parquet
 
+# Trendlab bulk-data cache (regenerable from data.binance.vision)
+data/binance/
+
 # Streamlit (legacy)
 .streamlit/
 
