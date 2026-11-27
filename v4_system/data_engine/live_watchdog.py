@@ -190,36 +190,85 @@ def send_telegram(text: str, config: tuple[str, str] | None = None) -> bool:
 
 
 REMINDER_INTERVAL = 3600.0  # remind at most hourly while a problem persists
+RECOVERY_STABLE_SECONDS = 300.0  # 5 continuous healthy minutes before recovery
+INCIDENTS_PATH = DATA_DIR / "_watchdog_incidents.json"
 
 
 class AlertState:
-    """Dedup alerting: send once when a problem starts, remind at most
-    hourly, and send once when it recovers."""
+    """Incident-based alerting.
 
-    def __init__(self, reminder_interval: float = REMINDER_INTERVAL):
+    An incident starts when a (stream, kind) problem first appears and ends
+    only after RECOVERY_STABLE_SECONDS of continuous health — brief
+    reconnections must NOT trigger recovery. While active, reminders are
+    sent at most once per hour. State is persisted to disk so a watchdog
+    restart neither re-alerts an ongoing incident nor fakes a recovery.
+    """
+
+    def __init__(self, reminder_interval: float = REMINDER_INTERVAL,
+                 recovery_stable_seconds: float = RECOVERY_STABLE_SECONDS,
+                 state_path: Path | None = None):
         self.reminder_interval = reminder_interval
-        self.active: dict[tuple[str, str], float] = {}  # (stream, kind) -> last sent ts
+        self.recovery_stable_seconds = recovery_stable_seconds
+        self.state_path = state_path
+        # key "stream|kind" -> {"start": ts, "last_sent": ts, "healthy_since": ts|None}
+        self.incidents: dict[str, dict] = {}
+        self._load()
+
+    # -- persistence -----------------------------------------------------
+    def _load(self) -> None:
+        if not self.state_path or not self.state_path.exists():
+            return
+        try:
+            raw = json.loads(self.state_path.read_text(encoding="utf-8"))
+            self.incidents = {k: dict(v) for k, v in raw.items()}
+        except Exception:  # noqa: BLE001 — corrupt state must not kill the watchdog
+            self.incidents = {}
+
+    def _save(self) -> None:
+        if not self.state_path:
+            return
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.state_path.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(self.incidents), encoding="utf-8")
+            os.replace(tmp, self.state_path)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("could not persist watchdog incident state: %s", exc)
+
+    # -- alerting ----------------------------------------------------------
+    @staticmethod
+    def _key(stream: str, kind: str) -> str:
+        return f"{stream}|{kind}"
 
     def process(self, alerts: list[dict], now_ts: float) -> list[dict]:
-        current = {(a["stream"], a["kind"]) for a in alerts}
+        current = {self._key(a["stream"], a["kind"]) for a in alerts}
         to_send: list[dict] = []
         for alert in alerts:
-            key = (alert["stream"], alert["kind"])
-            last = self.active.get(key)
-            if last is None:
+            key = self._key(alert["stream"], alert["kind"])
+            inc = self.incidents.get(key)
+            if inc is None:
+                self.incidents[key] = {"start": now_ts, "last_sent": now_ts,
+                                       "healthy_since": None}
                 to_send.append({**alert, "event": "start"})
-                self.active[key] = now_ts
-            elif now_ts - last >= self.reminder_interval:
-                to_send.append({**alert, "event": "reminder"})
-                self.active[key] = now_ts
-        for key in list(self.active):
-            if key not in current:
-                stream, kind = key
+            else:
+                inc["healthy_since"] = None  # problem is present again
+                if now_ts - inc["last_sent"] >= self.reminder_interval:
+                    to_send.append({**alert, "event": "reminder"})
+                    inc["last_sent"] = now_ts
+        for key in list(self.incidents):
+            if key in current:
+                continue
+            inc = self.incidents[key]
+            if inc.get("healthy_since") is None:
+                inc["healthy_since"] = now_ts
+            elif now_ts - inc["healthy_since"] >= self.recovery_stable_seconds:
+                stream, kind = key.split("|", 1)
                 to_send.append({
                     "stream": stream, "kind": kind, "event": "recovery",
                     "detail": "problem resolved",
                 })
-                del self.active[key]
+                del self.incidents[key]
+        self._save()
         return to_send
 
 
@@ -249,7 +298,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
     logger.info("live watchdog started (data dir %s)", DATA_DIR)
-    state = AlertState()
+    state = AlertState(state_path=INCIDENTS_PATH)
     while True:
         try:
             emit(state.process(check_once(), time.time()))

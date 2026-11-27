@@ -203,8 +203,86 @@ def test_alert_state_sends_once_on_recovery():
     st = lw.AlertState()
     alert = {"stream": "binance_bookticker", "kind": "no_rows"}
     st.process([alert], now_ts=1000.0)
-    recovery = st.process([], now_ts=1060.0)
+    # Brief health is NOT a recovery: 60s of quiet changes nothing.
+    assert st.process([], now_ts=1060.0) == []
+    # Recovery only after 5 continuous healthy minutes (1060 + 300 = 1360).
+    recovery = st.process([], now_ts=1361.0)
     assert len(recovery) == 1
     assert recovery[0]["event"] == "recovery"
     assert recovery[0]["stream"] == "binance_bookticker"
-    assert st.process([], now_ts=1120.0) == [], "recovery sent twice"
+    assert st.process([], now_ts=1420.0) == [], "recovery sent twice"
+
+
+# -- incident tracking: flapping must not fake recovery --------------------
+
+def _alert():
+    return {"stream": "binance_bookticker", "kind": "error"}
+
+
+def test_flapping_reconnects_stay_one_incident():
+    st = lw.AlertState()
+    # start, then alternating present/absent every 60s for 10 minutes
+    assert st.process([_alert()], now_ts=0.0)[0]["event"] == "start"
+    t = 60.0
+    events = []
+    while t <= 600.0:
+        present = (int(t // 60) % 2 == 0)
+        events += st.process([_alert()] if present else [], now_ts=t)
+        t += 60.0
+    assert not any(e["event"] == "recovery" for e in events), \
+        "brief reconnections triggered a recovery"
+    assert not any(e["event"] == "start" for e in events[1:]), \
+        "flapping re-opened the incident"
+
+
+def test_recovery_after_5_minutes_stable():
+    st = lw.AlertState()
+    st.process([_alert()], now_ts=0.0)
+    st.process([], now_ts=60.0)    # healthy_since = 60
+    assert st.process([], now_ts=359.0) == []   # 299s stable: no recovery
+    rec = st.process([], now_ts=360.0)          # 300s stable: recovery
+    assert len(rec) == 1 and rec[0]["event"] == "recovery"
+
+
+def test_recovery_timer_resets_when_problem_returns():
+    st = lw.AlertState()
+    st.process([_alert()], now_ts=0.0)
+    st.process([], now_ts=60.0)    # healthy_since = 60
+    st.process([], now_ts=200.0)   # 140s stable
+    st.process([_alert()], now_ts=250.0)  # problem back: timer cancelled
+    assert st.process([], now_ts=300.0) == []  # healthy_since = 300 now
+    assert st.process([], now_ts=599.0) == []  # only 299s stable
+    rec = st.process([], now_ts=600.0)         # 300s stable -> recovery
+    assert len(rec) == 1 and rec[0]["event"] == "recovery"
+
+
+def test_hourly_reminders_continue_during_flapping():
+    st = lw.AlertState()
+    st.process([_alert()], now_ts=0.0)          # start
+    # flap every 60s; reminders must still fire hourly from last send
+    t = 60.0
+    reminders = []
+    while t <= 3700.0:
+        present = (int(t // 60) % 2 == 0)
+        for e in st.process([_alert()] if present else [], now_ts=t):
+            if e["event"] == "reminder":
+                reminders.append(t)
+        t += 60.0
+    assert reminders, "no hourly reminder during a prolonged incident"
+    assert all(b - a >= 3600.0 for a, b in zip(reminders, reminders[1:]))
+
+
+def test_watchdog_restart_preserves_incident(tmp_path):
+    path = tmp_path / "incidents.json"
+    st1 = lw.AlertState(state_path=path)
+    st1.process([_alert()], now_ts=1000.0)
+    # "Restart": brand-new AlertState loading the same file.
+    st2 = lw.AlertState(state_path=path)
+    out = st2.process([_alert()], now_ts=1060.0)
+    assert out == [], "restart re-sent start for an ongoing incident"
+    # And it must not fake a recovery either while the problem persists.
+    out = st2.process([], now_ts=1100.0)
+    assert out == []
+    # Recovery still requires 5 stable minutes after the restart.
+    out = st2.process([], now_ts=1401.0)
+    assert len(out) == 1 and out[0]["event"] == "recovery"
