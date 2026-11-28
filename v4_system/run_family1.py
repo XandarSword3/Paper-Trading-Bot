@@ -332,11 +332,22 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
     dsr = compute_dsr(pt_sharpe, len(trades), N_TRIALS_DSR)
     fold_dds = [fr.get("max_drawdown_pct_marked", 0.0) for fr in fold_results]
     fold_dds_cash = [fr.get("max_drawdown_pct_cash", 0.0) for fr in fold_results]
+    fund = float(sum(t.funding_pnl for t in trades))
+    fees = float(sum(t.fee_and_slip_cost for t in trades))
+    notional = float(sum(t.quantity * t.executed_entry_price
+                          for t in trades))
+    hours = float(sum(
+        (pd.Timestamp(t.exit_time) - pd.Timestamp(t.entry_time))
+        .total_seconds() / 3600.0 for t in trades))
     return {
         "n_oos_trades": len(trades),
         "net_expectancy_bps": float(np.mean(bps)) if len(bps) else 0.0,
         "per_trade_sharpe": pt_sharpe,
         "dsr": dsr,
+        "total_funding_pnl": fund,
+        "total_fees_slippage": fees,
+        "total_notional_traded": notional,
+        "total_trade_hours": hours,
         # Worst-fold marked MDD — PREREG III.9 (2026-11-28 amendment)
         "max_drawdown_pct": max(fold_dds) if fold_dds else 0.0,
         "max_drawdown_pct_cash": max(fold_dds_cash) if fold_dds_cash else 0.0,
@@ -357,13 +368,15 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
     }
 
 
-def _passes_hurdles(stats: Dict[str, Any], stress_stats: Dict[str, Any]) -> bool:
+def _passes_hurdles(stats: Dict[str, Any], stress_stats: Dict[str, Any],
+                    baseline_passed: bool = True) -> bool:
     return (
         stats["net_expectancy_bps"] > 0
         and stress_stats["net_expectancy_bps"] > 0
         and stats["dsr"] >= DSR_HURDLE
         and stats["max_drawdown_pct"] <= MAX_DRAWDOWN_PCT
         and stats["n_oos_trades"] >= MIN_OOS_TRADES
+        and baseline_passed                      # PREREG III.10
     )
 
 
@@ -380,6 +393,34 @@ def equity_max_drawdown_pct(equity_values) -> float:
     peak = np.maximum.accumulate(eq)
     dd = (eq - peak) / np.where(peak == 0, 1.0, peak)
     return float(abs(dd.min()) * 100.0)
+
+
+def _write_trades_csv(trial_id: str, cfg_asset: str, cost_name: str,
+                      fold_results: List[Dict[str, Any]],
+                      out_dir: str) -> None:
+    """Write per-config OOS trade histories as CSV (never overwritten:
+    file name includes trial id; a second run of the SAME trial would
+    collide, so we refuse to overwrite)."""
+    import csv
+    safe = cfg_asset.replace("/", "_")
+    path = os.path.join(out_dir, "trades",
+                        f"{trial_id}__{safe}__{cost_name}.csv")
+    if os.path.exists(path):
+        raise FileExistsError(f"trade history already exists: {path}")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fields = ["fold_id", "entry_time", "exit_time", "direction",
+              "entry_price", "executed_entry_price", "exit_price",
+              "executed_exit_price", "quantity", "gross_pnl",
+              "fee_and_slip_cost", "funding_pnl", "net_pnl",
+              "return_bps", "exit_reason", "unit_number"]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for fr in fold_results:
+            for t in fr["trades"]:
+                row = {k: getattr(t, k) for k in fields if k != "fold_id"}
+                row["fold_id"] = fr["fold_id"]
+                w.writerow(row)
 
 
 def execute_trial(trial_id: str, configs: Optional[List[Config]] = None,
@@ -400,6 +441,9 @@ def execute_trial(trial_id: str, configs: Optional[List[Config]] = None,
     results: Dict[str, Any] = {"trial_id": trial_id, "family": FAMILY,
                                "pit_label": qr.PIT_LABEL, "configs": {}}
     bundles: Dict[tuple, Dict[str, Any]] = {}
+    # (asset, tf, N, M) -> base-cost fold results, for the random baseline
+    strategy_refs: Dict[tuple, Dict[str, Any]] = {}
+    cfg_outputs: Dict[str, Dict[str, Any]] = {}
 
     for cfg in configs:
         for asset in ASSETS:
@@ -427,10 +471,34 @@ def execute_trial(trial_id: str, configs: Optional[List[Config]] = None,
                               for fr in fold_results],
                     "pooled": _pooled_stats(fold_results, costs),
                 }
-            cfg_out["passes_hurdles"] = _passes_hurdles(
-                cfg_out["base"]["pooled"], cfg_out["stress"]["pooled"])
-            results["configs"][f"{cfg.config_id}/{asset}"] = cfg_out
+                # preserve full OOS trade histories (append-only artifacts)
+                _write_trades_csv(trial_id, f"{cfg.config_id}/{asset}",
+                                  cost_name, fold_results, out_dir)
+                if cost_name == "base":
+                    strategy_refs[key] = {
+                        "fold_results": fold_results,
+                        "strategy_bps": cfg_out["base"]["pooled"]
+                        ["net_expectancy_bps"],
+                    }
+            # free the (large) 1m bundle as soon as both cost scenarios
+            # for this config x asset are done
+            del bundles[key]
+            cfg_outputs[f"{cfg.config_id}/{asset}"] = cfg_out
 
+    # Random-entry null baseline (PREREG III.10) — parallel workers,
+    # base costs only, one-sided p_beats <= 0.05 hurdle.
+    from v4_system import random_baseline_family1 as rb
+    baselines = rb.run_baselines(strategy_refs)
+    for key, base in baselines.items():
+        asset, tf, N, M = key
+        cfg_id = f"{tf}_N{N}_M{M}"
+        cfg_out = cfg_outputs[f"{cfg_id}/{asset}"]
+        cfg_out["baseline"] = base
+        cfg_out["passes_hurdles"] = _passes_hurdles(
+            cfg_out["base"]["pooled"], cfg_out["stress"]["pooled"],
+            baseline_passed=base["passes"])
+
+    results["configs"] = cfg_outputs
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{trial_id}.json")
     with open(out_path, "w", encoding="utf-8") as f:

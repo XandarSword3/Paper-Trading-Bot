@@ -509,3 +509,31 @@ configuration, date range or budget is changed.*
   separate amendment.
 - **Open positions at fold end**: excluded from trade statistics
   (never completed) but included in marked equity at the final bar.
+
+## III.10 Amendment — Random-entry baseline for Family 1 (2026-11-28)
+
+*Implements the "beats random-entry baseline" hurdle from III.5,
+adapted from the audited `quant_research/turtle_random_entry_v3.py`
+construction to V4 data and Family 1 folds. Registered BEFORE any
+Family 1 result exists.*
+
+- **Null construction**: for each config x asset x fold, R = 200
+  random-entry simulations through the SAME `run_turtle_simulation`
+  code path (Donchian M-bar exits, 2N ATR stop, max_units=1, 1% risk,
+  2x leverage cap, next-open fills, 1m sub-bar exit resolution,
+  direction-aware funding, base 14 bps RT costs).
+- **Random signals**: entry channels replaced by sparse triggers at
+  bars drawn uniformly without replacement from the fold's TEST window
+  only (warm-up bars never receive signals). Per-fold signal count =
+  the strategy's OOS trade count in that fold; direction mix = the
+  strategy's realised long share in that fold.
+- **Daily trend filter is NOT applied to the null** — it is part of
+  the strategy under test, not of the random-entry null.
+- **Statistic**: pooled OOS net expectancy (bps/trade) across the five
+  folds per config x asset, base costs.
+- **p-value**: `p_beats` = fraction of the 200 null runs whose pooled
+  expectancy >= the strategy's. Hurdle: `p_beats <= 0.05` (one-sided).
+- **Seeds**: deterministic `zlib.crc32("family1|asset|tf|N|M|run")` —
+  bit-reproducible across machines.
+- **Scope**: baseline runs under BASE costs only; the stress-cost
+  hurdle is evaluated separately on the strategy itself.

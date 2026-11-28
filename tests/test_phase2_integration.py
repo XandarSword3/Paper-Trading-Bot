@@ -346,11 +346,17 @@ def test_registry_config_count_limit(trials_path):
 
 
 def test_registry_preserves_existing_header(tmp_path):
-    """The committed header-only trials_log.csv must remain valid."""
+    """The committed trials_log.csv must remain valid and append-only.
+
+    After the authorized Family 1 execution it contains the REGISTERED
+    row plus result rows for trial family1_turtle_dt-001-*."""
     from v4_system import trials_registry as tr
     real = os.path.join(os.path.dirname(tr.__file__), "trials_log.csv")
     rows = tr._read_rows(real)
-    assert rows == []  # header only, zero registrations
+    assert rows  # at least the Family 1 registration + results
+    assert any(r.get("result") == "REGISTERED" and
+               r.get("trial_id", "").startswith("family1_turtle_dt-001")
+               for r in rows)
     status = tr.budget_status(real)
-    assert status["total_registered"] == 0
+    assert status["total_registered"] == 1
     assert status["max_total"] == 40

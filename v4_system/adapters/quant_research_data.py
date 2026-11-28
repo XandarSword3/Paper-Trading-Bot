@@ -184,7 +184,8 @@ def apply_daily_mask(features: dict, trend: pd.Series) -> dict:
 
 def load_turtle_bundle(symbol: str, timeframe: str, as_of, *,
                        strict: bool = False,
-                       include_1m_subbars: bool = True) -> dict:
+                       include_1m_subbars: bool = True,
+                       include_daily_trend: bool = True) -> dict:
     """Load everything ``run_turtle_simulation`` needs for one symbol/TF.
 
     Returns ``{"df", "funding", "df_1m", "daily_trend"}``:
@@ -193,6 +194,7 @@ def load_turtle_bundle(symbol: str, timeframe: str, as_of, *,
       - ``df_1m``     : 1m perp klines for intrabar stop/level resolution
                         (None when ``include_1m_subbars=False``)
       - ``daily_trend``: EMA20 daily trend map for ``apply_daily_mask``
+                        (None when ``include_daily_trend=False``)
 
     All datasets share the SAME ``as_of`` cutoff. ``df_1m`` covers only
     the V4 1m history (from 2023-01-01); bars outside that range fall
@@ -207,7 +209,8 @@ def load_turtle_bundle(symbol: str, timeframe: str, as_of, *,
         "funding": load_funding(symbol, as_of, strict=strict),
         "df_1m": (load_1m_for_subbars(symbol, as_of, strict=strict)
                   if include_1m_subbars else None),
-        "daily_trend": daily_trend_map(symbol, as_of, strict=strict),
+        "daily_trend": (daily_trend_map(symbol, as_of, strict=strict)
+                        if include_daily_trend else None),
     }
     for k, v in bundle.items():
         if v is not None and hasattr(v, "attrs"):
