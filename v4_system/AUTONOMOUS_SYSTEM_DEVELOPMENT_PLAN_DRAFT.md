@@ -160,6 +160,26 @@ replaced by WP-07 (portfolio backtester design) in FIP-1.
 - **depth5 test: NOT done** before this plan — the 10-minute probe in
   §8.2 is the first depth5 measurement.
 
+**Recorder defects found 2026-11-28 (post-rev-2 review)**:
+- **Sampling mislabel (FIXED in code, historical rows mislabeled)**:
+  `parse_binance_bookticker` emitted `"sampled": false`, but the
+  recorder keeps only the first tick per symbol per clock-second —
+  rows are 1 Hz first-in-bucket, not full ticks. Fixed: rows now carry
+  `"sampled": true` + `"sample_rule": "first_per_symbol_per_1s_bucket"`.
+  All bookTicker data recorded before the fix is mislabeled.
+- **Gap logging ambiguity (FIXED)**: gap records spanned
+  last-message→reconnect, which for quiet feeds (liquidations) looked
+  like multi-hour "disconnects" that were mostly quiet time. Gap
+  records now also carry `disconnected_at` and `last_msg_ts`.
+- **Gap structure (measured)**: bookTicker has ~1,320 chronic short
+  drops (median 5.5 s, p90 18.7 s, `WebSocketConnectionClosedException`,
+  no close code) plus ~6 shared multi-hour outages that hit all three
+  streams simultaneously (machine/network, not stream faults). The
+  same drop pattern reproduces in an independent probe script —
+  cause is likely network path or Binance-side, not recorder logic.
+  **The running recorder (PID 25824) still uses the pre-fix code**;
+  restart required to pick up both fixes.
+
 ---
 
 ## 3. Complete development workstreams
@@ -318,9 +338,9 @@ tests, acceptance, complexity, resources, unlocks.
   24h soak test; storage-growth measurement.
 - **Acceptance**: ≥7 days continuous, ≥15/20 symbols healthy, gap rate
   <1%, measured storage within budget.
-- **Complexity**: Medium. **Resources**: ~6 GB/day download,
-  ~0.3–0.6 GB/day stored (§8.2). **Unlocks**: all microstructure
-  research.
+- **Complexity**: Medium. **Resources**: ~2.1–2.8 GB/day download,
+  ~0.15–0.3 GB/day stored (§8.2, probe v2). **Unlocks**: all
+  microstructure research.
 
 ### WP-02 — Universe registry + eligibility intervals (P0)
 - **Objective**: dynamic universe with survivorship control.
@@ -602,65 +622,82 @@ live-record:**
 | Funding settlements | ✅ Archive/REST | P1 | Already have BTC/ETH/SOL; extend to universe |
 | OI history | ✅ Archive (5m, 2020-09/2021-12→) | P0 | WP-03; timestamp conventions classified per file |
 
-**aggTrade WS stream caveat (measured)**: the `@aggTrade` stream on
-`fstream.binance.com` produced **zero messages** in both the 10-min
-probe and a 30-s single-symbol test, while `@trade`, `@bookTicker`,
-and `@depth5@100ms` on the same connection flowed normally. Either the
-stream name is unsupported on this endpoint or it is silently dropped.
-Since aggTrade history comes from the archive anyway, this does not
-block anything; if tick-level live data is needed later, `@trade`
-(verified flowing: ~36 msg/s BTC) or a corrected aggTrade subscription
-must be used. Recorded as a finding, not worked around.
+**aggTrade WS caveat — RESOLVED as probe bug (2026-11-28)**: the v1
+probe connected to `wss://fstream.binance.com/stream?...` (root path);
+non-migrated connections only receive `/public` data, so aggTrade was
+silently absent while bookTicker/depth5 flowed. This was a probe
+defect, not a stream finding. Probe v2 (`probe_v2.py`) uses two
+connections — `/public/stream` (bookTicker+depth5) and `/market/stream`
+(aggTrade) — with per-connection uptime and per-symbol counts; results
+in `result_v2.json`. aggTrade history comes from the Binance archive
+regardless, so nothing is blocked.
 
-### 8.2 Measured stream volumes (10-min probe, 2026-11-28 17:19–17:29 local)
+### 8.2 Measured stream volumes (probe v2, 2026-11-28 19:01–19:12 local)
 
-**Method**: `v4_system/data/volume_probe/probe.py` — separate WS
-connection, 60 streams (20 symbols × bookTicker+aggTrade+depth5),
-auto-reconnect (30 reconnects; connections lasted ~10–60 s each —
-Binance appears to cycle connections; counters accumulated across
-reconnects with small gaps, so rates are slight underestimates).
-Symbols = top-20 USDT perps by 24h quote volume at probe time
-(included tokenized equities e.g. SOXLUSDT/XAUUSDT/NVDAUSDT — the
-universe filter in WP-02 should exclude or separately classify
-these). Output: `v4_system/data/volume_probe/result.json`.
+**Method**: `v4_system/data/volume_probe/probe_v2.py` — TWO connections
+(fixes v1 routing bug): `/public/stream` = bookTicker+depth5@100ms,
+`/market/stream` = aggTrade, 20 symbols each. Per-connection uptime
+and per-symbol counts recorded. Output: `result_v2.json`.
+Symbols = top-20 USDT perps by 24h quote volume (includes tokenized
+equities — WP-02 filter must exclude/classify them).
 
-**Measured raw download rates** (JSON text as received):
+**Connection stability (measured)**:
+- `public` (bookTicker+depth5): **43 reconnects, uptime 74.4%** —
+  chronic drops every ~10–25 s, all `Connection to remote host was
+  lost`, no close code. Rates below are per elapsed time; uptime-
+  adjusted rates are ~35% higher.
+- `market` (aggTrade): **10 reconnects, uptime 94.4%** — mostly
+  `ping/pong timed out` drops every ~60–90 s.
 
-| Group | Stream | msgs/s | KB/s | **Download GB/day** |
-|---|---|---|---|---|
-| Top-3 (BTC/ETH/SOL) | bookTicker | 80.3 | 16.3 | **1.41** |
-| Top-3 | depth5@100ms | 6.7 | 2.8 | **0.24** |
-| Top-3 | aggTrade | 0 | 0 | 0 (see caveat §8.1) |
-| Top-20 | bookTicker | 279.5 | 56.9 | **4.92** |
-| Top-20 | depth5@100ms | 31.4 | 13.1 | **1.13** |
-| Top-20 | aggTrade | 0 | 0 | 0 |
+**Measured raw download rates** (JSON text incl. stream wrapper;
+per elapsed second — multiply by ~1.35 for public, ~1.06 for market
+to get uptime-adjusted):
 
-**Stored-size estimates** (separate from download — item 2 requirement):
-- JSONL raw ≈ download GB/day above.
-- Parquet columnar compression of numeric WS payloads typically
-  achieves **~10–20× reduction** (assumption, not measured — to be
-  verified on first week of data). Estimated **stored GB/day**:
-  - bookTicker top-20: ~0.25–0.5 GB/day → **~90–180 GB/year**
-  - depth5 top-20: ~0.06–0.11 GB/day → **~20–40 GB/year**
-  - liquidations: negligible (<1 GB/year)
-  - **Total live-recording stored: ~0.3–0.6 GB/day → ~110–220 GB/year**
-- If depth20@100ms instead of depth5: payload ~4× levels → download
-  ~4.5 GB/day, stored ~0.25–0.45 GB/day → **~90–165 GB/year additional**.
-  (Rev-1's "8.6 GB/day" depth figure was wrong; measured depth5 is
-  1.13 GB/day download for top-20; depth20 estimate above replaces it.)
+| Group | Stream | msgs/s | KB/s | GB/day (elapsed) | GB/day (uptime-adj) |
+|---|---|---|---|---|---|
+| Top-3 | bookTicker | 23.7 | 4.8 | 0.41 | ~0.56 |
+| Top-3 | depth5 | 1.5 | 0.6 | 0.05 | ~0.07 |
+| Top-3 | aggTrade | 13.7 | 2.8 | 0.24 | ~0.26 |
+| Top-20 | bookTicker | 100.2 | 20.2 | 1.75 | ~2.35 |
+| Top-20 | depth5 | 7.6 | 3.2 | 0.27 | ~0.37 |
+| Top-20 | aggTrade | 240.1 | 47.7 | 4.12 | ~4.36 |
+
+**Key findings**:
+- **aggTrade works on `/market/stream`** — v1's zero count was the
+  routing bug. Top-20 aggTrade is the largest stream by far
+  (4.1–4.4 GB/day raw), dominated by low-cap perps (EVAA 72k msgs,
+  BTW 35k, O 21k vs BTC 4.4k in 10 min). Confirms archive-backfill
+  priority; live-recording aggTrade is NOT proposed.
+- **depth5 is change-driven**: ~0.3–0.7 msg/s per symbol vs the 10/s
+  push ceiling — pushes only on top-5-level changes, not on a fixed
+  clock. v1's 31 msg/s was inflated by reconnect replays/dup windows;
+  v2's 7.6 msg/s is the realistic figure.
+- **bookTicker per-symbol rates vary ~100×** (EVAA 15.0k msgs vs XAG
+  153 in 10 min) — 24h quote volume does NOT predict tick rate;
+  universe selection for live recording should use measured rates,
+  not quote volume alone.
+
+**Stored-size estimates** (unchanged assumptions — verify on first
+week of parquet data): JSONL raw ≈ download above; parquet
+~10–20× reduction assumed. Live-recording set (liq+bookTicker+depth5,
+top-20): ~2.1–2.8 GB/day download, est. **~0.15–0.3 GB/day stored**
+→ ~55–110 GB/year. aggTrade excluded (archive-sourced).
 
 **Universe size decision**: live-recording universe = **top-20 USDT
-perps by 24h quote volume** (measured feasible: ~6 GB/day download,
-~0.3–0.6 GB/day stored). The *tradable/research* universe (WP-02
+perps by 24h quote volume** (measured feasible: ~2.1–2.8 GB/day
+download, est. ~0.15–0.3 GB/day stored — see caveat below that quote
+volume poorly predicts per-symbol tick rates). The *tradable/research* universe (WP-02
 eligibility filters) may be larger for klines-only data — klines are
 cheap (~MBs/symbol/year) — but live high-frequency streams stay at
 top-20 until storage/bandwidth justify expansion. M2 and FIP-1 both
 use 20 — aligned.
 
-**Storage budget reality**: 64.4 GB free now. At ~0.3–0.6 GB/day
-stored, ~3–7 months of headroom without expansion or retention
-policy. A retention/compaction policy (e.g., parquet-ize JSONL older
-than 7 days, then drop raw) is required — engineering recommendation.
+**Storage budget reality**: 64.4 GB free now. At ~0.15–0.3 GB/day
+stored (parquet, unverified assumption), ~7–14 months of headroom
+without expansion or retention policy — but JSONL raw is ~2.1–2.8
+GB/day, so compaction must happen within days, not months. A
+retention/compaction policy (parquet-ize JSONL older than 7 days,
+then drop raw) is required — engineering recommendation.
 
 ### 8.3 Timestamp and PIT for high-frequency data
 - Preserve exchange event timestamp (ms) AND receipt timestamp (µs).
@@ -768,37 +805,19 @@ data and consuming research budget (PREREG IV.4). Each registered
 config = architecture × horizon × feature set × threshold combination.
 Budget: 1/40 used, 39 remaining. N_trials = 1,480.
 
-### 11.2 Trial-count definition — conflict resolution (item 5, PROPOSAL for owner)
+### 11.2 Trial-count definition — OWNER RULING (2026-11-28)
 
-**The conflict**: rev-1 §11.2 said model training/eval without P&L
-doesn't count as a trial. PREREG IV.4 says "each registered (model
-architecture × horizon × feature set × threshold set) combination
-consumes the trial budget" and "feature-selection sweeps, horizon
-searches, and threshold grids each count their evaluated combinations"
-— i.e., **selection on historical data counts regardless of metric**
-(RMSE/IC or P&L). IV.4 is also unclear whether one registered trial
-with a config matrix consumes 1 or N of the 40 budget slots (Family 1
-used 1 slot but added 24 to DSR N).
-
-**Proposed single definition** (for owner decision):
-
-> **A trial-budget slot is consumed by one registered experiment
-> family** — a frozen (hypothesis × instrument-set × timeframe-set ×
-> model/feature/horizon/threshold matrix) specification registered
-> BEFORE evaluation. Within a family, every distinct evaluated
-> configuration adds to the DSR trial count N (per IV.4's "genuine
-> selection opportunities"), but consumes only the family's single
-> budget slot. Infrastructure work, unsupervised exploration with no
-> selection, and paper trading consume no slots. Any sweep over
-> model/feature/horizon/threshold alternatives on historical data —
-> whether scored by P&L, RMSE, IC, or any other metric — is a
-> selection and must be inside a registered family; unregistered
-> sweeps are prohibited.
-
-This works with 39 remaining slots: each new research family (e.g.,
-"ML return forecaster → trading strategy", "1m momentum family")
-registers once with a frozen matrix; the matrix size affects DSR N,
-not the slot count. **Owner must approve or amend.**
+PREREG IV.4 governs: **each registered (model architecture × horizon ×
+feature set × threshold set) combination consumes the trial budget
+exactly like a strategy config** — i.e., the 40-slot cap counts
+registered combinations, with **max 12 per family**. The DSR trial
+count N grows by every distinct hypothesis actually evaluated.
+Walk-forward folds, random baselines, placebos, and diagnostic
+re-computations of the SAME hypothesis do not count; **cost-scenario
+selection DOES count** — reporting only the best cost scenario is a
+selection and consumes budget. Any family-level (one-slot-per-family)
+accounting would require a dated PREREG amendment BEFORE the experiment;
+no such amendment exists, so the per-combination reading stands.
 
 ### 11.3 Governance constraints
 - PREREG binding; amendments for new families.
@@ -808,6 +827,13 @@ not the slot count. **Owner must approve or amend.**
   data; future-only holdout per PREREG IV.3.
 - Costs: 14/18 bps RT base/stress; funding applied.
 - No silent budget increases.
+- **Coverage gate**: no hypothesis that depends on live-recorded data
+  (liquidations, bookTicker, depth) may be evaluated until the
+  recorder's coverage for that stream is measured, and evaluation
+  windows containing excessive gaps are excluded ex ante. Coverage is
+  measured from `_gaps/` records — which now log `disconnected_at`
+  separately from the last-message timestamp (fixed 2026-11-28) —
+  not assumed.
 
 ---
 
@@ -817,7 +843,7 @@ not the slot count. **Owner must approve or amend.**
 
 | Task | Feasible now? | Notes |
 |---|---|---|
-| Live recording top-20 (liq+bookTicker+depth5) | ✅ Yes | ~6 GB/day download, network-bound; ~0.3–0.6 GB/day stored |
+| Live recording top-20 (liq+bookTicker+depth5) | ✅ Yes | ~2.1–2.8 GB/day download, network-bound; ~0.15–0.3 GB/day stored (parquet est.) |
 | Kline/funding/OI backfill | ✅ Yes | Existing downloader |
 | OI archive ingestion | ✅ Yes | ~70MB compressed; hours |
 | Feature engineering on klines | ✅ Yes | Pandas/polars |
@@ -826,7 +852,7 @@ not the slot count. **Owner must approve or amend.**
 | Tick-level feature engineering | ⚠️ Marginal | Needs polars/DuckDB; large data |
 | Temporal deep model training | ❌ No | Needs GPU/cloud; defer |
 | High-frequency online inference | ❌ No | Needs low-latency infra |
-| Full-depth book collection | ⚠️ Marginal | depth20 ~4.5 GB/day download; limit scope |
+| Full-depth book collection | ⚠️ Marginal | depth20 ~4× depth5 payload ≈ 1.1–1.5 GB/day download (est.); limit scope |
 
 ### 12.2 When additional resources justified
 - Storage >200GB tick data → cloud storage or larger disk.
@@ -867,16 +893,16 @@ research — cannot be accelerated, only started earlier.
 ### Requires owner approval
 | Decision | Why owner-only | Recommended default |
 |---|---|---|
-| **Storage budget** | ~110–220 GB/year live recording + backfills vs 64GB free | Approve ~500GB–1TB budget; parquet+retention policy |
+| **Storage budget** | ~55–110 GB/year live recording (parquet est.) + backfills vs 64GB free; JSONL raw ~2.1–2.8 GB/day forces early compaction | Approve ~500GB–1TB budget; parquet+retention policy |
 | **Compute upgrade / cloud** | Temporal models, production trading | Defer until GBM baseline exhausted |
 | **Exchange/account access** | Trading requires API keys | Paper/testnet first; no live without authorization |
 | **Live trading authorization** | Real money risk | Only after ≥6mo paper + sign-off |
 | **Risk appetite / limits** | Leverage, drawdown, position sizes | Conservative start (2x cap, 20% MDD) |
-| **Research governance** | Trial budget, PREREG amendments, §11.2 definition | Approve §11.2 proposal; keep 39 slots |
+| **Research governance** | Trial budget, PREREG amendments | §11.2 ruled 2026-11-28: per-combination cap (max 12/family); keep 39 slots |
 | **Strategic scope** | Which families first | Regime+forecast infra first; then 1m–15m momentum/mean-reversion; carry only with new mechanism |
 | **Cross-exchange timing** | Bybit/other exchanges | After Binance system validated |
 | **Options inclusion** | New asset class | Deferred until core proven |
-| **depth5 vs depth20** | Bandwidth/storage tradeoff | Start depth5 (measured 1.13 GB/day); upgrade if research justifies |
+| **depth5 vs depth20** | Bandwidth/storage tradeoff | Start depth5 (measured ~0.27–0.37 GB/day download); upgrade if research justifies |
 
 ### Engineering recommendations (no owner approval needed)
 - Code organization, data schemas, recorder reliability design,

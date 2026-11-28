@@ -128,6 +128,7 @@ class StreamRecorder:
         self.last_msg_ts: float | None = None
         self._forced_disconnect_at: float | None = None
         self._pending_gap_start: datetime | None = None
+        self._pending_disconnect: datetime | None = None
         self._last_close: dict | None = None
         self._last_error: str | None = None
         self._flush_seq = 0
@@ -402,9 +403,19 @@ class StreamRecorder:
                             details["close_reason"] = self._last_close.get("reason")
                         if self._last_error:
                             details["error"] = self._last_error
+                        # gap_start/gap_end span last-message -> reconnect
+                        # (the true no-data window). disconnected_at records
+                        # when the socket actually died, so quiet feeds are
+                        # not mislabeled as disconnected for hours.
+                        if self._pending_disconnect is not None:
+                            details["disconnected_at"] = _iso(self._pending_disconnect)
+                        if self.last_msg_ts is not None:
+                            details["last_msg_ts"] = _iso(datetime.fromtimestamp(
+                                self.last_msg_ts, tz=timezone.utc))
                         self._log_gap(self._pending_gap_start, gap_end, "disconnect",
                                       details or None)
                     self._pending_gap_start = None
+                    self._pending_disconnect = None
                     self._last_close = None
                     self._last_error = None
                 self._last_pong_ts = time.time()  # grace period after connect
@@ -444,6 +455,10 @@ class StreamRecorder:
                     ws.close(timeout=1)  # type: ignore[name-defined]
                 except Exception:  # noqa: BLE001
                     pass
+                # Socket teardown time — distinct from last_msg_ts so gap
+                # records show both the data-coverage window and the actual
+                # disconnect duration.
+                self._pending_disconnect = _utcnow()
             # Backoff accounting: a handshake alone never resets the counter.
             self._record_attempt_outcome(conn_start_mono, msg_count_at_connect)
             # Gap starts at the last received message (not at disconnect);
@@ -617,7 +632,12 @@ def parse_binance_bookticker(msg: dict) -> list[dict]:
         return []
     return [{
         "source": "binance",
-        "sampled": False,
+        # NOT full tick data: the recorder keeps only the first bookTicker
+        # per symbol per clock-second bucket (sample_seconds=1.0). Rows are
+        # 1 Hz first-in-bucket snapshots — label them so downstream
+        # microstructure analysis does not treat them as complete ticks.
+        "sampled": True,
+        "sample_rule": "first_per_symbol_per_1s_bucket",
         "event_type": "book_ticker",
         "event_time": msg.get("E"),
         "update_id": msg.get("u"),
