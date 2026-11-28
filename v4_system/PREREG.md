@@ -596,3 +596,119 @@ change any acceptance classification: the verdict remains
 **NO EDGE (0/24)**. The corrected DSR p-values are reported in
 `v4_system/results/family1_turtle_dt-001-f4f572efaa88b092_dsr_corrected.json`;
 the original results artifact is preserved byte-for-byte.
+
+## IV. Holdout contamination correction and future-only holdout policy (2026-11-28)
+
+*Integrity correction issued AFTER the Family 1 execution and the
+DSR correction (III.11). No historical experiment record, result, or
+trade file is modified; this section corrects the STATUS of the
+2026-11-01..2026-11-28 window and replaces the holdout policy going
+forward.*
+
+### IV.1 Audit: who actually accessed 2026-11-01..2026-11-28
+
+Dataset coverage is NOT experimental consumption. The audit below
+distinguishes the two, based on the actual date bounds hard-coded in
+each experiment script (not on what the data store contains).
+
+| Program / experiment | Instruments | Frequency | Dates consumed | Nov 2026 accessed? |
+|---|---|---|---|---|
+| A (paper systems) | BTC/SOL/ETH perps | daily/1h paper | <= 2026-10 | NO |
+| B (daily OKX spot) | spot universe | daily | <= 2026-10-31 | NO |
+| C (funding arb) | perps | daily/8h funding | <= 2026-10-31 | NO |
+| D1-D5 (indicator stack, grid, Turtle 36) | SOL/BTC/ETH perps | 1h/4h | IS/OOS 2024-01 -> 2026-03; ETH holdout to 2026-10-09 | NO |
+| D6-D8 (Amendments C/D/E) | same | 1h | <= 2026-03 (ETH <= 2026-10-09) | NO |
+| E-H01 cascade fade | 1m perps | 1m | discovery 2025-11-01..2026-07-31; holdout <= 2026-10-31 | NO |
+| E-H02/H02b funding reversal | perps | 8h funding | discovery <= 2025-01; holdout <= 2026-10-31 | NO |
+| E-H03 vol breakout + latency | 20 symbols | 1h/1m | <= 2026-10-31 (END=2026-11-01 exclusive) | NO |
+| E-H04 beta overshoot | perps | 1h | discovery <= 2026-08-01; holdout <= 2026-10-31 | NO |
+| E-H05/H05b cross-sectional momentum | 36 perps | daily | holdout 2025-01-01..2026-10-31 | NO |
+| E-H06 funding cash | perps | 8h | <= 2026-10-31 | NO |
+| E-H07 TSMOM | perps | daily | <= 2026-10-31 | NO |
+| E-H08 weekend alt bleed | alts | daily | holdout 2025-01-01..2026-10-31 | NO |
+| **E-H09 OI pilot** | 20 perps | **1h, live API** | **~2026-11-05 .. 2026-11-26** | **YES** |
+| **E-H10 premium fade** | perps + index | 8h events | holdout 2025-01-01..**2026-11-26** | **YES** |
+| **E-H11 SOL basis check** | SOL perp+spot | 8h events | sample ..**2026-11-26** | **YES** |
+| **E-H12 pairs mean-reversion** | BTC/ETH/SOL pairs | daily | holdout ..**2026-11-26** | **YES** |
+| trendlab (RGMT/OmniPulse) | multi-asset perps | daily | holdout 2025-07-01..2026-10-31 | NO |
+| Family 1 (V4 Turtle+daily filter) | BTC/ETH/SOL perps | 1h/4h | folds <= 2026-10-31; Nov window registered but NEVER read | NO |
+
+**Conclusion**: 2026-11-01..2026-11-28 was accessed by **four Program E
+experiments (H09, H10, H11, H12)** at 1h / 8h-event / daily frequency,
+using perp klines, index klines, spot klines, funding, and open
+interest. The window was used for **holdout evaluation** of those
+hypotheses (single-touch per their own registrations) — it was NOT
+used for feature or parameter selection within those experiments,
+but it WAS used for strategy selection at the program level (the
+kill/keep decisions in FINDINGS.md). The II.5 claim that "no strategy
+has read it" is therefore **FALSE** and is corrected here.
+
+### IV.2 Corrected holdout status
+
+- The 2026-11-01..2026-11-28 window is **EXPOSED / CONTAMINATED** for
+  any selection-free evaluation. It may not be described as pristine,
+  untouched, or a valid veto gate.
+- Family 1's registered boundaries (folds <= 2026-10-31) and its
+  NO EDGE result are **preserved unchanged**; Family 1 never read the
+  November window, so its result is not invalidated by this exposure.
+- **Prohibition**: the November 2026 window must not be used for new
+  model selection, parameter tuning, feature selection, or strategy
+  selection. It may only be cited as already-consumed history.
+
+### IV.3 Future-only holdout policy (replaces II.5 going forward)
+
+1. **No new historical holdout is declared.** All existing history
+   <= 2026-11-28 is treated as development/exploratory data.
+2. **Holdout start**: defined ONLY at the moment the final ML research
+   specification and all relevant code are frozen. The freeze commit
+   hash and UTC timestamp are recorded in `trials_log.csv` and in a
+   dated PREREG amendment BEFORE any holdout observation is read.
+3. **Holdout content**: only observations with `available_at` (or
+   event time, per the PIT label) STRICTLY AFTER the freeze timestamp.
+   Data collected before the freeze — even if never analyzed — is
+   development data.
+4. **Inaccessibility**: the holdout is inaccessible to feature
+   selection, training, model comparison, hyperparameter tuning, and
+   strategy selection. Single-touch evaluation procedure is defined in
+   advance (same hurdles as the development evaluation).
+5. **Sufficiency**: the holdout must accumulate enough forward
+   observations for a meaningful evaluation (target: >= 6 months for
+   daily strategies, >= 3 months for intraday, adjusted per strategy
+   frequency). No convenient historical date is substituted; if the
+   forward window is too short, the evaluation is reported as
+   inconclusive rather than padded with history.
+6. **Recorder dependency**: the forward holdout depends on the data
+   recorder continuing to run. If recording stops, the holdout clock
+   pauses and the gap is disclosed.
+
+### IV.4 Trial-count policy clarification (supersedes the bare N=1,480)
+
+The DSR trial count counts **genuine selection opportunities**, not
+raw runs:
+
+- **Counts as a trial**: each distinct hypothesis evaluated — a
+  (signal family x instrument x timeframe x parameter set) combination
+  that could have been chosen. Program D's 1,456 registered configs
+  each represent such a hypothesis.
+- **Re-logged configurations** (e.g., the +72 Amendment C re-log):
+  counted, because they were re-evaluated as separate arms with
+  separate results; the re-log is disclosed, not hidden.
+- **Correlated variants** (e.g., the 8 Family 1 channel configs, which
+  differ only in N/M): counted individually for conservatism, and the
+  correlation is documented; a sensitivity analysis with a reduced
+  effective count (e.g., 8 families instead of 24 config-assets) is
+  reported alongside.
+- **NOT counted**: walk-forward folds, cost scenarios, random-baseline
+  runs, placebo runs, and diagnostic re-computations of the SAME
+  hypothesis — these are robustness checks, not new selection
+  opportunities.
+- **Future ML**: each registered (model architecture x horizon x
+  feature set x threshold set) combination consumes the trial budget
+  exactly like a strategy config. Feature-selection sweeps, horizon
+  searches, and threshold grids each count their evaluated
+  combinations; the budget cap (40 total, 12 per family) applies to
+  registered trials, while the DSR N grows by the number of distinct
+  hypotheses actually evaluated.
+- **Current N**: 1,480 (1,456 Program D + 24 Family 1 config-assets),
+  per III.11. This correction changes the INTERPRETATION of the holdout,
+  not the Family 1 result or its trial count.
