@@ -150,26 +150,69 @@ def load_1m_for_subbars(symbol: str, as_of, *, strict: bool = False) -> pd.DataF
 
 def daily_trend_map(symbol: str, as_of, *, ema_span: int = 20,
                     strict: bool = False) -> pd.Series:
-    """Daily EMA trend filter rebuilt from V4 1m perp data.
+    """Daily EMA trend filter built from V4 1m perp data.
 
-    Replicates ``candidate_runner.daily_trend_map`` construction: last
-    close of each UTC day resampled from the 1m series, EMA(span, adjust
-    =False) seeded at the V4 archive start (2023-01-01), +1 if close > EMA
-    else -1. Warmup (~``ema_span`` trading days) yields NaN-free values
-    only after convergence; callers must treat early values as warmup.
+    Delegates the trend VALUES to the single audited implementation
+    ``quant_research.candidate_runner.daily_trend_from_daily_close`` —
+    there is exactly one EMA/sign construction in the codebase. The V4
+    adapter only supplies the daily close series (last close of each UTC
+    day resampled from the 1m perp series, identical resampling to
+    ``candidate_runner.daily_trend_map``).
 
-    NOTE: seeded at 2023-01-01, not the original quant_research archive
-    start — values from ~2023-02 onward are valid; label reports
-    accordingly.
+    Seeded at the V4 archive start (2023-01-01), not the original
+    quant_research archive start — values from ~2023-02 onward are valid;
+    label reports accordingly. Warmup (~``ema_span`` trading days) yields
+    unreliable early values.
     """
+    from quant_research.candidate_runner import daily_trend_from_daily_close
     as_of = _check_as_of(as_of)
     m1 = load_klines(symbol, "1m", as_of, market="perp", strict=strict)
     daily = m1["close"].resample("1D").last().dropna()
-    ema = daily.ewm(span=ema_span, adjust=False).mean()
-    trend = pd.Series(np.where(daily > ema, 1.0, -1.0), index=daily.index)
+    trend = daily_trend_from_daily_close(daily, span=ema_span)
     trend.attrs["pit_label"] = PIT_LABEL
     trend.attrs["source"] = f"{symbol}_perp_1m resampled 1D, EMA{ema_span}"
     return trend
+
+
+def apply_daily_mask(features: dict, trend: pd.Series) -> dict:
+    """The audited daily-trend entry gate, verbatim from
+    ``quant_research.candidate_runner.apply_daily_mask``. Re-exported so
+    Phase 2 runners use the exact tested function — no second copy."""
+    from quant_research.candidate_runner import apply_daily_mask as _impl
+    return _impl(features, trend)
+
+
+def load_turtle_bundle(symbol: str, timeframe: str, as_of, *,
+                       strict: bool = False,
+                       include_1m_subbars: bool = True) -> dict:
+    """Load everything ``run_turtle_simulation`` needs for one symbol/TF.
+
+    Returns ``{"df", "funding", "df_1m", "daily_trend"}``:
+      - ``df``        : signal-timeframe klines (OHLCV, UTC index)
+      - ``funding``   : funding_rate Series at actual settlement times
+      - ``df_1m``     : 1m perp klines for intrabar stop/level resolution
+                        (None when ``include_1m_subbars=False``)
+      - ``daily_trend``: EMA20 daily trend map for ``apply_daily_mask``
+
+    All datasets share the SAME ``as_of`` cutoff. ``df_1m`` covers only
+    the V4 1m history (from 2023-01-01); bars outside that range fall
+    back to the engine's documented pessimistic stop-first rule — the
+    runner MUST report ``ambiguous_bars`` and the sub-bar coverage so
+    this fallback is never silent.
+    """
+    as_of = _check_as_of(as_of)
+    bundle = {
+        "df": load_klines(symbol, timeframe, as_of, market="perp",
+                          strict=strict),
+        "funding": load_funding(symbol, as_of, strict=strict),
+        "df_1m": (load_1m_for_subbars(symbol, as_of, strict=strict)
+                  if include_1m_subbars else None),
+        "daily_trend": daily_trend_map(symbol, as_of, strict=strict),
+    }
+    for k, v in bundle.items():
+        if v is not None and hasattr(v, "attrs"):
+            v.attrs["pit_label"] = PIT_LABEL
+    return bundle
 
 
 def load_margin_tiers_as_of(symbol: str, as_of):

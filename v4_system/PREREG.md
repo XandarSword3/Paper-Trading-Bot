@@ -366,3 +366,116 @@ indicator, or backtesting calculation was changed. No Phase 2 experiment
 was run. No new historical data was fetched. The live recorder and
 watchdog were not altered. No live orders were placed. Previously
 recorded experiment results were not changed.
+
+---
+
+# PART III — Phase 2 Family 1 Registration (Turtle/Donchian + Daily Trend Filter)
+
+*Registered 2026-11-28 on branch `phase2-v4-adapter`, BEFORE any Phase 2
+historical strategy evaluation. This amendment does not modify the
+freeze commit or holdout definition in Part II.5.*
+
+## III.1 Relationship to prior research
+
+This family reuses the EXACT Program D Amendment C machinery:
+`quant_research/strategies/turtle_strategy.py` (Donchian breakout,
+Wilders ATR sizing, pyramiding, 2N stop, 1m sub-bar resolution) and
+`quant_research/candidate_runner.py` (`daily_trend_map` /
+`apply_daily_mask`, the audited daily EMA(20) trend gate). The daily
+filter's motivation comes from Amendment C results (C1 improved 11 of 12
+pooled pairings vs C0) — a direction worth keeping alive, NOT a proven
+edge. Program D tested 5m/15m/1h on the quant_research archive with
+IS 2024-01?2025-03 / OOS 2025-04?2026-03 and found NO EDGE (0/24 pooled
+configurations cleared all hurdles). Family 1 is a NEW registered trial
+under the V4 budget on V4 data — it is not a repeat of Amendment C
+(different data source, different date coverage, 1h/4h only, max_units=1,
+daily filter mandatory).
+
+## III.2 Strategy definition (frozen)
+
+- **Universe**: BTCUSDT, ETHUSDT, SOLUSDT USD?-M perpetuals.
+- **Decision timeframes**: 1h and 4h (4h is a new timeframe application
+  of identical rules — same channels, sizing, stops; NOT a parameter
+  optimization).
+- **Entry (long)**: close[t] > highest high of prior N bars (excluding
+  bar t); **entry (short)**: close[t] < lowest low of prior N bars.
+  Fill at open[t+1]. Daily trend gate: long entries only when the
+  previous COMPLETED UTC day's close > its EMA(20) on daily closes
+  resampled from 1m perp data; short entries only when trend == -1.
+  Missing/warmup trend blocks the direction (no default).
+- **Exit**: 2N ATR protective stop (N = channel lookback, ATR = Wilder
+  ATR(N)); M-bar Donchian channel exit; intrabar stop-vs-level
+  ambiguity resolved by 1m sub-bars ([bar_open, next_open) window,
+  chronological, no lookahead); missing sub-bars -> documented
+  pessimistic stop-first fallback, counted in `ambiguous_bars`.
+- **Sizing**: 1% of equity risk per unit, stop distance 2*ATR;
+  pyramiding DISABLED (max_units=1); portfolio gross leverage cap 2.0x;
+  minimum order $10 notional.
+- **Funding**: actual settlement timestamps, direction-aware
+  (long pays positive rate, short receives; reversed when negative).
+- **Costs**: base = taker 5 bps + slippage 2 bps per side (14 bps RT);
+  stress = taker 5 bps + slippage 4 bps per side (18 bps RT). No maker
+  fills (execution methodology is taker-only). Spread/market impact
+  UNKNOWN -> covered by stress slippage, never zero.
+
+## III.3 Configuration matrix (8 configurations, within 12-trial family cap)
+
+Channel pairs (N, M) — the four pairs documented in Program D:
+(20,10), (20,20), (55,10), (55,20).
+Timeframes: 1h, 4h.
+Matrix = 4 pairs x 2 TFs = **8 configurations**, single arm
+(daily filter ON, max_units=1). No other parameters vary.
+`bars_per_year`: 1h = 8760, 4h = 2190.
+
+## III.4 Date ranges
+
+- **Development window**: 2024-01-01 ? 2026-10-31 UTC for BTCUSDT and
+  SOLUSDT. For ETHUSDT: 2024-01-01 ? 2026-03-31 UTC — the ETH
+  2026-04-01?2026-10-09 window remains RESERVED per Part II.2 and is
+  excluded from Family 1.
+- **Holdout**: 2026-11-01 ? 2026-11-28 UTC — ENTIRELY EXCLUDED. No
+  Family 1 result may use it; it remains the single-touch veto gate.
+- Prior exposure is acknowledged: BTC 2025+ and SOL 2026-04+ were used
+  by earlier programs (Part II.2). Family 1 results on those windows
+  are therefore exploratory, not pristine; the DSR trial count
+  (1,354 prior + Family 1) accounts for selection pressure.
+
+## III.5 Validation protocol
+
+- **Five chronological walk-forward folds** over the development
+  window per symbol/TF: fold boundaries computed chronologically
+  (expanding train, forward test), no shuffling, no overlap leakage.
+- **Metrics**: net expectancy (bps/trade), OOS trade count, max
+  drawdown, daily Sharpe (sqrt(365)), deflated Sharpe ratio at
+  N_trials = 1,354 + registered Phase 2 trials, block-bootstrap CI.
+- **Pass hurdles** (frozen): net expectancy > 0 after base costs;
+  positive under stress costs; DSR >= 0.95; max drawdown <= 20%;
+  >= 30 OOS trades per configuration; beats random-entry baseline.
+- **Stopping rules**: family stops after 12 registered trials OR when
+  all 8 configurations fail hurdles; failed trials are recorded, never
+  omitted.
+
+## III.6 Budget allocation
+
+- Family 1: **1 trial** containing 8 configurations (of 12 allowed).
+- Global Phase 2 budget: 40 trials total; this registration consumes
+  1 upon execution (registration row appended to
+  `v4_system/trials_log.csv` BEFORE any results).
+- Repeats of identical (family, config) limited to 3.
+
+## III.7 Data & PIT labelling
+
+All Family 1 inputs load via `v4_system/adapters/quant_research_data.py`
+with `strict=False` and carry the label
+`EVENT-TIME PIT — HISTORICAL AVAILABILITY UNKNOWN`. Results must be
+reported with this label; strict-PIT claims are prohibited. OI features
+excluded (~30-day coverage). Margin tiers NOT used for historical
+liquidation claims (effective dates unknown).
+
+## III.8 Scope statement
+
+This amendment registers a strategy family and budget only. No strategy
+code was modified (`turtle_strategy.py`, `candidate_runner.py` logic
+unchanged — only the series-based `daily_trend_from_daily_close`
+extraction, behaviour-identical). No historical backtest was run. No
+holdout data was accessed. No live orders. `master` is untouched.

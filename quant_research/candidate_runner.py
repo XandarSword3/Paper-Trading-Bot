@@ -58,6 +58,20 @@ WINDOWS = {
 }
 
 
+def daily_trend_from_daily_close(daily_close: pd.Series,
+                                 span: int = DAILY_EMA_SPAN) -> pd.Series:
+    """The audited daily EMAn trend from a daily close series.
+
+    This is the single source of truth for the trend VALUES: EMA(span,
+    adjust=False) seeded at the series start, +1 if close > EMA else -1.
+    ``daily_trend_map`` (archive parquet path) and the V4 adapter both
+    delegate here, so there is exactly one implementation.
+    """
+    daily = daily_close.sort_index().dropna()
+    ema = daily.ewm(span=span, adjust=False).mean()
+    return pd.Series(np.where(daily > ema, 1.0, -1.0), index=daily.index)
+
+
 def daily_trend_map(asset: str) -> pd.Series:
     """The audited daily EMAn(20) trend: index = daily timestamps, values +1/-1.
 
@@ -68,8 +82,7 @@ def daily_trend_map(asset: str) -> pd.Series:
     """
     m1 = pd.read_parquet(os.path.join(DATA_DIR, f"{asset}_1m.parquet"))
     daily = m1.set_index("timestamp")["close"].sort_index().resample("1D").last().dropna()
-    ema = daily.ewm(span=DAILY_EMA_SPAN, adjust=False).mean()
-    return pd.Series(np.where(daily > ema, 1.0, -1.0), index=daily.index)
+    return daily_trend_from_daily_close(daily)
 
 
 def apply_daily_mask(features: Dict, trend: pd.Series) -> Dict:
