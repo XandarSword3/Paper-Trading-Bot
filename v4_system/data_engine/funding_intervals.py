@@ -69,24 +69,27 @@ def infer_intervals(funding_df: pd.DataFrame,
     hours = diffs.dt.total_seconds() / 3600.0
     # Dominant interval = median diff (robust to isolated gaps).
     dominant = float(hours.median())
-    # Segment the series into runs of constant rounded interval.
-    rounded = hours.round(6)
+    # Segment into runs of (approximately) constant interval. Funding
+    # timestamps carry millisecond jitter, so equality is tested with a
+    # tolerance (TOL_H hours = 3 minutes) instead of exact float equality.
+    TOL_H = 0.05
     segments = []
     start_idx = 0
-    current = rounded.iloc[0]
+    current = float(hours.iloc[0])
     run = 1
-    for i in range(1, len(rounded)):
-        if rounded.iloc[i] == current:
+    for i in range(1, len(hours)):
+        h = float(hours.iloc[i])
+        if abs(h - current) <= TOL_H:
             run += 1
         else:
-            segments.append({"interval_hours": float(current),
+            segments.append({"interval_hours": round(current, 3),
                              "n": run,
                              "from": str(ts[start_idx + 1]),
                              "to": str(ts[start_idx + run])})
             start_idx = i
-            current = rounded.iloc[i]
+            current = h
             run = 1
-    segments.append({"interval_hours": float(current), "n": run,
+    segments.append({"interval_hours": round(current, 3), "n": run,
                      "from": str(ts[start_idx + 1]),
                      "to": str(ts[-1])})
     # Keep only segments with a sustained run; merge isolated anomalies
@@ -95,13 +98,14 @@ def infer_intervals(funding_df: pd.DataFrame,
     if not sustained:
         sustained = [max(segments, key=lambda s: s["n"])]
     dominant_seg = max(sustained, key=lambda s: s["n"] * s["interval_hours"])
-    changes = [s for s in sustained if s["interval_hours"] != dominant_seg["interval_hours"]]
+    dom = dominant_seg["interval_hours"]
+    changes = [s for s in sustained if abs(s["interval_hours"] - dom) > TOL_H]
     confidence = "high" if len(sustained) >= 2 or len(ts) >= 10 else "medium"
     if changes:
         confidence = "high"
     return {
         "observed_intervals": sustained,
-        "dominant_interval_hours": float(dominant_seg["interval_hours"]),
+        "dominant_interval_hours": float(dom),
         "changes_detected": len(changes) > 0,
         "n_settlements": int(len(ts)),
         "confidence": confidence,

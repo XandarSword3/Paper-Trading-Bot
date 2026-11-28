@@ -96,8 +96,10 @@ def fetch_spot_specs(symbols: list[str] | None = None,
             "status": s["status"],
             "baseAsset": s["baseAsset"],
             "quoteAsset": s["quoteAsset"],
-            "pricePrecision": s["pricePrecision"],
-            "quantityPrecision": s["quantityPrecision"],
+            # Spot exchangeInfo has no pricePrecision/quantityPrecision;
+            # asset precisions serve the same role.
+            "pricePrecision": s.get("quoteAssetPrecision"),
+            "quantityPrecision": s.get("baseAssetPrecision"),
             "baseAssetPrecision": s.get("baseAssetPrecision"),
             "quotePrecision": s.get("quotePrecision"),
             "tick_size": _f(filters, "PRICE_FILTER", "tickSize"),

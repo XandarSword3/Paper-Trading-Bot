@@ -161,6 +161,17 @@ def test_isolated_gap_not_a_frequency_change():
     assert obs["dominant_interval_hours"] == 8.0
 
 
+def test_millisecond_jitter_not_a_frequency_change():
+    """Funding timestamps carry ms jitter; it must not look like a change."""
+    t0 = pd.Timestamp("2026-01-01", tz="UTC")
+    idx = [t0 + pd.Timedelta(hours=i * 8, milliseconds=i % 3)
+           for i in range(20)]
+    df = pd.DataFrame({"fundingRate": 0.0001}, index=pd.DatetimeIndex(idx))
+    obs = fi.infer_intervals(df)
+    assert obs["changes_detected"] is False
+    assert obs["dominant_interval_hours"] == 8.0
+
+
 def test_unknown_interval_for_too_few_observations():
     df = _funding_df([0, 8])
     obs = fi.infer_intervals(df)
