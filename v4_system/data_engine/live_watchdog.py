@@ -201,6 +201,41 @@ def send_telegram(text: str, config: tuple[str, str] | None = None) -> bool:
 REMINDER_INTERVAL = 3600.0  # remind at most hourly while a problem persists
 RECOVERY_STABLE_SECONDS = 300.0  # 5 continuous healthy minutes before recovery
 INCIDENTS_PATH = DATA_DIR / "_watchdog_incidents.json"
+PENDING_TG_PATH = DATA_DIR / "_telegram_pending.json"
+
+
+def _load_pending_telegram() -> list[str]:
+    try:
+        raw = json.loads(PENDING_TG_PATH.read_text(encoding="utf-8"))
+        return [str(t) for t in raw] if isinstance(raw, list) else []
+    except Exception:  # noqa: BLE001 — missing/corrupt outbox starts empty
+        return []
+
+
+def _save_pending_telegram(items: list[str]) -> None:
+    try:
+        PENDING_TG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        tmp = PENDING_TG_PATH.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(items), encoding="utf-8")
+        os.replace(tmp, PENDING_TG_PATH)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("could not persist telegram outbox: %s", exc)
+
+
+def _queue_telegram(text: str) -> None:
+    items = _load_pending_telegram()
+    items.append(text)
+    _save_pending_telegram(items)
+
+
+def flush_pending_telegram() -> None:
+    """Retry queued Telegram sends until they succeed (called every check)."""
+    items = _load_pending_telegram()
+    if not items:
+        return
+    remaining = [t for t in items if not send_telegram(t)]
+    if len(remaining) != len(items):
+        _save_pending_telegram(remaining)
 
 
 class AlertState:
@@ -334,7 +369,9 @@ def emit(alerts: list[dict]) -> None:
                 urllib.request.urlopen(req, timeout=10)  # noqa: S310
             except Exception as exc:  # noqa: BLE001
                 logger.warning("webhook alert failed: %s", exc)
-        send_telegram(f"V4 live recorder ALERT\n{line}")
+        text = f"V4 live recorder ALERT\n{line}"
+        if not send_telegram(text):
+            _queue_telegram(text)
 
 
 def main() -> None:
@@ -349,6 +386,7 @@ def main() -> None:
             # their health incident immediately (no second 300s wait).
             ready = {f"{s}|error" for s in confirmed_healthy_streams()}
             emit(state.process(alerts, time.time(), recovery_ready=ready))
+            flush_pending_telegram()
         except Exception:  # noqa: BLE001 — watchdog must never die
             logger.exception("watchdog check failed")
         time.sleep(CHECK_INTERVAL)

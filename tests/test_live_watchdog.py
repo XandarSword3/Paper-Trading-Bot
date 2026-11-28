@@ -394,3 +394,45 @@ def test_watchdog_restart_preserves_incident_for_recovery_ready(tmp_path):
     assert len(out) == 1 and out[0]["event"] == "recovery"
     assert st2.process([], now_ts=1360.0,
                        recovery_ready={"binance_bookticker|error"}) == []
+
+
+# -- telegram outbox retry -------------------------------------------------
+
+def test_failed_telegram_send_is_queued_and_retried(tmp_path, monkeypatch):
+    monkeypatch.setattr(lw, "ALERTS_FILE", tmp_path / "_alerts.jsonl")
+    monkeypatch.setattr(lw, "PENDING_TG_PATH", tmp_path / "_telegram_pending.json")
+    monkeypatch.delenv("LIVE_ALERT_WEBHOOK", raising=False)
+    sends = {"n": 0}
+
+    def flaky(text):
+        sends["n"] += 1
+        return sends["n"] > 1  # first send fails, later ones succeed
+
+    monkeypatch.setattr(lw, "send_telegram", flaky)
+    lw.emit([{"stream": "binance_bookticker", "kind": "error", "event": "start",
+              "detail": "x"}])
+    assert sends["n"] == 1
+    pending = json.loads((tmp_path / "_telegram_pending.json").read_text())
+    assert len(pending) == 1 and "ALERT" in pending[0]
+    # Later check: retry succeeds, outbox empties.
+    lw.flush_pending_telegram()
+    assert sends["n"] == 2
+    assert json.loads((tmp_path / "_telegram_pending.json").read_text()) == []
+
+
+def test_telegram_outbox_persists_until_success(tmp_path, monkeypatch):
+    monkeypatch.setattr(lw, "ALERTS_FILE", tmp_path / "_alerts.jsonl")
+    monkeypatch.setattr(lw, "PENDING_TG_PATH", tmp_path / "_telegram_pending.json")
+    monkeypatch.delenv("LIVE_ALERT_WEBHOOK", raising=False)
+    monkeypatch.setattr(lw, "send_telegram", lambda text: False)
+    lw.emit([{"stream": "s", "kind": "error", "event": "start", "detail": "d"}])
+    lw.emit([{"stream": "s", "kind": "stale", "event": "start", "detail": "d"}])
+    pending = json.loads((tmp_path / "_telegram_pending.json").read_text())
+    assert len(pending) == 2
+    # "Restart": functions reload from disk; still failing -> still pending.
+    lw.flush_pending_telegram()
+    assert len(json.loads((tmp_path / "_telegram_pending.json").read_text())) == 2
+    # Recover: both delivered, outbox cleared.
+    monkeypatch.setattr(lw, "send_telegram", lambda text: True)
+    lw.flush_pending_telegram()
+    assert json.loads((tmp_path / "_telegram_pending.json").read_text()) == []
