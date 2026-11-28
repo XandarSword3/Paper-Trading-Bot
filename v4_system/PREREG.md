@@ -369,7 +369,7 @@ recorded experiment results were not changed.
 
 ---
 
-# PART III — Phase 2 Family 1 Registration (Turtle/Donchian + Daily Trend Filter)
+# PART III ï¿½ Phase 2 Family 1 Registration (Turtle/Donchian + Daily Trend Filter)
 
 *Registered 2026-11-28 on branch `phase2-v4-adapter`, BEFORE any Phase 2
 historical strategy evaluation. This amendment does not modify the
@@ -383,11 +383,11 @@ Wilders ATR sizing, pyramiding, 2N stop, 1m sub-bar resolution) and
 `quant_research/candidate_runner.py` (`daily_trend_map` /
 `apply_daily_mask`, the audited daily EMA(20) trend gate). The daily
 filter's motivation comes from Amendment C results (C1 improved 11 of 12
-pooled pairings vs C0) — a direction worth keeping alive, NOT a proven
+pooled pairings vs C0) ï¿½ a direction worth keeping alive, NOT a proven
 edge. Program D tested 5m/15m/1h on the quant_research archive with
 IS 2024-01?2025-03 / OOS 2025-04?2026-03 and found NO EDGE (0/24 pooled
 configurations cleared all hurdles). Family 1 is a NEW registered trial
-under the V4 budget on V4 data — it is not a repeat of Amendment C
+under the V4 budget on V4 data ï¿½ it is not a repeat of Amendment C
 (different data source, different date coverage, 1h/4h only, max_units=1,
 daily filter mandatory).
 
@@ -395,7 +395,7 @@ daily filter mandatory).
 
 - **Universe**: BTCUSDT, ETHUSDT, SOLUSDT USD?-M perpetuals.
 - **Decision timeframes**: 1h and 4h (4h is a new timeframe application
-  of identical rules — same channels, sizing, stops; NOT a parameter
+  of identical rules ï¿½ same channels, sizing, stops; NOT a parameter
   optimization).
 - **Entry (long)**: close[t] > highest high of prior N bars (excluding
   bar t); **entry (short)**: close[t] < lowest low of prior N bars.
@@ -420,20 +420,20 @@ daily filter mandatory).
 
 ## III.3 Configuration matrix (8 configurations, within 12-trial family cap)
 
-Channel pairs (N, M) — the four pairs documented in Program D:
+Channel pairs (N, M) ï¿½ the four pairs documented in Program D:
 (20,10), (20,20), (55,10), (55,20).
 Timeframes: 1h, 4h.
-Matrix = 4 pairs x 2 TFs = **8 configurations**, single arm
+Matrix = 4 pairs x 2 TFs = **8 configurations**, single arm (daily filter ON, max_units=1). Each configuration runs on ALL THREE universe assets - asset is a universe dimension, not a configuration parameter (8 configs x 3 assets = 24 runs).
 (daily filter ON, max_units=1). No other parameters vary.
 `bars_per_year`: 1h = 8760, 4h = 2190.
 
 ## III.4 Date ranges
 
 - **Development window**: 2024-01-01 ? 2026-10-31 UTC for BTCUSDT and
-  SOLUSDT. For ETHUSDT: 2024-01-01 ? 2026-03-31 UTC — the ETH
+  SOLUSDT. For ETHUSDT: 2024-01-01 ? 2026-03-31 UTC ï¿½ the ETH
   2026-04-01?2026-10-09 window remains RESERVED per Part II.2 and is
   excluded from Family 1.
-- **Holdout**: 2026-11-01 ? 2026-11-28 UTC — ENTIRELY EXCLUDED. No
+- **Holdout**: 2026-11-01 ? 2026-11-28 UTC ï¿½ ENTIRELY EXCLUDED. No
   Family 1 result may use it; it remains the single-touch veto gate.
 - Prior exposure is acknowledged: BTC 2025+ and SOL 2026-04+ were used
   by earlier programs (Part II.2). Family 1 results on those windows
@@ -467,7 +467,7 @@ Matrix = 4 pairs x 2 TFs = **8 configurations**, single arm
 
 All Family 1 inputs load via `v4_system/adapters/quant_research_data.py`
 with `strict=False` and carry the label
-`EVENT-TIME PIT — HISTORICAL AVAILABILITY UNKNOWN`. Results must be
+`EVENT-TIME PIT ï¿½ HISTORICAL AVAILABILITY UNKNOWN`. Results must be
 reported with this label; strict-PIT claims are prohibited. OI features
 excluded (~30-day coverage). Margin tiers NOT used for historical
 liquidation claims (effective dates unknown).
@@ -476,6 +476,6 @@ liquidation claims (effective dates unknown).
 
 This amendment registers a strategy family and budget only. No strategy
 code was modified (`turtle_strategy.py`, `candidate_runner.py` logic
-unchanged — only the series-based `daily_trend_from_daily_close`
+unchanged ï¿½ only the series-based `daily_trend_from_daily_close`
 extraction, behaviour-identical). No historical backtest was run. No
 holdout data was accessed. No live orders. `master` is untouched.

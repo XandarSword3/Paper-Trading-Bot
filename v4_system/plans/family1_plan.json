@@ -1,0 +1,263 @@
+{
+  "family": "family1_turtle_dt",
+  "generated_at": "2026-11-28T12:03:19.119946+00:00",
+  "mode": "PLAN",
+  "n_configs": 8,
+  "assets": {
+    "BTCUSDT": {
+      "dev_range": [
+        "2024-01-01",
+        "2026-10-31"
+      ],
+      "folds": [
+        {
+          "fold_id": "Fold_1",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2023-12-31 23:59:59+00:00",
+          "test_start": "2024-01-01 00:00:00+00:00",
+          "test_end": "2024-07-25 19:11:59+00:00"
+        },
+        {
+          "fold_id": "Fold_2",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2024-07-25 19:11:59+00:00",
+          "test_start": "2024-07-25 19:12:00+00:00",
+          "test_end": "2025-02-17 14:23:59+00:00"
+        },
+        {
+          "fold_id": "Fold_3",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-02-17 14:23:59+00:00",
+          "test_start": "2025-02-17 14:24:00+00:00",
+          "test_end": "2025-09-12 09:35:59+00:00"
+        },
+        {
+          "fold_id": "Fold_4",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-09-12 09:35:59+00:00",
+          "test_start": "2025-09-12 09:36:00+00:00",
+          "test_end": "2026-04-07 04:47:59+00:00"
+        },
+        {
+          "fold_id": "Fold_5",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2026-04-07 04:47:59+00:00",
+          "test_start": "2026-04-07 04:48:00+00:00",
+          "test_end": "2026-10-31 00:00:00+00:00"
+        }
+      ],
+      "datasets_present": {
+        "perp_1h": true,
+        "perp_4h": true,
+        "perp_1m": true,
+        "funding": true
+      }
+    },
+    "SOLUSDT": {
+      "dev_range": [
+        "2024-01-01",
+        "2026-10-31"
+      ],
+      "folds": [
+        {
+          "fold_id": "Fold_1",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2023-12-31 23:59:59+00:00",
+          "test_start": "2024-01-01 00:00:00+00:00",
+          "test_end": "2024-07-25 19:11:59+00:00"
+        },
+        {
+          "fold_id": "Fold_2",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2024-07-25 19:11:59+00:00",
+          "test_start": "2024-07-25 19:12:00+00:00",
+          "test_end": "2025-02-17 14:23:59+00:00"
+        },
+        {
+          "fold_id": "Fold_3",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-02-17 14:23:59+00:00",
+          "test_start": "2025-02-17 14:24:00+00:00",
+          "test_end": "2025-09-12 09:35:59+00:00"
+        },
+        {
+          "fold_id": "Fold_4",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-09-12 09:35:59+00:00",
+          "test_start": "2025-09-12 09:36:00+00:00",
+          "test_end": "2026-04-07 04:47:59+00:00"
+        },
+        {
+          "fold_id": "Fold_5",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2026-04-07 04:47:59+00:00",
+          "test_start": "2026-04-07 04:48:00+00:00",
+          "test_end": "2026-10-31 00:00:00+00:00"
+        }
+      ],
+      "datasets_present": {
+        "perp_1h": true,
+        "perp_4h": true,
+        "perp_1m": true,
+        "funding": true
+      }
+    },
+    "ETHUSDT": {
+      "dev_range": [
+        "2024-01-01",
+        "2026-03-31"
+      ],
+      "folds": [
+        {
+          "fold_id": "Fold_1",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2023-12-31 23:59:59+00:00",
+          "test_start": "2024-01-01 00:00:00+00:00",
+          "test_end": "2024-06-12 23:59:59+00:00"
+        },
+        {
+          "fold_id": "Fold_2",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2024-06-12 23:59:59+00:00",
+          "test_start": "2024-06-13 00:00:00+00:00",
+          "test_end": "2024-11-23 23:59:59+00:00"
+        },
+        {
+          "fold_id": "Fold_3",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2024-11-23 23:59:59+00:00",
+          "test_start": "2024-11-24 00:00:00+00:00",
+          "test_end": "2025-05-06 23:59:59+00:00"
+        },
+        {
+          "fold_id": "Fold_4",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-05-06 23:59:59+00:00",
+          "test_start": "2025-05-07 00:00:00+00:00",
+          "test_end": "2025-10-17 23:59:59+00:00"
+        },
+        {
+          "fold_id": "Fold_5",
+          "train_start": "2024-01-01 00:00:00+00:00",
+          "train_end": "2025-10-17 23:59:59+00:00",
+          "test_start": "2025-10-18 00:00:00+00:00",
+          "test_end": "2026-03-31 00:00:00+00:00"
+        }
+      ],
+      "datasets_present": {
+        "perp_1h": true,
+        "perp_4h": true,
+        "perp_1m": true,
+        "funding": true
+      }
+    }
+  },
+  "costs": {
+    "base": {
+      "taker_fee_pct": 0.05,
+      "slippage_pct": 0.02,
+      "round_trip_bps": 14.000000000000002
+    },
+    "stress": {
+      "taker_fee_pct": 0.05,
+      "slippage_pct": 0.04,
+      "round_trip_bps": 18.0
+    }
+  },
+  "holdout": {
+    "start": "2026-11-01 00:00:00+00:00",
+    "end": "2026-11-28 00:00:00+00:00",
+    "status": "EXCLUDED"
+  },
+  "pit_label": "EVENT-TIME PIT \u2014 HISTORICAL AVAILABILITY UNKNOWN",
+  "configs": [
+    {
+      "timeframe": "1h",
+      "N": 20,
+      "M": 10,
+      "config_id": "1h_N20_M10",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "1h",
+      "N": 20,
+      "M": 20,
+      "config_id": "1h_N20_M20",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "1h",
+      "N": 55,
+      "M": 10,
+      "config_id": "1h_N55_M10",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "1h",
+      "N": 55,
+      "M": 20,
+      "config_id": "1h_N55_M20",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "4h",
+      "N": 20,
+      "M": 10,
+      "config_id": "4h_N20_M10",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "4h",
+      "N": 20,
+      "M": 20,
+      "config_id": "4h_N20_M20",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "4h",
+      "N": 55,
+      "M": 10,
+      "config_id": "4h_N55_M10",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    },
+    {
+      "timeframe": "4h",
+      "N": 55,
+      "M": 20,
+      "config_id": "4h_N55_M20",
+      "assets": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "ETHUSDT"
+      ]
+    }
+  ]
+}
