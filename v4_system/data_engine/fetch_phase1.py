@@ -127,7 +127,7 @@ def _save(df: pd.DataFrame, name: str, source: str, symbol: str,
           tf: str | None, gap_report: dict) -> None:
     path = store.save(df, name, source=source, symbol=symbol, timeframe=tf,
                       extra={"gaps": gap_report})
-    print(f"  saved {name}: {len(df)} rows {df.index[0]} → {df.index[-1]} "
+    print(f"  saved {name}: {len(df)} rows {df.index[0]} -> {df.index[-1]} "
           f"-> {os.path.basename(path)}")
 
 
