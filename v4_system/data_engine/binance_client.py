@@ -67,7 +67,10 @@ class BinanceClient:
         params = dict(params or {})
         params["timestamp"] = int(time.time() * 1000)
         params["recvWindow"] = 5000
-        query = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
+        # Binance verifies the signature against the query string AS
+        # RECEIVED, so the signed string must match the order requests
+        # will send (dict insertion order) — do NOT sort.
+        query = "&".join(f"{k}={v}" for k, v in params.items())
         signature = hmac.new(api_secret.encode(), query.encode(),
                              hashlib.sha256).hexdigest()
         params["signature"] = signature

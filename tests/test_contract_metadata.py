@@ -324,3 +324,50 @@ def test_manifest_provenance_for_margin_tiers(store_dir):
     entry = manifest[mt.DATASET]
     assert "leverageBracket" in entry["source"]
     assert entry["rows"] == 3
+
+
+# ---------------------------------------------------------------------------
+# Signed client (regression: signature must match sent query string order)
+# ---------------------------------------------------------------------------
+
+def test_get_signed_signature_matches_sent_query(monkeypatch):
+    import hashlib
+    import hmac as hmac_mod
+    from v4_system.data_engine.binance_client import BinanceClient
+
+    captured = {}
+
+    class FakeResp:
+        status_code = 200
+        headers = {}
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeSession:
+        def get(self, url, params=None, headers=None, timeout=None):
+            captured["params"] = dict(params)
+            captured["headers"] = headers
+            return FakeResp()
+
+    monkeypatch.setattr(BinanceClient, "_throttle", lambda self: None)
+    client = BinanceClient(base="https://example.com")
+    client.session = FakeSession()
+    client.get_signed("/fapi/v1/leverageBracket", {"symbol": "BTCUSDT"},
+                      api_key="KEY", api_secret="SECRET")
+    params = captured["params"]
+    assert captured["headers"]["X-MBX-APIKEY"] == "KEY"
+    assert "timestamp" in params and "recvWindow" in params
+    sig = params.pop("signature")
+    # Recompute over the query string in the SAME order requests sends
+    # (dict insertion order) — this is what Binance verifies.
+    query = "&".join(f"{k}={v}" for k, v in params.items())
+    expected = hmac_mod.new(b"SECRET", query.encode(),
+                            hashlib.sha256).hexdigest()
+    assert sig == expected
+    # And the order must NOT be sorted (symbol first, then timestamp...).
+    keys = list(params.keys())
+    assert keys[0] == "symbol" and keys[1] == "timestamp"
