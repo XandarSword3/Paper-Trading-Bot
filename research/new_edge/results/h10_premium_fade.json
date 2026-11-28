@@ -1,0 +1,298 @@
+{
+  "hypothesis": "H10 perp/index premium extreme fade, time-series 1h",
+  "universe": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "excluded": {
+    "SOLUSDT": "index corrupted around 2022-11-09 FTX crash"
+  },
+  "params": {
+    "z_window_hours": 720,
+    "z_entry": 2.0,
+    "primary_hold_hours": 8,
+    "secondary_holds": [
+      24,
+      72
+    ],
+    "cost_per_side_bps": 8.0
+  },
+  "discovery": [
+    "2019-12-23",
+    "2024-12-31"
+  ],
+  "holdout": [
+    "2025-01-01",
+    "2026-11-26"
+  ],
+  "results": {
+    "perp_index": {
+      "premium": "perp_index",
+      "primary_hold_hours": 8,
+      "primary": {
+        "discovery": {
+          "label": "discovery",
+          "events": 2226,
+          "avg_gross_bps": 7.418210420941181,
+          "median_gross_bps": 6.799591035008268,
+          "avg_net_bps": -8.581789579058821,
+          "hit_rate": 0.5211141060197664,
+          "gross_t": 1.3798200463051122,
+          "long_share": 0.42273135669362083,
+          "days": 1836,
+          "total_return": -0.7003087775801042,
+          "cagr": -0.21302328316186947,
+          "sharpe": -0.5970164045135042,
+          "max_drawdown": -0.7738350803861441
+        },
+        "holdout": {
+          "label": "holdout",
+          "events": 909,
+          "avg_gross_bps": 1.6147139106306998,
+          "median_gross_bps": 3.0406716039710346,
+          "avg_net_bps": -14.3852860893693,
+          "hit_rate": 0.5115511551155115,
+          "gross_t": 0.23714591156638476,
+          "long_share": 0.47964796479647964,
+          "days": 695,
+          "total_return": -0.5178646782900751,
+          "cagr": -0.31827893391533024,
+          "sharpe": -1.2881823075733032,
+          "max_drawdown": -0.5664785295885761
+        },
+        "discovery_sharpe": -0.5970164045135042,
+        "holdout_sharpe": -1.2881823075733032,
+        "stitched_max_drawdown": -0.8634207207219302,
+        "placebo": {
+          "p_value": 0.0,
+          "placebo_mean_sharpe": -2.1674744080847317,
+          "placebo_p95_sharpe": -1.4621732502344793
+        },
+        "events_by_symbol": {
+          "BTCUSDT": 1581,
+          "ETHUSDT": 1554
+        }
+      },
+      "secondary": {
+        "24h": {
+          "discovery": {
+            "label": "discovery",
+            "events": 1319,
+            "avg_gross_bps": 11.090716361925473,
+            "median_gross_bps": 11.93045753592914,
+            "avg_net_bps": -4.90928363807452,
+            "hit_rate": 0.5208491281273692,
+            "gross_t": 1.0364748332665368,
+            "long_share": 0.44579226686884005,
+            "days": 1836,
+            "total_return": -0.4768230897602336,
+            "cagr": -0.12084217669353658,
+            "sharpe": -0.12598008343786377,
+            "max_drawdown": -0.6889194768124561
+          },
+          "holdout": {
+            "label": "holdout",
+            "events": 596,
+            "avg_gross_bps": 5.780626832139783,
+            "median_gross_bps": -7.870983884807892,
+            "avg_net_bps": -10.219373167860217,
+            "hit_rate": 0.4865771812080537,
+            "gross_t": 0.42215472052077635,
+            "long_share": 0.4815436241610738,
+            "days": 695,
+            "total_return": -0.34250126257654856,
+            "cagr": -0.1976532792371809,
+            "sharpe": -0.5105928331243628,
+            "max_drawdown": -0.49128216495652455
+          },
+          "discovery_sharpe": -0.12598008343786377,
+          "holdout_sharpe": -0.5105928331243628,
+          "stitched_max_drawdown": -0.7555618054398611
+        },
+        "72h": {
+          "discovery": {
+            "label": "discovery",
+            "events": 698,
+            "avg_gross_bps": -6.401625919897422,
+            "median_gross_bps": 29.93600255801365,
+            "avg_net_bps": -22.401625919897388,
+            "hit_rate": 0.5214899713467048,
+            "gross_t": -0.24228226663191882,
+            "long_share": 0.46131805157593125,
+            "days": 1836,
+            "total_return": -0.7134587877796696,
+            "cagr": -0.22001213111949158,
+            "sharpe": -0.3170589491761572,
+            "max_drawdown": -0.8221910090833731
+          },
+          "holdout": {
+            "label": "holdout",
+            "events": 310,
+            "avg_gross_bps": -33.8175133872028,
+            "median_gross_bps": -26.61060129418469,
+            "avg_net_bps": -49.81751338720279,
+            "hit_rate": 0.4806451612903226,
+            "gross_t": -1.106857862421085,
+            "long_share": 0.4967741935483871,
+            "days": 695,
+            "total_return": -0.5863687426640656,
+            "cagr": -0.37099651105065756,
+            "sharpe": -1.0754178987527094,
+            "max_drawdown": -0.6651275396850328
+          },
+          "discovery_sharpe": -0.3170589491761572,
+          "holdout_sharpe": -1.0754178987527094,
+          "stitched_max_drawdown": -0.9031391349502234
+        }
+      },
+      "primary_at_4bps": {
+        "label": "discovery_4bps",
+        "events": 2226,
+        "avg_gross_bps": 7.418210420941181,
+        "median_gross_bps": 6.799591035008268,
+        "avg_net_bps": -0.5817895790588132,
+        "hit_rate": 0.5211141060197664,
+        "gross_t": 1.3798200463051122,
+        "long_share": 0.42273135669362083
+      }
+    },
+    "mark_index": {
+      "premium": "mark_index",
+      "primary_hold_hours": 8,
+      "primary": {
+        "discovery": {
+          "label": "discovery",
+          "events": 2059,
+          "avg_gross_bps": 11.745272048000867,
+          "median_gross_bps": 8.797867688399297,
+          "avg_net_bps": -4.254727951999134,
+          "hit_rate": 0.5313258863525984,
+          "gross_t": 2.2295460279955575,
+          "long_share": 0.3822243807673628,
+          "days": 1836,
+          "total_return": -0.4630629417798574,
+          "cagr": -0.11629299612782518,
+          "sharpe": -0.3395360526145212,
+          "max_drawdown": -0.5453332255037887
+        },
+        "holdout": {
+          "label": "holdout",
+          "events": 888,
+          "avg_gross_bps": -3.924251614580788,
+          "median_gross_bps": -0.024323934671999226,
+          "avg_net_bps": -19.92425161458079,
+          "hit_rate": 0.5,
+          "gross_t": -0.5661209909553176,
+          "long_share": 0.41103603603603606,
+          "days": 695,
+          "total_return": -0.6092764548045402,
+          "cagr": -0.3895387154146661,
+          "sharpe": -1.8394691100794414,
+          "max_drawdown": -0.6234626080641823
+        },
+        "discovery_sharpe": -0.3395360526145212,
+        "holdout_sharpe": -1.8394691100794414,
+        "stitched_max_drawdown": -0.8072961945067192,
+        "placebo": {
+          "p_value": 0.0,
+          "placebo_mean_sharpe": -2.345327370027886,
+          "placebo_p95_sharpe": -1.7476096255276075
+        },
+        "events_by_symbol": {
+          "BTCUSDT": 1463,
+          "ETHUSDT": 1484
+        }
+      },
+      "secondary": {
+        "24h": {
+          "discovery": {
+            "label": "discovery",
+            "events": 1193,
+            "avg_gross_bps": 6.40719145293059,
+            "median_gross_bps": 9.812986379929,
+            "avg_net_bps": -9.592808547069403,
+            "hit_rate": 0.5129924559932942,
+            "gross_t": 0.5408665252809461,
+            "long_share": 0.3889354568315172,
+            "days": 1836,
+            "total_return": -0.5944554737152571,
+            "cagr": -0.16424808691073145,
+            "sharpe": -0.32945659813852324,
+            "max_drawdown": -0.6619088953946317
+          },
+          "holdout": {
+            "label": "holdout",
+            "events": 561,
+            "avg_gross_bps": -4.759549731824119,
+            "median_gross_bps": 4.565146101934703,
+            "avg_net_bps": -20.759549731824116,
+            "hit_rate": 0.5008912655971479,
+            "gross_t": -0.3533607888343585,
+            "long_share": 0.40106951871657753,
+            "days": 695,
+            "total_return": -0.48464520662444444,
+            "cagr": -0.29400107711011125,
+            "sharpe": -0.9899634147491991,
+            "max_drawdown": -0.6105171717831065
+          },
+          "discovery_sharpe": -0.32945659813852324,
+          "holdout_sharpe": -0.9899634147491991,
+          "stitched_max_drawdown": -0.8370773839970738
+        },
+        "72h": {
+          "discovery": {
+            "label": "discovery",
+            "events": 641,
+            "avg_gross_bps": 25.271220300795807,
+            "median_gross_bps": 18.694734513466926,
+            "avg_net_bps": 9.271220300795818,
+            "hit_rate": 0.5241809672386896,
+            "gross_t": 0.931146190918367,
+            "long_share": 0.3993759750390016,
+            "days": 1836,
+            "total_return": -0.12488421847449249,
+            "cagr": -0.026171403263126836,
+            "sharpe": 0.15465197441245757,
+            "max_drawdown": -0.6242516152360551
+          },
+          "holdout": {
+            "label": "holdout",
+            "events": 300,
+            "avg_gross_bps": 21.494275789036717,
+            "median_gross_bps": 17.243256353473015,
+            "avg_net_bps": 5.494275789036725,
+            "hit_rate": 0.52,
+            "gross_t": 0.7139893224681145,
+            "long_share": 0.4,
+            "days": 695,
+            "total_return": -0.008620038783080708,
+            "cagr": -0.004536374776603069,
+            "sharpe": 0.1540932118990955,
+            "max_drawdown": -0.4186120916362137
+          },
+          "discovery_sharpe": 0.15465197441245757,
+          "holdout_sharpe": 0.1540932118990955,
+          "stitched_max_drawdown": -0.6242516152360551
+        }
+      },
+      "primary_at_4bps": {
+        "label": "discovery_4bps",
+        "events": 2059,
+        "avg_gross_bps": 11.745272048000867,
+        "median_gross_bps": 8.797867688399297,
+        "avg_net_bps": 3.745272048000877,
+        "hit_rate": 0.5313258863525984,
+        "gross_t": 2.2295460279955575,
+        "long_share": 0.3822243807673628
+      }
+    }
+  },
+  "gates": {
+    "events>=100": true,
+    "discovery_sharpe>=0.50": false,
+    "holdout_sharpe>=0.0": false,
+    "max_dd>=-30%": false,
+    "placebo_p<=0.05": true
+  },
+  "verdict": "KILL"
+}

@@ -62,6 +62,9 @@ quant_research/results/*.parquet
 # Trendlab bulk-data cache (regenerable from data.binance.vision)
 data/binance/
 
+# V4 system market-data cache (large parquet datasets, regenerable)
+v4_system/data/
+
 # Streamlit (legacy)
 .streamlit/
 

@@ -1,0 +1,981 @@
+{
+  "verified_at": "2026-11-28T11:05:29.449356+00:00",
+  "elapsed_s": null,
+  "summary": {
+    "expected": 60,
+    "downloaded": 0,
+    "validated": 60,
+    "failed": 0,
+    "incomplete": 0,
+    "missing": 0,
+    "unsupported": 0
+  },
+  "datasets": {
+    "BTCUSDT_perp_1m": {
+      "name": "BTCUSDT_perp_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055544,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_1m": {
+      "name": "BTCUSDT_spot_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055464,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 80,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_perp_5m": {
+      "name": "BTCUSDT_perp_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411108,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_5m": {
+      "name": "BTCUSDT_spot_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411092,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 16,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_perp_15m": {
+      "name": "BTCUSDT_perp_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137036,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_15m": {
+      "name": "BTCUSDT_spot_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137031,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 5,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_perp_1h": {
+      "name": "BTCUSDT_perp_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 63306,
+        "start": "2019-09-08 17:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_1h": {
+      "name": "BTCUSDT_spot_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 81239,
+        "start": "2017-08-17 04:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 28,
+        "missing_bars_total": 128,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_perp_4h": {
+      "name": "BTCUSDT_perp_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 15826,
+        "start": "2019-09-08 16:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_4h": {
+      "name": "BTCUSDT_spot_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 20325,
+        "start": "2017-08-17 04:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 8,
+        "missing_bars_total": 16,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_perp_1d": {
+      "name": "BTCUSDT_perp_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 2638,
+        "start": "2019-09-08 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_spot_1d": {
+      "name": "BTCUSDT_spot_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 3390,
+        "start": "2017-08-17 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_funding": {
+      "name": "BTCUSDT_funding",
+      "status": "PASS",
+      "checks": {
+        "rows": 7909,
+        "start": "2019-09-10 08:00:00+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "funding",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_mark_1h": {
+      "name": "BTCUSDT_mark_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 60768,
+        "start": "2019-12-23 11:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "mark_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_index_1h": {
+      "name": "BTCUSDT_index_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 60768,
+        "start": "2019-12-23 11:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "index_kline",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_oi_5m": {
+      "name": "BTCUSDT_oi_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 8381,
+        "start": "2026-10-30 08:40:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_oi_15m": {
+      "name": "BTCUSDT_oi_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2794,
+        "start": "2026-10-30 08:45:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_oi_1h": {
+      "name": "BTCUSDT_oi_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 735,
+        "start": "2026-10-28 21:00:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_oi_4h": {
+      "name": "BTCUSDT_oi_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 174,
+        "start": "2026-10-30 12:00:00+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "BTCUSDT_oi_1d": {
+      "name": "BTCUSDT_oi_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 29,
+        "start": "2026-10-31 00:00:00+00:00",
+        "end": "2026-11-28 00:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "BTCUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_1m": {
+      "name": "ETHUSDT_perp_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055544,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_1m": {
+      "name": "ETHUSDT_spot_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055464,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 80,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_5m": {
+      "name": "ETHUSDT_perp_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411108,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_5m": {
+      "name": "ETHUSDT_spot_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411092,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 16,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_15m": {
+      "name": "ETHUSDT_perp_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137036,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_15m": {
+      "name": "ETHUSDT_spot_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137031,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 5,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_1h": {
+      "name": "ETHUSDT_perp_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 61396,
+        "start": "2019-11-27 07:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_1h": {
+      "name": "ETHUSDT_spot_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 81239,
+        "start": "2017-08-17 04:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 28,
+        "missing_bars_total": 128,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_4h": {
+      "name": "ETHUSDT_perp_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 15349,
+        "start": "2019-11-27 04:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_4h": {
+      "name": "ETHUSDT_spot_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 20325,
+        "start": "2017-08-17 04:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 8,
+        "missing_bars_total": 16,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_perp_1d": {
+      "name": "ETHUSDT_perp_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 2558,
+        "start": "2019-11-27 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_spot_1d": {
+      "name": "ETHUSDT_spot_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 3390,
+        "start": "2017-08-17 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_funding": {
+      "name": "ETHUSDT_funding",
+      "status": "PASS",
+      "checks": {
+        "rows": 7675,
+        "start": "2019-11-27 08:00:00+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "funding",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_mark_1h": {
+      "name": "ETHUSDT_mark_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 60768,
+        "start": "2019-12-23 11:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "mark_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_index_1h": {
+      "name": "ETHUSDT_index_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 60768,
+        "start": "2019-12-23 11:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "index_kline",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_oi_5m": {
+      "name": "ETHUSDT_oi_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 8372,
+        "start": "2026-10-30 09:25:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_oi_15m": {
+      "name": "ETHUSDT_oi_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2791,
+        "start": "2026-10-30 09:30:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_oi_1h": {
+      "name": "ETHUSDT_oi_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 734,
+        "start": "2026-10-28 22:00:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_oi_4h": {
+      "name": "ETHUSDT_oi_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 174,
+        "start": "2026-10-30 12:00:00+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "ETHUSDT_oi_1d": {
+      "name": "ETHUSDT_oi_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 29,
+        "start": "2026-10-31 00:00:00+00:00",
+        "end": "2026-11-28 00:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "ETHUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_1m": {
+      "name": "SOLUSDT_perp_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055544,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_1m": {
+      "name": "SOLUSDT_spot_1m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2055464,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 11:03:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 80,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_5m": {
+      "name": "SOLUSDT_perp_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411108,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_5m": {
+      "name": "SOLUSDT_spot_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 411092,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:55:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 16,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_15m": {
+      "name": "SOLUSDT_perp_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137036,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_15m": {
+      "name": "SOLUSDT_spot_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 137031,
+        "start": "2023-01-01 00:00:00+00:00",
+        "end": "2026-11-28 10:45:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 1,
+        "missing_bars_total": 5,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_1h": {
+      "name": "SOLUSDT_perp_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 54388,
+        "start": "2020-09-14 07:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_1h": {
+      "name": "SOLUSDT_spot_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 55185,
+        "start": "2020-08-11 06:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 10,
+        "missing_bars_total": 20,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_4h": {
+      "name": "SOLUSDT_perp_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 13597,
+        "start": "2020-09-14 04:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_4h": {
+      "name": "SOLUSDT_spot_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 13801,
+        "start": "2020-08-11 04:00:00+00:00",
+        "end": "2026-11-28 04:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_perp_1d": {
+      "name": "SOLUSDT_perp_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 2266,
+        "start": "2020-09-14 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "perp_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_spot_1d": {
+      "name": "SOLUSDT_spot_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 2300,
+        "start": "2020-08-11 00:00:00+00:00",
+        "end": "2026-11-27 00:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "spot_kline",
+      "market": "spot",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_funding": {
+      "name": "SOLUSDT_funding",
+      "status": "PASS",
+      "checks": {
+        "rows": 6876,
+        "start": "2020-09-13 16:00:00.004000+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "funding",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_mark_1h": {
+      "name": "SOLUSDT_mark_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 54408,
+        "start": "2020-09-13 11:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "mark_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_index_1h": {
+      "name": "SOLUSDT_index_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 54707,
+        "start": "2020-09-01 00:00:00+00:00",
+        "end": "2026-11-28 10:00:00+00:00",
+        "duplicates": 0,
+        "n_gaps": 0,
+        "missing_bars_total": 0,
+        "unfinished_candles": 0
+      },
+      "kind": "index_kline",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_oi_5m": {
+      "name": "SOLUSDT_oi_5m",
+      "status": "PASS",
+      "checks": {
+        "rows": 8365,
+        "start": "2026-10-30 10:05:00+00:00",
+        "end": "2026-11-28 11:05:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_oi_15m": {
+      "name": "SOLUSDT_oi_15m",
+      "status": "PASS",
+      "checks": {
+        "rows": 2788,
+        "start": "2026-10-30 10:15:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_oi_1h": {
+      "name": "SOLUSDT_oi_1h",
+      "status": "PASS",
+      "checks": {
+        "rows": 734,
+        "start": "2026-10-28 22:00:00+00:00",
+        "end": "2026-11-28 11:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_oi_4h": {
+      "name": "SOLUSDT_oi_4h",
+      "status": "PASS",
+      "checks": {
+        "rows": 174,
+        "start": "2026-10-30 12:00:00+00:00",
+        "end": "2026-11-28 08:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    },
+    "SOLUSDT_oi_1d": {
+      "name": "SOLUSDT_oi_1d",
+      "status": "PASS",
+      "checks": {
+        "rows": 29,
+        "start": "2026-10-31 00:00:00+00:00",
+        "end": "2026-11-28 00:00:00+00:00",
+        "duplicates": 0
+      },
+      "kind": "oi",
+      "market": "perp",
+      "symbol": "SOLUSDT",
+      "download_status": "not_attempted"
+    }
+  }
+}

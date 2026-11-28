@@ -1,0 +1,91 @@
+{
+  "hypothesis": "H11 held-out-asset check of the H10 72h mark/index premium fade",
+  "symbol": "SOLUSDT",
+  "sample": [
+    "2021-04-01",
+    "2026-11-27"
+  ],
+  "excluded": [
+    "2022-11-07",
+    "2022-11-15"
+  ],
+  "hold_hours": 72,
+  "cost_per_side_bps": 8.0,
+  "overall": {
+    "label": "overall",
+    "events": 364,
+    "avg_gross_bps": -40.00516363536248,
+    "median_gross_bps": 10.254856481098361,
+    "avg_net_bps": -56.005163635362486,
+    "hit_rate": 0.5027472527472527,
+    "gross_t": -0.7614598599606401,
+    "long_share": 0.45604395604395603,
+    "days": 2066,
+    "total_return": -0.9692074570251319,
+    "cagr": -0.4593031526004949,
+    "sharpe": -0.434608862150911,
+    "max_drawdown": -0.986621388493868,
+    "stitched_max_drawdown": -0.986621388493868
+  },
+  "discovery": {
+    "label": "discovery",
+    "events": 238,
+    "avg_gross_bps": -48.70822720735335,
+    "median_gross_bps": -48.40376298575866,
+    "avg_net_bps": -64.70822720735337,
+    "hit_rate": 0.4831932773109244,
+    "gross_t": -0.6716492545132796,
+    "long_share": 0.5,
+    "days": 1371,
+    "total_return": -0.9300260670748592,
+    "cagr": -0.5074066920430421,
+    "sharpe": -0.43602498828891967,
+    "max_drawdown": -0.9815456871859403
+  },
+  "holdout": {
+    "label": "holdout",
+    "events": 126,
+    "avg_gross_bps": -23.566043554935256,
+    "median_gross_bps": 70.84565530721676,
+    "avg_net_bps": -39.56604355493525,
+    "hit_rate": 0.5396825396825397,
+    "gross_t": -0.3586349447937779,
+    "long_share": 0.373015873015873,
+    "days": 695,
+    "total_return": -0.5599426573919962,
+    "cagr": -0.3502021789868477,
+    "sharpe": -0.4509824111590553,
+    "max_drawdown": -0.7373951928531828
+  },
+  "placebo": {
+    "p_value": 0.61,
+    "placebo_mean_sharpe": -0.3367230967986962,
+    "placebo_p95_sharpe": 0.32923904133602533
+  },
+  "yearly_sharpe": {
+    "2021": -0.29188053473504705,
+    "2022": -0.6546545825192707,
+    "2023": -1.3719729003147745,
+    "2024": 0.6826951044221433,
+    "2025": 0.2944976147980615,
+    "2026": -1.3854438068731603
+  },
+  "at_4bps": {
+    "label": "overall_4bps",
+    "events": 364,
+    "avg_gross_bps": -40.00516363536248,
+    "median_gross_bps": 10.254856481098361,
+    "avg_net_bps": -48.00516363536249,
+    "hit_rate": 0.5027472527472527,
+    "gross_t": -0.7614598599606401,
+    "long_share": 0.45604395604395603
+  },
+  "gates": {
+    "events>=100": true,
+    "avg_net_bps>0": false,
+    "sharpe>=0.30": false,
+    "max_dd>=-40%": false,
+    "placebo_p<=0.05": false
+  },
+  "verdict": "KILL"
+}

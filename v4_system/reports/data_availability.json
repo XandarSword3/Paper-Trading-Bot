@@ -1,0 +1,178 @@
+{
+  "probed_at": "2026-11-26T19:29:13.684904+00:00",
+  "checks": [
+    {
+      "name": "exchangeInfo+contractSpecs",
+      "ok": true,
+      "result": [
+        3,
+        13
+      ],
+      "elapsed_s": 2.3
+    },
+    {
+      "name": "perp_klines_1h_earliest[BTCUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 0.32
+    },
+    {
+      "name": "spot_klines_1h_earliest[BTCUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 1.35
+    },
+    {
+      "name": "perp_klines_1h_earliest[ETHUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 0.28
+    },
+    {
+      "name": "spot_klines_1h_earliest[ETHUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 0.26
+    },
+    {
+      "name": "perp_klines_1h_earliest[SOLUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 0.27
+    },
+    {
+      "name": "spot_klines_1h_earliest[SOLUSDT]",
+      "ok": true,
+      "rows": 1,
+      "start": "0",
+      "end": "0",
+      "elapsed_s": 0.27
+    },
+    {
+      "name": "funding_history[BTCUSDT]",
+      "ok": true,
+      "rows": 1000,
+      "start": "2019-09-10 08:00:00+00:00",
+      "end": "2020-08-08 08:00:00+00:00",
+      "elapsed_s": 3.53
+    },
+    {
+      "name": "funding_history[ETHUSDT]",
+      "ok": true,
+      "rows": 1000,
+      "start": "2019-11-27 08:00:00+00:00",
+      "end": "2020-10-25 08:00:00.014000+00:00",
+      "elapsed_s": 3.32
+    },
+    {
+      "name": "funding_history[SOLUSDT]",
+      "ok": true,
+      "rows": 1000,
+      "start": "2020-09-13 16:00:00.004000+00:00",
+      "end": "2021-08-12 16:00:00+00:00",
+      "elapsed_s": 2.8
+    },
+    {
+      "name": "openInterestHist_1h[BTCUSDT]",
+      "ok": true,
+      "rows": 696,
+      "start": "2026-10-28 20:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 1.23
+    },
+    {
+      "name": "openInterestHist_1h[ETHUSDT]",
+      "ok": true,
+      "rows": 696,
+      "start": "2026-10-28 20:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 1.2
+    },
+    {
+      "name": "openInterestHist_1h[SOLUSDT]",
+      "ok": true,
+      "rows": 696,
+      "start": "2026-10-28 20:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 1.25
+    },
+    {
+      "name": "markPriceKlines_1h[BTCUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 0.92
+    },
+    {
+      "name": "indexPriceKlines_1h[BTCUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 0.85
+    },
+    {
+      "name": "markPriceKlines_1h[ETHUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 1.03
+    },
+    {
+      "name": "indexPriceKlines_1h[ETHUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 0.9
+    },
+    {
+      "name": "markPriceKlines_1h[SOLUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 0.96
+    },
+    {
+      "name": "indexPriceKlines_1h[SOLUSDT]",
+      "ok": true,
+      "rows": 188,
+      "start": "2026-11-19 00:00:00+00:00",
+      "end": "2026-11-26 19:00:00+00:00",
+      "elapsed_s": 0.9
+    },
+    {
+      "name": "aggTrades_1h_window[BTCUSDT]",
+      "ok": true,
+      "rows": 5000,
+      "start": "2026-11-26 18:29:37.728000+00:00",
+      "end": "2026-11-26 18:36:28.084000+00:00",
+      "elapsed_s": 2.71
+    },
+    {
+      "name": "liquidation_history",
+      "ok": false,
+      "error": "NO_PUBLIC_REST_ENDPOINT \u2014 Binance exposes liquidations only via !forceOrder@arr websocket (live only). Historical liquidation data requires third-party vendors or self-recording.",
+      "elapsed_s": 0
+    },
+    {
+      "name": "orderbook_history",
+      "ok": false,
+      "error": "NO_PUBLIC_REST_HISTORY \u2014 depth snapshots are websocket-only (<symbol>@depth). Historical book reconstruction not possible from Binance public API.",
+      "elapsed_s": 0
+    }
+  ]
+}

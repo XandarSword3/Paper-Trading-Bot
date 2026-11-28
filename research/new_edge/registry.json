@@ -217,6 +217,127 @@
       },
       "verdict": "PILOT_KILL",
       "reason": "Fading a crowded OI+price move has a +12.4 bps gross edge per 8h event (t=1.70) but the 16 bps round trip eats it. The sample is 21 days of one regime, so this is a mechanism check, not evidence. Binance only serves ~21 days of OI history; a forward recorder is required before this can be tested properly."
+    },
+    {
+      "id": "H10",
+      "name": "Perp/index premium extreme fade, time-series 1h",
+      "date": "2026-11-27",
+      "primary": {
+        "premium": "perp_close / index_close - 1",
+        "z_window_hours": 720,
+        "z_entry": 2.0,
+        "hold_hours": 8,
+        "entry": "next bar open (one full bar delay)"
+      },
+      "universe": ["BTCUSDT", "ETHUSDT"],
+      "excluded": {"SOLUSDT": "index series prints -2000 bps vs mark around the 2022-11-09 FTX crash; data artifact, not a tradeable dislocation"},
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "discovery_events": 2226,
+        "discovery_avg_gross_bps": 7.42,
+        "discovery_median_gross_bps": 6.80,
+        "discovery_gross_t": 1.38,
+        "discovery_avg_net_bps": -8.58,
+        "discovery_net_sharpe": -0.60,
+        "holdout_events": 909,
+        "holdout_avg_gross_bps": 1.61,
+        "holdout_avg_net_bps": -14.39,
+        "holdout_net_sharpe": -1.29,
+        "stitched_max_drawdown": -0.86,
+        "placebo_p_value": 0.0,
+        "placebo_mean_sharpe": -2.17,
+        "at_4bps_avg_net_bps": -0.58,
+        "mark_index_panel": {
+          "discovery_avg_gross_bps": 11.75,
+          "discovery_gross_t": 2.23,
+          "discovery_avg_net_bps": -4.25,
+          "holdout_avg_gross_bps": -3.92,
+          "holdout_avg_net_bps": -19.92
+        },
+        "secondary_72h_mark_index": {
+          "discovery_events": 641,
+          "discovery_avg_net_bps": 9.27,
+          "discovery_gross_t": 0.93,
+          "discovery_sharpe": 0.15,
+          "holdout_avg_net_bps": 5.49,
+          "holdout_sharpe": 0.15,
+          "max_drawdown": -0.62,
+          "note": "secondary diagnostic only; not promoted to primary after seeing the holdout"
+        }
+      },
+      "verdict": "KILL",
+      "reason": "Fading a 2-sigma perp/index premium has a positive but tiny gross edge (+7.4 bps per 8h event, t=1.38), less than half the 16 bps round trip. Net is -8.6 bps/event and the holdout gross collapses to +1.6 bps. The mark/index panel is stronger in discovery (+11.8 bps, t=2.23) but turns negative out of sample (-3.9 bps). The only positive-net variant is a 72h mark/index hold (+9.3 bps discovery, +5.5 bps holdout) but it is statistically insignificant (t<1), draws down -62%, and was not pre-registered as the primary, so it is recorded as a diagnostic and not promoted."
+    },
+    {
+      "id": "H11",
+      "name": "Held-out-asset check of the H10 72h mark/index premium fade (SOL)",
+      "date": "2026-11-27",
+      "primary": {
+        "premium": "mark_close / index_close - 1",
+        "z_window_hours": 720,
+        "z_entry": 2.0,
+        "hold_hours": 72,
+        "entry": "next bar open (one full bar delay)"
+      },
+      "universe": ["SOLUSDT"],
+      "sample": ["2021-04-01", "2026-11-26"],
+      "excluded": ["2022-11-07", "2022-11-15"],
+      "cost_per_side_bps": 8.0,
+      "result": {
+        "events": 364,
+        "avg_gross_bps": -40.01,
+        "median_gross_bps": 10.25,
+        "avg_net_bps": -56.01,
+        "gross_t": -0.76,
+        "hit_rate": 0.503,
+        "net_sharpe": -0.43,
+        "max_drawdown": -0.99,
+        "total_return": -0.97,
+        "placebo_p_value": 0.61,
+        "placebo_mean_sharpe": -0.34,
+        "at_4bps_avg_net_bps": -48.01,
+        "yearly_sharpe": {"2021": -0.29, "2022": -0.65, "2023": -1.37, "2024": 0.68, "2025": 0.29, "2026": -1.39}
+      },
+      "verdict": "KILL",
+      "reason": "The only H10 variant with positive net expectancy was the 72h mark/index fade on BTC/ETH. Frozen and tested on a held-out asset (SOL), it loses -56 bps net per event (gross -40 bps, t=-0.76), Sharpe -0.43, drawdown -99%, placebo p=0.61. The BTC/ETH 72h result was asset-specific noise, not a general basis-reversion edge. This also closes the H10 family."
+    },
+    {
+      "id": "H12",
+      "name": "BTC/ETH/SOL pairs mean-reversion, rolling-beta log spread 1h",
+      "date": "2026-11-27",
+      "primary": {
+        "beta_window_hours": 720,
+        "z_window_hours": 720,
+        "z_entry": 2.0,
+        "z_exit": 0.5,
+        "max_hold_hours": 168,
+        "entry": "next bar open",
+        "cost_per_side_per_leg_bps": 8.0,
+        "round_trip_bps": 32.0
+      },
+      "universe": ["BTCUSDT/ETHUSDT", "BTCUSDT/SOLUSDT", "ETHUSDT/SOLUSDT"],
+      "result": {
+        "overall_sharpe": -0.99,
+        "overall_total_return": -0.767,
+        "overall_max_drawdown": -0.767,
+        "discovery_sharpe": -1.06,
+        "holdout_sharpe": -0.80,
+        "discovery_events": 238,
+        "by_pair_discovery_net_bps": {
+          "BTC/ETH": -95.19,
+          "BTC/SOL": -211.77,
+          "ETH/SOL": -181.54
+        },
+        "by_pair_discovery_gross_t": {
+          "BTC/ETH": -0.71,
+          "BTC/SOL": -1.95,
+          "ETH/SOL": -1.24
+        },
+        "placebo_p_value": 0.0,
+        "placebo_mean_sharpe": -8.66
+      },
+      "verdict": "KILL",
+      "reason": "The sign is wrong: at 2 sigma the BTC/ETH/SOL log spreads trend rather than revert. Fading them loses -95 to -212 bps net per event in discovery (gross t -0.7 to -1.9), with overall Sharpe -0.99 and a -77% drawdown; the holdout is also negative (-0.80). The momentum version was positive in-sample but mixed out of sample, so it is not promoted. Statistical pairs arbitrage is not available at this cadence and cost."
     }
   ],
   "cost_model": {
@@ -227,14 +348,17 @@
   },
   "conclusion": {
     "status": "NO_DEPLOYABLE_EDGE_FOUND",
-    "tested": 9,
+    "tested": 12,
     "pilots": 1,
     "survivors": 0,
     "key_lessons": [
       "Same-bar fills create fake edges: H3 looked like Sharpe 4.7 until a one-minute entry delay turned it negative.",
       "The only strong gross signals (funding crowding 1.54, cross-sectional momentum 0.91) are regime bets that died in the 2025-2026 holdout.",
-      "Intraday signals (H1, H4, H9) have gross edges of 1-12 bps, at or below realistic round-trip costs.",
+      "Intraday signals (H1, H4, H9, H10) have gross edges of 1-12 bps, at or below realistic round-trip costs.",
       "Calendar effects (H8) are real but too small to pay for weekly turnover and did not survive the holdout.",
+      "Basis/premium mean-reversion (H10) is real but small: a 2-sigma perp/index premium fades ~7-12 bps per event, under the 16 bps round trip. Only a slow 72h hold clears costs, and then only with a -62% drawdown.",
+      "The one positive H10 variant did not generalize: the 72h basis fade made +5 to +9 bps on BTC/ETH but lost -56 bps net per event on held-out SOL (H11). Single-asset positives are not edges.",
+      "Pairs do not mean-revert at this cadence (H12): BTC/ETH/SOL log spreads trend at 2 sigma, and fading them lost 95-212 bps net per event. Momentum was positive in-sample but mixed out of sample.",
       "The 36-symbol universe is survivorship-biased: every coin still listed in 2026 is in the sample, which flatters long-loser and short-alt books."
     ],
     "data_access_finding": "Binance's public API is reachable and serves ~21 days of open-interest history (no API key needed). OI cannot be backtested over the cached 2020-2026 window; it has to be recorded forward. The one-month flow_bars dataset is unusable (trade_count is always zero and buy/sell volume does not reconcile).",
