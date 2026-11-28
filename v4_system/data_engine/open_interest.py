@@ -23,6 +23,9 @@ _PERIOD_MS = {
     "1d": 86_400_000,
 }
 
+# Public list of supported OI periods (endpoint-supported granularity).
+OI_PERIODS = tuple(_PERIOD_MS)
+
 
 def fetch_open_interest_hist(symbol: str, period: str = "1h",
                              days: int = 29,
