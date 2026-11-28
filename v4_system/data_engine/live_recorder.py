@@ -305,10 +305,12 @@ class StreamRecorder:
         """Exponential backoff with ±25% jitter and a HARD cap.
 
         failures=1 (first failure) -> initial; each further failure doubles.
-        The jittered delay is clamped so it can never exceed backoff_max.
+        The exponent is capped so 2**exp can never overflow (failures=1025
+        used to raise OverflowError and kill the stream thread). The
+        jittered delay is clamped so it can never exceed backoff_max.
         """
-        base = min(self.backoff_initial * (2 ** max(0, self._backoff_failures - 1)),
-                   self.backoff_max)
+        exp = min(max(0, self._backoff_failures - 1), 30)
+        base = min(self.backoff_initial * (2 ** exp), self.backoff_max)
         jittered = base * (0.75 + 0.5 * random.random())
         return min(jittered, self.backoff_max)
 
@@ -336,13 +338,28 @@ class StreamRecorder:
 
     # -- main loop -------------------------------------------------------
     def run(self, duration: float | None = None, self_test: bool = False) -> None:
-        self._report_startup()
+        try:
+            self._report_startup()
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("%s: startup report failed: %s", self.name, exc)
         deadline = time.time() + duration if duration else None
         if self_test and duration:
             self._forced_disconnect_at = time.time() + duration * 0.25
         while not self.stop_event.is_set():
             if deadline and time.time() >= deadline:
                 break
+            try:
+                self._run_iteration(deadline)
+            except Exception as exc:  # noqa: BLE001 — never end the thread
+                logger.exception("%s: unexpected error in run loop: %s",
+                                 self.name, exc)
+                time.sleep(1.0)
+        try:
+            self._flush()
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("%s: final flush failed: %s", self.name, exc)
+
+    def _run_iteration(self, deadline: float | None) -> None:
             attempt_start = _utcnow()
             conn_start_mono: float | None = None
             msg_count_at_connect = self.msg_count
@@ -418,9 +435,8 @@ class StreamRecorder:
             elif self._pending_gap_start is None:
                 self._pending_gap_start = attempt_start
             if deadline and time.time() >= deadline:
-                break
+                return
             time.sleep(self._next_delay())
-        self._flush()
 
     def _ws_ping_loop(self, ws, stop: threading.Event) -> None:
         """Protocol-level keepalive: ws.ping() every ws_ping_interval."""
@@ -636,24 +652,25 @@ def build_recorders(flush_seconds: float) -> list[StreamRecorder]:
         # protocol ping/pong detects a dead socket instead.
         StreamRecorder("binance_liquidations", BINANCE_LIQ_URL,
                        parse_binance_liquidation, flush_seconds=flush_seconds,
-                       ws_ping_interval=20.0, ws_ping_timeout=30.0),
+                       ws_ping_interval=20.0, ws_ping_timeout=30.0,
+                       backoff_max=10.0),
         # bookTicker is high-frequency: a few seconds of silence means a dead
         # socket, so use a data-staleness timeout. It also gets the strict
-        # reconnect policy (5s initial, x2, cap 120s, jitter; reset only after
+        # reconnect policy (5s initial, x2, cap 5s, jitter; reset only after
         # 5 continuous healthy minutes WITH data) because Binance's
         # /public/stream endpoint has been dropping it every few seconds.
         StreamRecorder("binance_bookticker", BINANCE_BOOK_URL,
                        parse_binance_bookticker, flush_seconds=flush_seconds,
                        sample_seconds=1.0, sample_key=lambda r: r.get("symbol"),
                        staleness_timeout=5.0,
-                       backoff_initial=5.0, backoff_max=120.0,
+                       backoff_initial=5.0, backoff_max=5.0,
                        healthy_reset_seconds=300.0, require_data_for_reset=True,
                        track_health=True),
         StreamRecorder("bybit_liquidations", BYBIT_LIQ_URL,
                        parse_bybit_liquidation, BYBIT_SUBSCRIBE,
                        flush_seconds=flush_seconds,
                        ping_msg=BYBIT_PING, ping_interval=20.0,
-                       staleness_timeout=60.0),
+                       staleness_timeout=60.0, backoff_max=10.0),
     ]
 
 

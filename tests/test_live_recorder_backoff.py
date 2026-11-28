@@ -226,13 +226,63 @@ def test_other_streams_keep_default_policy():
     recs = lr.build_recorders(60.0)
     by_name = {r.name: r for r in recs}
     bt = by_name["binance_bookticker"]
-    assert bt.backoff_initial == 5.0 and bt.backoff_max == 120.0
+    assert bt.backoff_initial == 5.0 and bt.backoff_max == 5.0
     assert bt.require_data_for_reset is True
     for name in ("binance_liquidations", "bybit_liquidations"):
         r = by_name[name]
         assert r.backoff_initial == lr.RECONNECT_BASE_DELAY
-        assert r.backoff_max == lr.RECONNECT_MAX_DELAY
+        assert r.backoff_max == 10.0
         assert r.require_data_for_reset is False
+
+
+def test_reconnect_delay_caps_per_stream():
+    recs = {r.name: r for r in lr.build_recorders(60.0)}
+    # bookTicker: hard cap 5s (jitter allowed below it).
+    bt = recs["binance_bookticker"]
+    bt._backoff_failures = 500
+    for _ in range(1000):
+        d = bt._next_delay()
+        assert 0.0 < d <= 5.0, d
+    # Liquidations: hard cap 10s.
+    for name in ("binance_liquidations", "bybit_liquidations"):
+        r = recs[name]
+        r._backoff_failures = 500
+        for _ in range(1000):
+            d = r._next_delay()
+            assert 0.0 < d <= 10.0, (name, d)
+
+
+def test_2000_failures_no_overflow_and_thread_survives(tmp_path, monkeypatch):
+    clock = FakeClock()
+    script = [("fail",)]
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [script],
+                                 max_attempts=3, backoff_max=5.0)
+    # Simulate 2000 accumulated failures, then keep running: no OverflowError.
+    r._backoff_failures = 2000
+    for _ in range(2000):
+        d = r._next_delay()
+        assert 0.0 < d <= 5.0
+    _run_until_attempts(r, attempts, 3)
+    assert attempts["n"] >= 3
+
+
+def test_exception_in_iteration_does_not_end_thread(tmp_path, monkeypatch):
+    clock = FakeClock()
+    script = [("fail",)]
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [script],
+                                 max_attempts=4, backoff_max=5.0)
+    calls = {"n": 0}
+    real = r._record_attempt_outcome
+
+    def flaky(conn_start_mono, msg_count):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("simulated bookkeeping failure")
+        return real(conn_start_mono, msg_count)
+
+    monkeypatch.setattr(r, "_record_attempt_outcome", flaky)
+    _run_until_attempts(r, attempts, 4)
+    assert attempts["n"] >= 4, "run loop died after an exception"
 
 
 # -- health tracking (stale-timeout observability fix) ---------------------
