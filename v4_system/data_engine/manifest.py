@@ -56,5 +56,11 @@ def update_manifest(
     manifest[name] = entry
 
     os.makedirs(os.path.dirname(MANIFEST_PATH), exist_ok=True)
-    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
+    # Atomic replace: a failed manifest write never corrupts the previous
+    # valid manifest, and the .tmp file is never read as the manifest.
+    tmp = f"{MANIFEST_PATH}.tmp-{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, MANIFEST_PATH)
