@@ -71,3 +71,10 @@ v4_system/data/
 
 frontend/node_modules/
 start.bat
+
+# Phase 2 preserved research dirs - generated data stays untracked
+research_next/data/*.csv
+research_next/data/quarterly/
+slow_study/data/*.csv
+slow_study/data/bybit/
+slow_study/reports_S5_audit.zip

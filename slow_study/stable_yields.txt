@@ -1,0 +1,19 @@
+Top stablecoin lending APYs (DefiLlama yields.llama.fi/pools, fetched 2026-11-26)
+hyperliquid-hlp        USDC   Hyperliquid L1 apy= 15.63% tvl=   0.2B
+sparklend              USDS   Ethereum   apy=  8.73% tvl=   0.2B
+pareto-credit          USDC   Ethereum   apy=  8.07% tvl=   0.1B
+sentora-curator        USDC   Ethereum   apy=  7.49% tvl=   0.1B
+midas-rwa              USDC   Base       apy=  6.54% tvl=   0.1B
+centrifuge-protocol    USDC   Avalanche  apy=  5.59% tvl=   0.3B
+maple                  USDC   Ethereum   apy=  5.27% tvl=   0.6B
+fluid-lending          USDT   Ethereum   apy=  5.20% tvl=   0.1B
+fluid-lending          USDC   Ethereum   apy=  5.10% tvl=   0.2B
+maple                  USDT   Ethereum   apy=  4.95% tvl=   0.2B
+jupiter-lend           USDC   Solana     apy=  4.63% tvl=   0.5B
+spark-savings          USDT   Ethereum   apy=  4.25% tvl=   0.3B
+spark-savings          USDS   Arbitrum   apy=  3.80% tvl=   0.5B
+spark-savings          USDC   Ethereum   apy=  3.80% tvl=   0.2B
+sparklend              USDS   Ethereum   apy=  3.44% tvl=   0.1B
+aave-v3                USDT   Ethereum   apy=  3.06% tvl=   0.5B
+aave-v3                USDC   Ethereum   apy=  2.99% tvl=   0.9B
+hyperliquid-earn       USDC   Hyperliquid L1 apy=  2.52% tvl=   0.3B
