@@ -284,10 +284,20 @@ def verify_dataset(name: str, timeframe: str | None = None) -> dict:
         gaps = store.detect_gaps(df, tf)
         result["checks"]["n_gaps"] = len(gaps)
         result["checks"]["missing_bars_total"] = sum(g[2] for g in gaps)
+        result["checks"]["gap_details"] = [
+            [str(a), str(b), int(m)] for a, b, m in gaps[:20]]
+        result["checks"]["gap_details_truncated"] = len(gaps) > 20
         if tf in pit.CANDLE_DELTA:
             unfinished = int((df.index + pit.CANDLE_DELTA[tf]
                               > pd.Timestamp.now(tz="UTC")).sum())
             result["checks"]["unfinished_candles"] = unfinished
+    # Availability provenance: fraction of rows with a known
+    # available_at. Historical bulk downloads leave it unset (NaT).
+    if "available_at" in df.columns:
+        result["checks"]["available_at_known_frac"] = float(
+            df["available_at"].notna().mean())
+    else:
+        result["checks"]["available_at_known_frac"] = 0.0
     ok = dupes == 0 and result["checks"].get("unfinished_candles", 0) == 0
     result["status"] = "PASS" if ok else "INCOMPLETE"
     return result
