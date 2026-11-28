@@ -71,3 +71,298 @@ availability report only. Endpoint probes are logged but are not
   defensible return.
 - **Phase 7 — Paper trading automation**: live paper deployment, no real
   orders, no withdrawal-enabled keys.
+
+---
+
+# PART II — Research History, Cost Model, Trial Budget, Freeze & Holdout
+
+*Written 2026-11-28, after remediation items 1–6 of the V4 data-engine
+program were completed, and BEFORE any Phase 2 strategy experiment. Every
+number below is reconstructed from committed artifacts; sources are cited
+per row. Nothing here is invented: where a metric or date is unavailable
+it is marked **UNKNOWN**.*
+
+## II.1 Complete history of previous experiments
+
+Six research programs have been run in this repository. They are listed
+chronologically. "Superseded" means a later, corrected artifact replaced
+the earlier one; both are listed.
+
+### Program A — Legacy funding-carry validation & paper track (2026-07)
+
+| # | Experiment | Config | Data | Result | Source |
+|---|---|---|---|---|---|
+| A1 | Funding-rate carry validation | short perp + long spot, BTC, $100k | funding 2019-09-10→2024-12-31, 5,819 settlements | +109.9% total, CAGR 15.0%, maxDD −1.5%, Sharpe 18.2, 87.2% periods profitable | `funding_carry_results.json` (commit `6383612`) |
+| A2 | Funding carry paper bot v1 | same, paper track | live 2026-07 | superseded by v2 (fee/slippage drag, mark-price feed, liquidation sim) | commits `82300c0`, `9c52762` |
+| A3 | Walk-forward mean-reversion mr_1h | 2y train / 6m test / 6m step, 9 folds | OOS 2020-05-15→2024-11-15 | 375 trades, Sharpe −2.91, return −63.5%, maxDD −64.7% — **FAIL** | `walk_forward_results_mr_1h.json` |
+| A4 | Walk-forward mean-reversion mr_4h | same folds | Bitstamp BTCUSD proxy (Binance unreachable) | acceptance check passed; results in same file family — **FAIL** (negative OOS) | `walk_forward_results_mr_4h.json` |
+| A5 | Trend Momentum Pyramid (TMP) | live strategy | live paper | paper-trading system, not a backtest trial | commit `7b3a4e3` |
+| A6 | RGMT / OmniPulse paper systems | daily rebalance, offline replay 70/30, 5 pre-registered variants, kill gate | live/paper | paper-trading systems with readiness gates; not backtest trials | commits `1877d15`, `d373a80`, `c3e6a9b` |
+
+**Note on A1:** the +15% CAGR / Sharpe 18.2 figure was produced before the
+fee/slippage drag and mark-price corrections of A2 and before the
+slow_study margin model (Program B). It is **superseded** by B3/B4/B5 and
+must not be quoted as a validated result.
+
+### Program B — slow_study daily-frequency study (2026-11)
+
+Daily candles, $1,000 start, costs 0.10% taker + 0.05% slippage per side
+(0.15%/side), signals on daily close executed next open. Data: OKX spot
+1D 12 majors 2019-01→2026-11-25; Binance funding full history.
+
+| # | Strategy | FULL CAGR | 2023+ mean/mo | 2023+ CI99 | maxDD | Verdict | Source |
+|---|---|---|---|---|---|---|---|
+| B1 | S1 MA trend | 28.0% | 1.80% | [−0.91%, 5.55%] | −30.9% | not viable | `slow_study/reports/REPORT.md` |
+| B2 | S2 TSMOM vol-target | 30.1% | 2.50% | [−1.28%, 7.35%] | −46.0% | not viable | same |
+| B3 | S3 Donchian 55 | 39.4% | 2.32% | [−1.48%, 6.81%] | −39.6% | not viable | same |
+| B4 | S4 cross-sectional momentum | −13.1% | −1.86% | [−6.03%, 0.94%] | −70.0% | not viable | same |
+| B5 | S5 funding carry (no margin model) | 30.2% | 1.14% | [0.56%, 1.86%] | −0.7% | **VIABLE but below 6%/mo target** | same |
+| B6 | S6 buy & hold (benchmark) | 41.8% | 3.82% | [−1.25%, 8.97%] | −53.1% | benchmark | same |
+
+| # | Experiment | Result | Source |
+|---|---|---|---|
+| B7 | S5 v2 margin model (isolated, OKX MMR 0.40%) | L=1: $1,434 (5.4% CAGR, maxDD −0.9%, min liq dist 47.3%); L=2: $1,626 (7.3%); **L=3: LIQUIDATED 2021-01-22** | `slow_study/reports/REPORT_S5_margin.md` |
+| B8 | S5 v3 Bybit venue-consistent (mark price, exact funding timestamps, MMR 0.33%) | $1,195 final, CAGR 3.36%, mean 0.28%/mo, maxDD −0.76%, 0 liquidations; negative-funding stress −3.71% CAGR; ≈ stablecoin yield with funding-sign risk | `slow_study/reports/REPORT_S5_v3.md` |
+
+### Program C — research_next income study (2026-11)
+
+$1,000 total capital, frozen rules, cost stress 1.0/1.5/2.0x on 0.15%/side.
+Data: OKX spot 1D 12 majors 2019-01→2026-11-25; Binance funding; Binance
+quarterly futures.
+
+| # | Strategy | Result | Source |
+|---|---|---|---|
+| C1 | A multi-asset funding arb (top-3 trailing-30d funding, weekly rebalance) | $1,037–$1,053 final (0.9–1.3% CAGR); loses to S5 1x; loses money at 1.5x/2.0x costs — **FAIL** | `research_next/reports/REPORT.md` |
+| C2 | B cash-and-carry v1 (long spot + short quarterly, isolated IMR 20%) | ETH $1,652 (13.6% CAGR), BTC $1,212 (5.0%), 8–9 liquidations each — **INVALIDATED** (see C3) | same |
+| C3 | B cash-and-carry v2 (corrected data alignment, 4H futures marks) | **v1 numbers were a data-alignment artifact** (OKX 16:00 UTC candle-open labels vs Binance 00:00 UTC daily candles → look-ahead in every basis calc). Corrected: ETH cross-margin IMR=20% ~$1,145 (0.30%/mo, maxDD −3.9%, 0 liq); BTC cross max-deploy ~$1,177 (0.35%/mo, maxDD −4.8%); isolated margin unprofitable or liquidation-prone at every IMR. **Below S5 1x on return AND drawdown — not pursued** | `research_next/reports_v2/REPORT_V2.md` |
+| C4 | C adaptive funding carry (BTC carry, weekly exposure from trailing funding + 30d vol) | L=1: $1,134 (3.3% CAGR, maxDD −0.6%, 0 liq); L=2: $1,187 (4.5%, min liq dist 14%) — **below S5 1x** | `research_next/reports/REPORT.md` |
+
+### Program D — quant_research pre-registered program (2026-10-10 → 2026-10-14)
+
+Pre-registration commit `888867e` (PREREG before data ingestion, verified
+24 min before first data file). Trial log `quant_research/trials.csv`
+(2,650 rows → 1,354 unique configs after dedup of an aborted duplicate
+run). Master report `quant_research/REPORT.md`.
+
+| # | Experiment | Config | Data | Result | Source |
+|---|---|---|---|---|---|
+| D1 | Test 1 mechanical indicator stack | 4 variants (1A–1D) × 3 TFs (1m/3m/5m), SOL perp | IS 2024-01→2025-03 | all 12 fail: net expectancy −11 to −23 bps | REPORT §6 |
+| D2 | Test 2 parameter grid | 1,296 configs (BB/RSI/ADX/stop/TP/time-stop), walk-forward 5 folds | IS/OOS 2024-01→2026-03 | zero OOS edge; top IS candidate CFG_1142: stitched −76.14%, net −18.25 bps, PF 0.65 — **FAIL** | REPORT §6, `test_2_results.json` |
+| D3 | Turtle/Donchian breakout | 36 configs (N∈{20,55}, M∈{10,20} × SOL/BTC/ETH × 5m/15m/1h), 4-unit pyramiding | IS/OOS 2024-01→2026-03 | all 36 FAIL (net −5.38 to −33.19 bps pooled); funding-sign defect found & fixed (36/36 moved, 0 verdict changes) | REPORT §10, §13 |
+| D4 | Test 3 user execution replay | 257 real Binance fills, 2025-04-04→2025-05-12 | live ledger | account 100% depleted; net −$189.28 on $189.28 deposits; pooled net −3.08 bps/trade (equal-weighted) — **NO EDGE**; superseded summary artifact documented | REPORT §9 |
+| D5 | Entry autopsy (1m + 15s) | 13 indicators × 1,000 matched random controls | 2025-04-04→2025-05-12 | intraday indicators indistinguishable from random; only daily context survives Holm; taker print costs +5.14 bps vs fill-minute open | REPORT §15, §18 |
+| D6 | Amendment C candidate (daily filter, 1 unit) | 72 configs (36 C1 + 36 C0) | IS/OOS 2024-01→2026-03 | **NO EDGE**; runner 1-unit defect found & corrected (v1 ran 4 units); 3 configs clear 5/6 hurdles, all fail DSR | REPORT §19 |
+| D7 | Amendment D maker entry | 24 configs (R1 maker vs R0 taker, 1h) | IS/OOS 2024-01→2026-03 | **NO EDGE**; maker worth +5.09/+5.00 bps on N=20, −3.68/−3.95 bps on N=55 (adverse selection); all fail DSR at N=1,450 | REPORT §20 |
+| D8 | Amendment E funding-sign | 6 configs (U1 taker / U2 maker, pro-side) | IS/OOS 2024-01→2026-03 | **NO EDGE**; pooled OOS −17.99 (U1) / −13.77 (U2) bps; runner defects fixed pre-run | REPORT §21 |
+
+**Hold-out status after Program D:** ETH 2026-04-01→2026-10-09
+**FRESH** (never touched — no config cleared the hurdles, so the veto
+hold-out was never opened); BTC 2025+ and SOL 2026-04+ **BURNED**.
+
+### Program E — research/new_edge hypothesis lab (2026-11)
+
+Pre-registered hypotheses H01–H12, discovery/holdout split, hard gates
+(net Sharpe ≥1.0, DD ≤20%, ≥100 trades, placebo p<0.05, DSR≥0.95).
+
+| # | Hypothesis | Result | Source |
+|---|---|---|---|
+| E1 | H01 liquidation cascade fade | KILL | `research/new_edge/FINDINGS.md` |
+| E2 | H02 funding reversal (+H02b hold variant) | KILL | same |
+| E3 | H03 latency / H04 beta overshoot | KILL | same |
+| E4 | H05 cross-sectional momentum (+H05b) | KILL | same |
+| E5 | H06 funding cash / H07 TSMOM | KILL | same |
+| E6 | H08 weekend alt bleed | KILL (effect real 2020–2024, t=4.0, but 31–39 bps/week gross vs 16 bps cost, gone 2025–2026) | same |
+| E7 | H09 OI pilot | KILL (data insufficient) | same |
+| E8 | H10 premium fade (+H11 held-out SOL check) | KILL (BTC/ETH positive was asset-specific; SOL holdout −56 bps net/event, Sharpe −0.43, DD −99%) | same |
+| E9 | H12 pairs mean-reversion | KILL (crypto pairs trend, not revert; −95 to −212 bps net/event) | same |
+
+Data: Binance perp 1m 2025-11-01→2026-10-31 (20 symbols), 1h
+2020-01-01→2026-10-31 (36 symbols), funding 2020-01→2026-10-31,
+order-flow bars 2026-10-23→2026-11-22 (1 month, internally inconsistent —
+not usable). **Survivorship bias disclosed**: all symbols still listed in
+2026.
+
+### Program F — V4 data engine (2026-11-26 → 2026-11-28)
+
+Phase 1 data engineering only. **0 strategy trials.** Deliverables:
+point-in-time data engine, atomic storage, manifest provenance,
+historical coverage expansion (item 5), contract metadata / funding
+intervals / margin-tier snapshots (item 6). See
+`v4_system/reports/DATA_AVAILABILITY.md` and
+`v4_system/reports/phase1_fetch_report.json`.
+
+### Experiment count summary
+
+- Named strategy experiments/backtests reconstructed: **~45** (A1–A6,
+  B1–B8, C1–C4, D1–D8, E1–E9).
+- Registered parameter configurations (Program D alone): **1,354 unique**
+  (+72 Amendment C re-logged, +24 D, +6 E → N_trials = 1,456 at end of
+  Program D).
+- Programs A/B/C/E ran **without** a formal pre-registration (rules frozen
+  before runs in B/C/E, but no DSR accounting); Program D is the only
+  fully pre-registered program with trial accounting.
+
+## II.2 Historical data usage reconstruction
+
+### Chronological table of date ranges actually consumed
+
+| Period | Program(s) | Instruments | Timeframe(s) | Role |
+|---|---|---|---|---|
+| 2018-05→2026-07 | A4 | BTC | 4h (Bitstamp proxy) | walk-forward OOS |
+| 2019-01→2026-11-25 | B1–B8 | BTC (+ETH in C3) | 1D | full-period backtests |
+| 2019-09→2024-12 | A1 | BTC | funding 8h | carry validation |
+| 2020-01→2026-10-31 | E1–E9 | 36 perps | 1h | discovery + holdout |
+| 2020-01→2026-11-25 | C1–C4 | 12 majors + BTC/ETH quarterly | 1D + funding + futures | income study |
+| 2020-05→2024-11 | A3 | BTC | 1h | walk-forward OOS |
+| 2021-02→2026-11-25 | C3 | ETH (+BTC) | 1D spot + quarterly 4H | cash-and-carry v2 |
+| 2021-07-05→2026-11-26 | B8 | BTC | Bybit daily/1H/mark/funding | venue-consistent S5 |
+| 2023-01→2026-11-28 | F | BTC/ETH/SOL | 1m/5m/15m spot+perp | v4 data engine (fetched, not yet consumed by strategies) |
+| 2024-01→2025-03 | D1–D3 | SOL (+BTC/ETH in D3) | 1m/3m/5m/15m/1h | IS (selection) |
+| 2025-04→2026-03 | D1–D3 | SOL (+BTC/ETH) | same | OOS (walk-forward) |
+| 2025-04-04→2025-05-12 | D4–D5 | SOL/BTC/ETH/BNB | 1m + 15s aggTrades | user replay + autopsy |
+| 2025-11-01→2026-10-31 | E1–E9 | 20 perps | 1m | intraday pilots |
+| 2026-04-01→2026-10-09 | D (reserved) | ETH | all | **FRESH hold-out, never touched** |
+| 2026-04-01→2026-10-31 | E (partial) | 36 perps | 1h | new_edge holdout slice |
+| 2026-10-23→2026-11-22 | E7 | 20 perps | order-flow | microstructure (unusable) |
+| 2026-11-01→2026-11-28 | **nobody** | BTC/ETH/SOL | all v4 datasets | **unused by any experiment** |
+
+### Overlaps and contamination
+
+- **2024-01→2026-03** was used as IS+OOS by Program D, as part of the
+  1h universe by Program E, and as part of daily history by Programs
+  B/C. Three independent programs consumed overlapping windows.
+- **BTC 2025+ and SOL 2026-04+** are burned (Program D). **ETH
+  2026-04-01→2026-10-09** is fresh but reserved by Program D's veto
+  protocol — V4 Phase 2 will NOT reuse it.
+- **2026-10-10→2026-10-31** was consumed by Program E's 1h holdout slice.
+- **2026-11-01→2026-11-28** (~27 days) is the only window not consumed by
+  any intraday experiment. Caveat: Programs B/C observed the same
+  calendar window at **daily** frequency (different timeframe, different
+  strategies) — disclosed, not hidden.
+- Datasets fetched by the V4 engine (item 5) but **not yet consumed** by
+  any strategy: spot intraday 1m/5m/15m (2023-01→2026-11-28), OI (~30d),
+  margin-tier snapshots, funding-interval table.
+
+### ETH-specific usage
+
+ETH appears in: A1 (BTC only — no), B (BTC only — no), C3 cash-and-carry
+(2021-02→2026-11-25, daily + quarterly), D3/D6/D7/D8 (IS 2024-01→2025-03,
+OOS 2025-04→2026-03, holdout 2026-04→2026-10-09 fresh), E (1h universe
+2020→2026-10-31), F (v4 engine, unconsumed). **ETH has the richest
+history of any symbol and the only unburned holdout window in the
+repository.**
+
+## II.3 Full trading-cost specification for Phase 2
+
+| Cost component | Value | Status | Evidence |
+|---|---|---|---|
+| Taker fee | 0.05% (5 bps) per side | **VERIFIED** | Binance USDⓈ-M VIP0 schedule; confirmed against user ledger (1,785 COMMISSION entries) in Program D Test 3 |
+| Maker fee | 0.02% (2 bps) per side | **VERIFIED** | same schedule; maker fills not present in user ledger (99% taker) — fee taken from published schedule |
+| Bid-ask spread | not directly measured | **UNKNOWN** | no historical book data (websocket-only); proxy: taker print crosses +5.14 bps vs fill-minute open (Program D autopsy, 2025-04→05) |
+| Slippage (base) | 2 bps per side | **ASSUMPTION** (conservative vs measured) | Program D cost model; user fills show +5.14 bps cross on breakout entries |
+| Slippage (stress) | 4 bps per side | **STRESS ASSUMPTION** | Program D stress schedule |
+| Market impact | not modelled | **UNKNOWN** | no book data; mitigated by stress slippage + position-size caps |
+| Partial fills | maker: strict-through rule (fill only if 1m tape trades strictly through limit) | **MODELLED** (Program D Amendment D) | adverse selection measured: maker worth +5 bps on N=20, −4 bps on N=55 |
+| Execution delay | signals on closed bar t, fills at open[t+1] | **CONVENTION** | zero-lookahead rule used by all programs |
+| Funding payments | actual settlement timestamps, rate × notional, direction-aware (long pays positive rate, short receives) | **VERIFIED convention** | Program D funding-sign defect found & fixed; funding history full from listing |
+| Funding interval | current 8h for BTC/ETH/SOL (fundingInfo, 2026-11-28); SOL historical excursion to 2h/4h in 2022-11 (observed) | **VERIFIED current / OBSERVED history** | `funding_intervals.parquet` |
+| Borrowing/financing | N/A for USDⓈ-M perp (no borrow); spot margin not used | **N/A** | — |
+| Liquidation fee | BTC/ETH 1.25%, SOL 1.5% (`liquidationFee` in exchangeInfo, 2026-11-28) | **VERIFIED current**; historical schedule UNKNOWN | `contract_specs.parquet`; the 1.25% figure in Program C was a delivery-futures assumption — the perp value is now sourced directly |
+| Maintenance margin | maintMarginPercent 2.5% / requiredMarginPercent 5.0% for BTC/ETH/SOL (exchangeInfo, 2026-11-28); bracketed tiers snapshot 2026-11-28 10:49 UTC (12/12/10 brackets) | **VERIFIED current snapshot** | `contract_specs.parquet`, `margin_tiers.parquet`; **historical effective dates UNKNOWN** |
+| Margin-tier history | not available from exchange | **UNKNOWN** | snapshots are dated observations, not reconstructed history; Phase 2 must use current snapshot as assumption and flag it |
+| Position-size constraints | min notional (BTC 50 / ETH 20 / SOL 5 USDT), lot/tick sizes | **VERIFIED current** | `contract_specs.parquet` |
+| Data/signal latency | recorder + watchdog live; historical data PIT-clean | **VERIFIED** | v4 items 1–3 |
+| Exchange outages / WS gaps | recorder logs gaps; historical klines have exchange-side gaps (documented, not filled) | **OBSERVED** | item 5 verification |
+| Rejected orders / reconnection | paper-trading phase concern | **N/A for backtest** | — |
+
+**Rules:** no zero-cost assumptions; missing values are stress-tested,
+not ignored; historical fee/margin schedules are NOT assumed constant —
+where only current snapshots exist, the snapshot is used with an explicit
+"current-snapshot assumption" flag in every result.
+
+## II.4 Phase 2 trial budget
+
+| Limit | Value | Rationale |
+|---|---|---|
+| Max total strategy trials (Phase 2) | **40** | Program D alone ran 1,354 configs and found nothing; DSR penalty at N=1,456 already makes p<0.05 nearly unreachable for marginal edges. 40 is enough for a technical baseline family with walk-forward, small enough to keep DSR meaningful. |
+| Max per strategy family | **12** | one family = one mechanism (e.g. trend, mean-reversion, breakout). 12 configs per family allows a small parameter grid without data mining. |
+| Max hyperparameter configurations per trial | **200** | grid search within a trial counts as one trial but every config is logged; 200 keeps compute bounded. |
+| Max repeated trials per configuration | **3** | a 4th run of the same config requires explicit user approval and is logged as a new trial. |
+| Model/feature selection | **frozen before holdout** | features selected on IS+OOS only; holdout never used for selection. |
+| Validation | chronological walk-forward, 5 folds, purged/embargoed windows | matches Program D convention. |
+| Stop condition for a family | if a family fails all 12 configs on OOS net expectancy ≤ 0 at 1.5x costs, the family is closed and reported as NO EDGE | prevents endless tweaking. |
+| Failed-experiment documentation | every trial appended to `v4_system/trials_log.csv` with params, result, net expectancy, OOS trades, max DD, pass/fail | matches Program D governance. |
+| Post-holdout modification | any change after holdout exposure requires a NEW registration and a NEW holdout | prevents holdout reuse. |
+
+**Budget is NOT spent by this document.** Phase 2 has not started.
+
+## II.5 Freeze commit and holdout definition
+
+1. **Freeze commit**: the commit that introduces this Part II document
+   (hash recorded in `v4_system/trials_log.csv` and the item-7 final
+   report). From that commit onward, the research specification is
+   frozen: hypotheses, cost model, trial budget, evaluation criteria.
+2. **Holdout period**: **2026-11-01 00:00:00 UTC → 2026-11-28** (end of
+   available v4 data). ~27 days.
+3. **Holdout validity evidence**:
+   - No intraday experiment (Programs D, E) consumed data after
+     2026-10-31 (Program E 1h holdout slice ends 2026-10-31).
+   - Programs B/C consumed the same calendar window at **daily**
+     frequency only (different timeframe, different strategies) —
+     disclosed contamination risk: LOW but non-zero.
+   - The V4 engine fetched this window on 2026-11-28; no strategy has
+     read it.
+4. **Previous exposure**: BTC/SOL 2026-04→2026-10 burned; ETH
+   2026-04→2026-10-09 reserved by Program D (not reused); everything
+   ≤2026-10-31 used by at least one program.
+5. **Holdout usage rules**: single-touch evaluation of the frozen
+   candidate only; no feature selection, hyperparameter tuning, or
+   strategy selection on holdout data; results reported as-is.
+6. **Honest limitation**: 27 days is SHORT. A 1h strategy produces
+   ~650 bars; a 4h strategy ~160 bars. The holdout can confirm or veto
+   a candidate but cannot establish statistical significance alone.
+   This is reported honestly: the holdout is a **veto gate**, not a
+   proof of edge. If Phase 2 candidates need more holdout data, the
+   only defensible option is to WAIT for new data to accumulate (the
+   recorder is running) and extend the holdout forward — never to
+   reach backward into burned windows.
+7. **Post-freeze changes**: any modification to strategy, features,
+   costs, or evaluation criteria after the freeze commit requires a new
+   PREREG amendment (dated, appended, committed BEFORE the change runs)
+   and, where the change affects the candidate, a new holdout period.
+
+## II.6 Research integrity rules (explicit prohibitions)
+
+The following are prohibited in Phase 2 and all future phases:
+
+- **Lookahead bias** — no future information in features, signals, or
+  fills; signals on closed bars, fills at next open.
+- **Survivorship bias** — universe fixed at listing; delisted symbols
+  are not silently dropped (Program E disclosed this bias; V4 universe
+  is BTC/ETH/SOL, all still listed — risk is low but noted).
+- **Future funding or margin information** — funding rates and margin
+  tiers are used only at their observation timestamps; `available_at`
+  PIT filtering is mandatory.
+- **Test-set optimization** — holdout is never used for selection.
+- **Repeated unregistered experiments** — every trial logged before
+  results are seen.
+- **Cherry-picking profitable date ranges** — all windows reported,
+  including negative ones.
+- **Ignoring transaction costs** — no zero-cost assumptions; stress
+  costs mandatory.
+- **Omitting failed trials** — `trials_log.csv` is append-only.
+- **Changing evaluation criteria after observing results** — criteria
+  frozen in Part I and Part II; changes require amendment.
+
+**Required practices**: chronological walk-forward validation; strict
+separation of training / validation / holdout; every experiment
+configuration, code commit, and dataset version traceable (git hash +
+manifest entry); "no tradable edge found" is a valid, reportable result.
+
+## II.7 Scope statement
+
+This Part II modifies documentation only. No strategy, ML model,
+indicator, or backtesting calculation was changed. No Phase 2 experiment
+was run. No new historical data was fetched. The live recorder and
+watchdog were not altered. No live orders were placed. Previously
+recorded experiment results were not changed.
