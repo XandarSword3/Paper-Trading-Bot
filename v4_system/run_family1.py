@@ -295,13 +295,31 @@ def run_fold(config: Config, fold: Dict[str, str], features: Dict[str, Any],
         "net_expectancy_bps": float(np.mean(oos_bps)) if len(oos_bps) else 0.0,
         "ambiguous_bars": metrics.get("ambiguous_bars", 0),
         "daily_sharpe": metrics.get("daily_sharpe", 0.0),
+        # Equity-curve drawdowns from the simulator's own accounting:
+        # max_drawdown_pct = cash equity (realized PnL + funding);
+        # max_drawdown_marked_pct = cash + unrealized PnL of open units.
+        # Each fold is an INDEPENDENT simulation (own initial capital) —
+        # folds are never stitched into artificial equity continuity.
+        "max_drawdown_pct_cash": metrics.get("max_drawdown_pct", 0.0),
+        "max_drawdown_pct_marked": metrics.get(
+            "max_drawdown_marked_pct", 0.0),
+        "final_marked_equity": metrics.get("final_marked_equity", 0.0),
         "trades": oos_trades,
     }
 
 
 def _pooled_stats(fold_results: List[Dict[str, Any]],
                   costs: CostModel) -> Dict[str, Any]:
-    """Pool OOS trades across folds for the registered metrics."""
+    """Pool OOS trades across folds for the registered metrics.
+
+    Drawdown: PREREG III.5 requires "max drawdown <= 20%" but does NOT
+    define how fold-level drawdowns aggregate into a configuration-level
+    figure. We therefore report every fold's marked-equity drawdown and
+    use the WORST fold as the configuration-level value — the most
+    conservative reading that invents no equity continuity between
+    independent fold simulations. This aggregation is PROVISIONAL and
+    flagged for confirmation before EXECUTE.
+    """
     trades = [t for fr in fold_results for t in fr["trades"]]
     bps = np.array([t.return_bps for t in trades])
     pnls = np.array([t.net_pnl for t in trades])
@@ -309,17 +327,21 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
     losses = pnls[pnls < 0]
     pt_sharpe = per_trade_sharpe(trades)
     dsr = compute_dsr(pt_sharpe, len(trades), N_TRIALS_DSR)
-    # max drawdown on pooled per-trade cumulative pnl (documented approx)
-    cum = np.cumsum(pnls)
-    peak = np.maximum.accumulate(cum)
-    dd = float(np.min((cum - peak) / np.maximum(1.0, np.abs(peak)))) * 100 \
-        if len(cum) else 0.0
+    fold_dds = [fr.get("max_drawdown_pct_marked", 0.0) for fr in fold_results]
+    fold_dds_cash = [fr.get("max_drawdown_pct_cash", 0.0) for fr in fold_results]
     return {
         "n_oos_trades": len(trades),
         "net_expectancy_bps": float(np.mean(bps)) if len(bps) else 0.0,
         "per_trade_sharpe": pt_sharpe,
         "dsr": dsr,
-        "max_drawdown_pct_approx": abs(dd),
+        # PROVISIONAL aggregation — see docstring; PREREG silent on
+        # fold->config drawdown aggregation.
+        "max_drawdown_pct": max(fold_dds) if fold_dds else 0.0,
+        "max_drawdown_pct_cash": max(fold_dds_cash) if fold_dds_cash else 0.0,
+        "fold_max_drawdowns_marked": fold_dds,
+        "fold_max_drawdowns_cash": fold_dds_cash,
+        "drawdown_aggregation": "worst-fold marked equity (PROVISIONAL — "
+                                "PREREG III.5 does not define fold aggregation)",
         "win_rate_pct": float(len(wins) / len(trades) * 100) if trades else 0.0,
         "profit_factor": float(wins.sum() / abs(losses.sum()))
         if len(losses) and losses.sum() != 0 else None,
@@ -335,9 +357,24 @@ def _passes_hurdles(stats: Dict[str, Any], stress_stats: Dict[str, Any]) -> bool
         stats["net_expectancy_bps"] > 0
         and stress_stats["net_expectancy_bps"] > 0
         and stats["dsr"] >= DSR_HURDLE
-        and stats["max_drawdown_pct_approx"] <= MAX_DRAWDOWN_PCT
+        and stats["max_drawdown_pct"] <= MAX_DRAWDOWN_PCT
         and stats["n_oos_trades"] >= MIN_OOS_TRADES
     )
+
+
+def equity_max_drawdown_pct(equity_values) -> float:
+    """Max drawdown (%) of an equity curve: peak-to-trough, marked equity.
+
+    Standalone helper for tests and for any caller holding an explicit
+    equity series. Uses the same expanding-peak convention as
+    ``QuantEngine.calculate_metrics``.
+    """
+    eq = np.asarray(list(equity_values), dtype=np.float64)
+    if len(eq) < 2:
+        return 0.0
+    peak = np.maximum.accumulate(eq)
+    dd = (eq - peak) / np.where(peak == 0, 1.0, peak)
+    return float(abs(dd.min()) * 100.0)
 
 
 def execute_trial(trial_id: str, configs: Optional[List[Config]] = None,

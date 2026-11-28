@@ -114,11 +114,27 @@ def run_turtle_simulation(
 
     completed_trades: List[EngineTrade] = []
     equity_curve = [equity]
+    # Marked-to-market equity (cash + unrealized PnL of open units at the
+    # bar close) — accounting output ONLY. ``equity`` itself is untouched:
+    # position sizing and the leverage cap keep using cash equity exactly
+    # as before, so strategy rules are unchanged.
+    marked_equity_curve = [equity]
+
+    def _unrealized(close_px: float) -> float:
+        if direction == 0 or not units:
+            return 0.0
+        return float(sum(
+            (close_px - u["entry_price"]) * u["quantity"] * direction
+            for u in units))
+
+    def _append_equity(close_px: float) -> None:
+        equity_curve.append(equity)
+        marked_equity_curve.append(equity + _unrealized(close_px))
 
     for i in range(n_bars - 1):
         if equity <= 5.0:
             # Portfolio ruined (< $10 notional order capacity at 2x leverage)
-            equity_curve.append(equity)
+            _append_equity(close_arr[i])
             continue
 
         ts = timestamps[i]
@@ -130,7 +146,7 @@ def run_turtle_simulation(
         atr = atr_arr[i]
 
         if i < warmup or np.isnan(atr) or np.isnan(entry_high_arr[i]):
-            equity_curve.append(equity)
+            _append_equity(close)
             continue
 
         # 1. Accrue funding if holding units (direction-aware: PREREG section 3)
@@ -323,7 +339,7 @@ def run_turtle_simulation(
 
                     last_action_bar = i + 1
 
-        equity_curve.append(equity)
+        _append_equity(close)
 
     # Invariant validator
     assert_no_same_bar_pyramiding(completed_trades)
@@ -344,6 +360,17 @@ def run_turtle_simulation(
     )
     metrics["daily_sharpe"] = round(calculate_daily_sharpe(eq_series), 3)
     metrics["final_equity"] = round(equity, 2)
+    # Marked-to-market drawdown: includes unrealized PnL of open units,
+    # fees/slippage/funding exactly once (all realized in ``equity``).
+    marked_series = pd.Series(
+        np.asarray(marked_equity_curve, dtype=np.float64),
+        index=pd.DatetimeIndex(timestamps[: len(marked_equity_curve)]),
+    )
+    marked_dd = (marked_series - marked_series.expanding().max()) \
+        / marked_series.expanding().max()
+    metrics["max_drawdown_marked_pct"] = round(
+        float(abs(marked_dd.min()) * 100.0), 4)
+    metrics["final_marked_equity"] = round(float(marked_series.iloc[-1]), 2)
     metrics["ambiguous_bars"] = ambiguous_bars
     metrics["config"] = params
 

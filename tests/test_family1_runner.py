@@ -212,7 +212,7 @@ def test_pooled_stats_and_hurdles():
     assert stats["dsr"] <= 1.0 and stats["dsr"] >= 0.0
     assert stats["cost_model"]["round_trip_bps"] == pytest.approx(14.0)
     good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
-            "max_drawdown_pct_approx": 5.0, "n_oos_trades": 40}
+            "max_drawdown_pct": 5.0, "n_oos_trades": 40}
     stress_good = {"net_expectancy_bps": 3.0}
     assert r1._passes_hurdles(good, stress_good) is True
     # stress failure -> fail
@@ -220,6 +220,141 @@ def test_pooled_stats_and_hurdles():
     # too few trades -> fail
     assert r1._passes_hurdles({**good, "n_oos_trades": 10},
                               stress_good) is False
+    # drawdown above hurdle -> fail
+    assert r1._passes_hurdles({**good, "max_drawdown_pct": 25.0},
+                              stress_good) is False
+
+
+def test_pooled_stats_drawdown_from_folds_not_trades():
+    """DD must come from fold equity curves, never from per-trade pnl."""
+    trades = [_fake_trade(5.0, 50.0) for _ in range(35)]
+    fold_results = [
+        {"trades": trades, "fold_id": "F1",
+         "max_drawdown_pct_marked": 12.0, "max_drawdown_pct_cash": 8.0},
+        {"trades": trades, "fold_id": "F2",
+         "max_drawdown_pct_marked": 30.0, "max_drawdown_pct_cash": 10.0},
+    ]
+    stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
+    # worst fold wins; per-trade path is NOT used
+    assert stats["max_drawdown_pct"] == pytest.approx(30.0)
+    assert stats["max_drawdown_pct_cash"] == pytest.approx(10.0)
+    assert stats["fold_max_drawdowns_marked"] == [12.0, 30.0]
+    assert "PROVISIONAL" in stats["drawdown_aggregation"]
+    # per-trade cumulative pnl would give ~0% DD here — proving the old
+    # approximation is gone
+    assert stats["max_drawdown_pct"] != 0.0
+
+
+# --------------------------------------------------------------------------- #
+# Equity-curve drawdown — exact accounting
+# --------------------------------------------------------------------------- #
+
+def test_equity_max_drawdown_known_curve():
+    # peak 120 -> trough 90 = -25%; recovery to 110 does not deepen it
+    assert r1.equity_max_drawdown_pct([100, 120, 90, 110]) == \
+        pytest.approx(25.0)
+    # monotonic up -> no drawdown
+    assert r1.equity_max_drawdown_pct([100, 110, 120]) == 0.0
+    # single point / empty -> 0
+    assert r1.equity_max_drawdown_pct([100]) == 0.0
+    assert r1.equity_max_drawdown_pct([]) == 0.0
+
+
+def test_marked_equity_includes_unrealized_loss():
+    """Open position under water at fold end: marked DD > cash DD."""
+    # features: long entry early, price then slides, no exit triggers
+    n = 400
+    idx = pd.date_range("2024-01-01", periods=n, freq="1h", tz="UTC")
+    c = np.concatenate([
+        np.full(60, 100.0),
+        np.linspace(100, 80, n - 60),   # steady decline after entry
+    ])
+    feats = {
+        "open": c, "high": c + 0.2, "low": c - 0.2, "close": c,
+        "entry_high": np.full(n, 99.0),   # close > 99 -> long entries
+        "entry_low": np.full(n, -1e9),
+        "exit_high": np.full(n, 1e9),     # channel exit unreachable
+        "exit_low": np.full(n, -1e9),
+        "atr": np.full(n, 50.0),  # stop = entry - 100 -> never hit
+        "timestamps": idx,
+    }
+    fold = {"fold_id": "F1", "train_start": "2024-01-01",
+            "train_end": "2024-01-10", "test_start": "2024-01-11",
+            "test_end": "2024-01-20"}
+    funding = pd.Series(0.0, index=pd.date_range(
+        "2024-01-01", periods=2000, freq="8h", tz="UTC"), name="funding_rate")
+    cfg = r1.Config("1h", 20, 10)
+    res = r1.run_fold(cfg, fold, feats, funding, None, r1.BASE_COSTS)
+    # position open at fold end with unrealized loss -> marked DD exists
+    assert res["max_drawdown_pct_marked"] > 0
+    # cash equity never realized the loss -> cash DD smaller or zero
+    assert res["max_drawdown_pct_marked"] >= res["max_drawdown_pct_cash"]
+
+
+def test_open_position_at_fold_end_excluded_from_trades():
+    """Unfinished trades are not in OOS trade stats but hit marked equity."""
+    n = 400
+    idx = pd.date_range("2024-01-01", periods=n, freq="1h", tz="UTC")
+    c = np.concatenate([np.full(60, 100.0),
+                        np.linspace(100, 70, n - 60)])
+    feats = {
+        "open": c, "high": c + 0.2, "low": c - 0.2, "close": c,
+        "entry_high": np.full(n, 99.0), "entry_low": np.full(n, -1e9),
+        "exit_high": np.full(n, 1e9), "exit_low": np.full(n, -1e9),
+        "atr": np.full(n, 50.0), "timestamps": idx,
+    }
+    fold = {"fold_id": "F1", "train_start": "2024-01-01",
+            "train_end": "2024-01-10", "test_start": "2024-01-11",
+            "test_end": "2024-01-20"}
+    funding = pd.Series(0.0, index=pd.date_range(
+        "2024-01-01", periods=2000, freq="8h", tz="UTC"), name="funding_rate")
+    cfg = r1.Config("1h", 20, 10)
+    res = r1.run_fold(cfg, fold, feats, funding, None, r1.BASE_COSTS)
+    # no completed trades inside test window (position never closed)
+    assert res["n_trades_oos"] == 0
+    # but marked equity reflects the open loss
+    assert res["final_marked_equity"] < 100_000.0
+
+
+def test_fold_independence_no_equity_stitching():
+    """Two folds are independent sims: pooled stats never concatenate
+    equity curves; each fold reports its own DD."""
+    trades = [_fake_trade(5.0, 50.0) for _ in range(35)]
+    fold_results = [
+        {"trades": trades, "fold_id": "F1",
+         "max_drawdown_pct_marked": 5.0, "max_drawdown_pct_cash": 5.0},
+        {"trades": trades, "fold_id": "F2",
+         "max_drawdown_pct_marked": 15.0, "max_drawdown_pct_cash": 15.0},
+    ]
+    stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
+    assert stats["fold_max_drawdowns_marked"] == [5.0, 15.0]
+    assert stats["max_drawdown_pct"] == 15.0  # worst fold, not stitched
+
+
+def test_missing_data_gap_no_invented_equity():
+    """Gaps in timestamps produce no equity points — curve length equals
+    bar count, nothing is forward-filled."""
+    # features with a 48h hole in the middle
+    idx = pd.DatetimeIndex(
+        list(pd.date_range("2024-01-01", periods=100, freq="1h", tz="UTC"))
+        + list(pd.date_range("2024-01-10", periods=100, freq="1h", tz="UTC")))
+    n = len(idx)
+    c = np.full(n, 100.0)
+    feats = {
+        "open": c, "high": c + 0.5, "low": c - 0.5, "close": c,
+        "entry_high": np.full(n, 99.0), "entry_low": np.full(n, -1e9),
+        "exit_high": np.full(n, 1e9), "exit_low": np.full(n, -1e9),
+        "atr": np.full(n, 50.0), "timestamps": idx,
+    }
+    fold = {"fold_id": "F1", "train_start": "2024-01-01",
+            "train_end": "2024-01-05", "test_start": "2024-01-06",
+            "test_end": "2024-01-20"}
+    funding = pd.Series(0.0, index=pd.date_range(
+        "2024-01-01", periods=2000, freq="8h", tz="UTC"), name="funding_rate")
+    cfg = r1.Config("1h", 20, 10)
+    res = r1.run_fold(cfg, fold, feats, funding, None, r1.BASE_COSTS)
+    # simulation ran on available bars only; no crash, DD defined
+    assert res["max_drawdown_pct_marked"] >= 0.0
 
 
 def test_dsr_uses_registered_trial_count():
