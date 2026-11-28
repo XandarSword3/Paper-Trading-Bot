@@ -479,3 +479,33 @@ code was modified (`turtle_strategy.py`, `candidate_runner.py` logic
 unchanged ï¿½ only the series-based `daily_trend_from_daily_close`
 extraction, behaviour-identical). No historical backtest was run. No
 holdout data was accessed. No live orders. `master` is untouched.
+
+## III.9 Amendment — Drawdown methodology (2026-11-28)
+
+*Clarifies the "max drawdown <= 20%" hurdle in III.5. No threshold,
+configuration, date range or budget is changed.*
+
+- **Configuration-level maximum drawdown** =
+  `max(fold_1_MDD, ..., fold_5_MDD)` — the WORST OOS fold's marked
+  maximum drawdown. Every OOS fold must individually satisfy marked
+  MDD <= 20% (equivalent, since the max is taken over folds).
+- **Independent fold accounting**: each walk-forward fold is an
+  independent simulation with its own initial equity. Fold equity
+  curves are NEVER concatenated or stitched; no artificial equity
+  continuity is created between folds.
+- **Marked equity** = cash equity (realized PnL + fees + slippage +
+  funding, each applied exactly once) PLUS unrealized PnL of open
+  units marked at the bar close. Position sizing and leverage caps
+  continue to use cash equity only — strategy rules unchanged.
+- **Cash-only drawdown** (realized PnL + funding, no unrealized
+  marking) is reported as a supplementary diagnostic per fold and per
+  configuration; it is NOT the acceptance metric.
+- **Sampling frequency**: the marked equity curve is sampled once per
+  DECISION-BAR CLOSE (1h or 4h, matching the configuration timeframe).
+  It is therefore a CLOSE-SAMPLED mark-to-market drawdown. It does
+  NOT capture the worst intrabar equity excursion between decision
+  bars; 1m sub-bars are used only for exit-order resolution, not for
+  equity marking. Any change to intrabar equity sampling requires a
+  separate amendment.
+- **Open positions at fold end**: excluded from trade statistics
+  (never completed) but included in marked equity at the final bar.

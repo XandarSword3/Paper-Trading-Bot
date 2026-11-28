@@ -312,13 +312,16 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
                   costs: CostModel) -> Dict[str, Any]:
     """Pool OOS trades across folds for the registered metrics.
 
-    Drawdown: PREREG III.5 requires "max drawdown <= 20%" but does NOT
-    define how fold-level drawdowns aggregate into a configuration-level
-    figure. We therefore report every fold's marked-equity drawdown and
-    use the WORST fold as the configuration-level value — the most
-    conservative reading that invents no equity continuity between
-    independent fold simulations. This aggregation is PROVISIONAL and
-    flagged for confirmation before EXECUTE.
+    Drawdown (PREREG III.9 amendment, 2026-11-28): configuration-level
+    maximum drawdown = WORST OOS fold's marked maximum drawdown,
+    ``max(fold_1_MDD, ..., fold_5_MDD)``. Each fold is an independent
+    simulation with its own initial equity; fold equity curves are never
+    concatenated. Marked MDD includes unrealized + realized PnL with
+    fees/slippage/funding exactly once. Cash-only drawdown is reported
+    as a supplementary diagnostic, never the acceptance metric. The
+    marked equity curve is sampled at every DECISION-BAR CLOSE
+    (1h/4h) — it is a close-sampled mark-to-market drawdown and does
+    NOT capture worst intrabar equity excursions.
     """
     trades = [t for fr in fold_results for t in fr["trades"]]
     bps = np.array([t.return_bps for t in trades])
@@ -334,14 +337,16 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
         "net_expectancy_bps": float(np.mean(bps)) if len(bps) else 0.0,
         "per_trade_sharpe": pt_sharpe,
         "dsr": dsr,
-        # PROVISIONAL aggregation — see docstring; PREREG silent on
-        # fold->config drawdown aggregation.
+        # Worst-fold marked MDD — PREREG III.9 (2026-11-28 amendment)
         "max_drawdown_pct": max(fold_dds) if fold_dds else 0.0,
         "max_drawdown_pct_cash": max(fold_dds_cash) if fold_dds_cash else 0.0,
         "fold_max_drawdowns_marked": fold_dds,
         "fold_max_drawdowns_cash": fold_dds_cash,
-        "drawdown_aggregation": "worst-fold marked equity (PROVISIONAL — "
-                                "PREREG III.5 does not define fold aggregation)",
+        "drawdown_aggregation": "worst-fold marked equity "
+                                "(PREREG III.9, 2026-11-28)",
+        "equity_sampling": "decision-bar close (1h/4h); close-sampled "
+                           "mark-to-market — intrabar excursions not "
+                           "captured",
         "win_rate_pct": float(len(wins) / len(trades) * 100) if trades else 0.0,
         "profit_factor": float(wins.sum() / abs(losses.sum()))
         if len(losses) and losses.sum() != 0 else None,

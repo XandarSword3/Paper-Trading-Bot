@@ -239,7 +239,13 @@ def test_pooled_stats_drawdown_from_folds_not_trades():
     assert stats["max_drawdown_pct"] == pytest.approx(30.0)
     assert stats["max_drawdown_pct_cash"] == pytest.approx(10.0)
     assert stats["fold_max_drawdowns_marked"] == [12.0, 30.0]
-    assert "PROVISIONAL" in stats["drawdown_aggregation"]
+    # documented aggregation (PREREG III.9), no longer provisional
+    assert "worst-fold marked equity" in stats["drawdown_aggregation"]
+    assert "PREREG III.9" in stats["drawdown_aggregation"]
+    assert "PROVISIONAL" not in stats["drawdown_aggregation"]
+    # sampling-frequency metadata is explicit and accurate
+    assert "decision-bar close" in stats["equity_sampling"]
+    assert "intrabar excursions not captured" in stats["equity_sampling"]
     # per-trade cumulative pnl would give ~0% DD here — proving the old
     # approximation is gone
     assert stats["max_drawdown_pct"] != 0.0
@@ -314,6 +320,41 @@ def test_open_position_at_fold_end_excluded_from_trades():
     assert res["n_trades_oos"] == 0
     # but marked equity reflects the open loss
     assert res["final_marked_equity"] < 100_000.0
+
+
+def test_config_fails_if_any_fold_exceeds_20pct():
+    """Worst-fold rule: one bad fold sinks the configuration."""
+    trades = [_fake_trade(5.0, 50.0) for _ in range(35)]
+    fold_results = [
+        {"trades": trades, "fold_id": "F1",
+         "max_drawdown_pct_marked": 5.0, "max_drawdown_pct_cash": 5.0},
+        {"trades": trades, "fold_id": "F2",
+         "max_drawdown_pct_marked": 20.1, "max_drawdown_pct_cash": 3.0},
+        {"trades": trades, "fold_id": "F3",
+         "max_drawdown_pct_marked": 4.0, "max_drawdown_pct_cash": 4.0},
+    ]
+    stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
+    assert stats["max_drawdown_pct"] == pytest.approx(20.1)
+    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+            "max_drawdown_pct": stats["max_drawdown_pct"],
+            "n_oos_trades": 40}
+    assert r1._passes_hurdles(good, {"net_expectancy_bps": 3.0}) is False
+
+
+def test_cash_dd_cannot_override_marked_dd():
+    """Cash drawdown is diagnostic only — marked MDD gates."""
+    trades = [_fake_trade(5.0, 50.0) for _ in range(35)]
+    fold_results = [
+        {"trades": trades, "fold_id": "F1",
+         "max_drawdown_pct_marked": 25.0, "max_drawdown_pct_cash": 1.0},
+    ]
+    stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
+    assert stats["max_drawdown_pct"] == 25.0       # marked gates
+    assert stats["max_drawdown_pct_cash"] == 1.0   # diagnostic only
+    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+            "max_drawdown_pct": stats["max_drawdown_pct"],
+            "n_oos_trades": 40}
+    assert r1._passes_hurdles(good, {"net_expectancy_bps": 3.0}) is False
 
 
 def test_fold_independence_no_equity_stitching():
