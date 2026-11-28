@@ -150,6 +150,10 @@ class StreamRecorder:
         self._streak_start_mono: float | None = None
         self._confirmed_healthy = False
         self._unhealthy_since: str | None = None
+        # Set by _record_attempt_outcome once the current connection attempt
+        # has been counted in the backoff state; lets the run-loop exception
+        # handler avoid double-counting the same attempt.
+        self._outcome_counted = False
 
     # -- storage ---------------------------------------------------------
     def _flush_key(self) -> str:
@@ -324,6 +328,7 @@ class StreamRecorder:
         """
         if conn_start_mono is None:
             self._backoff_failures += 1  # handshake never completed
+            self._outcome_counted = True
             return
         uptime = time.monotonic() - conn_start_mono
         got_data = self.msg_count > msg_count_at_connect
@@ -335,6 +340,7 @@ class StreamRecorder:
             self._backoff_failures = 0
         else:
             self._backoff_failures += 1
+        self._outcome_counted = True
 
     # -- main loop -------------------------------------------------------
     def run(self, duration: float | None = None, self_test: bool = False) -> None:
@@ -353,13 +359,28 @@ class StreamRecorder:
             except Exception as exc:  # noqa: BLE001 — never end the thread
                 logger.exception("%s: unexpected error in run loop: %s",
                                  self.name, exc)
-                time.sleep(1.0)
+                try:
+                    # An escaped exception is a stream failure: record it in
+                    # health/error state and count it toward backoff exactly
+                    # once (skip if this attempt was already counted).
+                    self._last_error = f"{type(exc).__name__}: {exc}"
+                    self._mark_unhealthy("unexpected error")
+                    if not self._outcome_counted:
+                        self._backoff_failures += 1
+                        self._outcome_counted = True
+                    self._persist_state()
+                    delay = self._next_delay()
+                except Exception:  # noqa: BLE001 — handler must not kill thread
+                    logger.exception("%s: error handler failed", self.name)
+                    delay = 1.0
+                time.sleep(delay)
         try:
             self._flush()
         except Exception as exc:  # noqa: BLE001
             logger.exception("%s: final flush failed: %s", self.name, exc)
 
     def _run_iteration(self, deadline: float | None) -> None:
+            self._outcome_counted = False
             attempt_start = _utcnow()
             conn_start_mono: float | None = None
             msg_count_at_connect = self.msg_count

@@ -285,6 +285,126 @@ def test_exception_in_iteration_does_not_end_thread(tmp_path, monkeypatch):
     assert attempts["n"] >= 4, "run loop died after an exception"
 
 
+# -- generic exception handler: health + backoff ----------------------------
+
+def _health_params(**kw):
+    params = dict(track_health=True, staleness_timeout=0.02,
+                  healthy_reset_seconds=300.0, require_data_for_reset=True,
+                  flush_seconds=9999, backoff_initial=5.0, backoff_max=120.0)
+    params.update(kw)
+    return params
+
+
+def test_unexpected_exception_marks_healthy_stream_unhealthy(tmp_path, monkeypatch):
+    clock = FakeClock()
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [("fail",)],
+                                 max_attempts=1, **_health_params())
+    # Stream was previously confirmed healthy.
+    r._confirmed_healthy = True
+    r._unhealthy_since = None
+    r._streak_start_mono = clock.monotonic()
+    monkeypatch.setattr(r, "_record_attempt_outcome",
+                        lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+    _run_until_attempts(r, attempts, 1)
+    assert r._confirmed_healthy is False, "exception left stream marked healthy"
+    assert r._unhealthy_since is not None
+    assert "RuntimeError" in (r._last_error or "")
+    # unhealthy_since persisted to the state file.
+    state = _state_file(tmp_path)
+    assert state is not None and state.get("unhealthy_since"), state
+    assert state.get("healthy") is False
+    assert "RuntimeError" in state.get("error", "")
+
+
+def test_unexpected_exception_counts_backoff_exactly_once(tmp_path, monkeypatch):
+    clock = FakeClock()
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [("fail",)],
+                                 max_attempts=1, **_health_params())
+    monkeypatch.setattr(r, "_record_attempt_outcome",
+                        lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+    _run_until_attempts(r, attempts, 1)
+    assert r._backoff_failures == 1, \
+        f"expected exactly one counted failure, got {r._backoff_failures}"
+
+
+def test_repeated_unexpected_exceptions_increase_delay(tmp_path, monkeypatch):
+    clock = FakeClock()
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [("fail",)],
+                                 max_attempts=4, **_health_params())
+    monkeypatch.setattr(r, "_record_attempt_outcome",
+                        lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+    _run_until_attempts(r, attempts, 4)
+    sleeps = clock.sleeps
+    assert len(sleeps) >= 3, sleeps
+    # failures after attempts 1..3 -> bases 5, 10, 20 (initial 5, x2, cap 120)
+    for i, base in enumerate([5, 10, 20]):
+        lo, hi = 0.75 * base, 1.25 * base
+        assert lo <= sleeps[i] <= hi, f"delay #{i}={sleeps[i]} outside [{lo}, {hi}]"
+    assert r._backoff_failures == 4
+
+
+def test_persistent_exception_never_leaves_stream_healthy(tmp_path, monkeypatch):
+    clock = FakeClock()
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [("fail",)],
+                                 max_attempts=3, **_health_params())
+    r._confirmed_healthy = True
+    r._unhealthy_since = None
+    monkeypatch.setattr(r, "_record_attempt_outcome",
+                        lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+    _run_until_attempts(r, attempts, 3)
+    assert r._confirmed_healthy is False
+    assert r._unhealthy_since is not None
+    state = _state_file(tmp_path)
+    assert state is not None and state.get("healthy") is False
+    assert state.get("unhealthy_since")
+
+
+def test_stream_recovers_under_300s_rule_after_exception(tmp_path, monkeypatch):
+    """After an unexpected exception marks the stream unhealthy, the existing
+    300-second continuous-data rule still confirms health again."""
+    clock = FakeClock()
+    monkeypatch.setattr(lr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(lr.time, "monotonic", clock.monotonic)
+    r = lr.StreamRecorder("binance_bookticker", "ws://x",
+                          lambda m: [{"symbol": "BTCUSDT"}],
+                          track_health=True, healthy_reset_seconds=300.0,
+                          flush_seconds=9999)
+    # Simulate the exception handler's effect.
+    r._last_error = "RuntimeError: boom"
+    r._mark_unhealthy("unexpected error")
+    assert r._confirmed_healthy is False and r._unhealthy_since is not None
+    # Recovery: 300 continuous seconds of data messages.
+    r._note_message()
+    clock.now += 299.0
+    r._note_message()
+    assert r._confirmed_healthy is False
+    clock.now += 1.0
+    r._note_message()
+    assert r._confirmed_healthy is True
+    assert r._unhealthy_since is None
+
+
+def test_exception_after_outcome_recorded_does_not_double_count(tmp_path, monkeypatch):
+    """If the exception escapes AFTER _record_attempt_outcome already counted
+    the attempt (e.g. in _next_delay), the handler must not count it again."""
+    clock = FakeClock()
+    r, attempts = _make_recorder(tmp_path, monkeypatch, clock, [("fail",)],
+                                 max_attempts=3, backoff_max=120.0)
+    real_next = r._next_delay
+    calls = {"n": 0}
+
+    def flaky_next():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("delay computation failed")
+        return real_next()
+
+    monkeypatch.setattr(r, "_next_delay", flaky_next)
+    _run_until_attempts(r, attempts, 3)
+    # 3 failed attempts, each counted exactly once (not 4).
+    assert r._backoff_failures == 3, r._backoff_failures
+
+
 # -- health tracking (stale-timeout observability fix) ---------------------
 
 def _health_recorder(tmp_path, monkeypatch, clock, scripts, max_attempts, **kw):
