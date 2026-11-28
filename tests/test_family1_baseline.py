@@ -86,7 +86,7 @@ def test_p_beats_logic():
 
 
 def test_hurdles_require_baseline_pass():
-    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+    good = {"net_expectancy_bps": 5.0, "dsr_p_value": 0.01,
             "max_drawdown_pct": 5.0, "n_oos_trades": 40}
     stress = {"net_expectancy_bps": 3.0}
     assert r1._passes_hurdles(good, stress, baseline_passed=True) is True

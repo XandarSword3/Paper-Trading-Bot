@@ -210,9 +210,9 @@ def test_pooled_stats_and_hurdles():
     stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
     assert stats["n_oos_trades"] == 35
     assert stats["net_expectancy_bps"] == pytest.approx(5.0)
-    assert stats["dsr"] <= 1.0 and stats["dsr"] >= 0.0
+    assert stats["dsr_p_value"] <= 1.0 and stats["dsr_p_value"] >= 0.0
     assert stats["cost_model"]["round_trip_bps"] == pytest.approx(14.0)
-    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+    good = {"net_expectancy_bps": 5.0, "dsr_p_value": 0.01,
             "max_drawdown_pct": 5.0, "n_oos_trades": 40}
     stress_good = {"net_expectancy_bps": 3.0}
     assert r1._passes_hurdles(good, stress_good) is True
@@ -336,7 +336,7 @@ def test_config_fails_if_any_fold_exceeds_20pct():
     ]
     stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
     assert stats["max_drawdown_pct"] == pytest.approx(20.1)
-    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+    good = {"net_expectancy_bps": 5.0, "dsr_p_value": 0.01,
             "max_drawdown_pct": stats["max_drawdown_pct"],
             "n_oos_trades": 40}
     assert r1._passes_hurdles(good, {"net_expectancy_bps": 3.0}) is False
@@ -352,7 +352,7 @@ def test_cash_dd_cannot_override_marked_dd():
     stats = r1._pooled_stats(fold_results, r1.BASE_COSTS)
     assert stats["max_drawdown_pct"] == 25.0       # marked gates
     assert stats["max_drawdown_pct_cash"] == 1.0   # diagnostic only
-    good = {"net_expectancy_bps": 5.0, "dsr": 0.99,
+    good = {"net_expectancy_bps": 5.0, "dsr_p_value": 0.01,
             "max_drawdown_pct": stats["max_drawdown_pct"],
             "n_oos_trades": 40}
     assert r1._passes_hurdles(good, {"net_expectancy_bps": 3.0}) is False
@@ -400,4 +400,82 @@ def test_missing_data_gap_no_invented_equity():
 
 
 def test_dsr_uses_registered_trial_count():
-    assert r1.N_TRIALS_DSR == 1355  # 1354 historical + 1 Family 1
+    # 1,456 Program D registered configs + 24 Family 1 config-asset
+    # hypotheses (8 configs x 3 assets; folds/costs are not independent
+    # trials). See PREREG III.11.
+    assert r1.N_TRIALS_DSR == 1480
+
+
+# --------------------------------------------------------------------------- #
+# DSR semantics correction (PREREG III.11, 2026-11-28)
+# --------------------------------------------------------------------------- #
+
+def test_dsr_returns_p_value_small_is_significant():
+    """compute_dsr returns a p-value: strong evidence -> p <= 0.05."""
+    from quant_research.core.metrics import compute_dsr
+    # Strong: high per-trade Sharpe, many trades, few trials
+    p_strong = compute_dsr(per_trade_sharpe=0.30, n_trades=500,
+                           n_trials=10)
+    assert p_strong <= 0.05
+    # Weak: marginal Sharpe, few trades, many trials
+    p_weak = compute_dsr(per_trade_sharpe=0.02, n_trades=40,
+                         n_trials=1480)
+    assert p_weak > 0.05
+    # Negative/zero evidence -> p = 1.0 (never significant)
+    assert compute_dsr(per_trade_sharpe=-0.5, n_trades=500,
+                       n_trials=10) == 1.0
+    assert compute_dsr(per_trade_sharpe=0.0, n_trades=500,
+                       n_trials=10) == 1.0
+
+
+def test_dsr_p_value_monotone_in_trial_count():
+    """More competing trials -> larger (less significant) p-value."""
+    from quant_research.core.metrics import compute_dsr
+    p_few = compute_dsr(per_trade_sharpe=0.10, n_trades=200, n_trials=10)
+    p_many = compute_dsr(per_trade_sharpe=0.10, n_trades=200, n_trials=1480)
+    assert p_many > p_few
+
+
+def test_hurdles_dsr_directionality():
+    """Hurdle requires p <= 0.05; a large p-value (old 'confidence'
+    misreading) must FAIL, not pass."""
+    base = {"net_expectancy_bps": 5.0, "max_drawdown_pct": 5.0,
+            "n_oos_trades": 40}
+    stress = {"net_expectancy_bps": 3.0}
+    assert r1._passes_hurdles({**base, "dsr_p_value": 0.01},
+                              stress) is True
+    assert r1._passes_hurdles({**base, "dsr_p_value": 0.05},
+                              stress) is True
+    assert r1._passes_hurdles({**base, "dsr_p_value": 0.051},
+                              stress) is False
+    # The inverted-semantics value that previously 'passed' (0.99) now fails
+    assert r1._passes_hurdles({**base, "dsr_p_value": 0.99},
+                              stress) is False
+
+
+def test_pooled_stats_exposes_dsr_p_value_not_confidence():
+    """The pooled stats field is named dsr_p_value and bounded [0,1];
+    no ambiguous 'dsr' confidence-score field remains."""
+    trades = [_fake_trade(5.0, 50.0) for _ in range(35)]
+    stats = r1._pooled_stats([{"trades": trades, "fold_id": "F1"}],
+                             r1.BASE_COSTS)
+    assert "dsr_p_value" in stats
+    assert "dsr" not in stats
+    assert 0.0 <= stats["dsr_p_value"] <= 1.0
+
+
+def test_family1_results_json_preserved_unchanged():
+    """The original Family 1 results artifact must not be modified by
+    the DSR correction; the corrected reassessment lives in a separate
+    file."""
+    import json, pathlib
+    results_dir = pathlib.Path(r1.__file__).parent / "results"
+    original = results_dir / (
+        "family1_turtle_dt-001-f4f572efaa88b092.json")
+    assert original.exists()
+    data = json.loads(original.read_text())
+    # Original artifact still carries the pre-correction 'dsr' field
+    # and the inverted hurdle outcome (0/24 passed).
+    sample = next(iter(data["configs"].values()))
+    assert "dsr" in sample["base"]["pooled"]
+    assert sample["passes_hurdles"] is False

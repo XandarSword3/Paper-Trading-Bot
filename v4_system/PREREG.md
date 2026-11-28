@@ -537,3 +537,62 @@ Family 1 result exists.*
   bit-reproducible across machines.
 - **Scope**: baseline runs under BASE costs only; the stress-cost
   hurdle is evaluated separately on the strategy itself.
+
+## III.11 Amendment — DSR semantics correction and trial-count reconstruction (2026-11-28)
+
+*Integrity correction issued AFTER the Family 1 execution completed.
+No strategy result, trade record, cost assumption or fold boundary is
+modified; only the statistical interpretation of the already-computed
+DSR values and the trial-count constant are corrected.*
+
+### III.11.1 The defect
+
+`quant_research/core/metrics.compute_dsr()` returns a **p-value**
+(`1 - Phi(z)`): small values indicate the observed Sharpe exceeds the
+expected maximum under the null of N competing trials. Part III.5 was
+written as "DSR >= 0.95", which reads the p-value as a confidence
+score — inverted semantics. Program D's own runners
+(`turtle_runner.py`, `maker_runner.py`, `funding_runner.py`) used the
+correct direction (`dsr_p < 0.05`); only the Family 1 runner
+(`v4_system/run_family1.py`) implemented the inverted check
+(`dsr >= 0.95`) and stored the value under the ambiguous field name
+`"dsr"`.
+
+### III.11.2 The correction
+
+- Acceptance now requires `dsr_p_value <= 0.05` (p-value semantics,
+  matching Program D's `dsr_p < 0.05`).
+- The pooled-stats field is renamed `dsr_p_value`; no field named
+  `dsr` remains in new outputs.
+- `compute_dsr()` itself is UNCHANGED — its mathematics were verified
+  against an independent SciPy implementation
+  (`tests/test_sharpe_and_dsr.py`); no defect was found in the
+  function, only in the runner's comparison direction and naming.
+
+### III.11.3 Trial-count reconstruction
+
+The pre-correction constant was `N_TRIALS_DSR = 1354 + 1 = 1355`.
+Reconstruction:
+
+- Program D ended at **1,456** registered configurations
+  (1,354 base + 72 Amendment C re-logged + 24 Amendment D maker +
+  6 Amendment E funding-sign), per PREREG II.1.
+- Family 1 evaluated **8 channel configs x 3 assets = 24 distinct
+  config-asset hypotheses**. Walk-forward folds and base/stress cost
+  scenarios are robustness checks of the SAME hypothesis, not
+  independent trials, and are NOT counted.
+- Corrected count: **N = 1,456 + 24 = 1,480**.
+
+Sensitivity: the DSR p-value depends on N only through
+`E[max SR | null] ~ sqrt(2 ln N) / sqrt(T)`; between N=1,455 and
+N=1,480 the p-value moves by <0.001 for every Family 1 config-asset,
+so the verdict is insensitive to the exact count within this range.
+
+### III.11.4 Effect on Family 1
+
+All 24 config-assets already FAILED the random-entry baseline hurdle
+(`p_beats` 0.19-0.60 >> 0.05), so the corrected DSR direction cannot
+change any acceptance classification: the verdict remains
+**NO EDGE (0/24)**. The corrected DSR p-values are reported in
+`v4_system/results/family1_turtle_dt-001-f4f572efaa88b092_dsr_corrected.json`;
+the original results artifact is preserved byte-for-byte.

@@ -71,11 +71,21 @@ STRESS_COSTS = CostModel(taker_fee_pct=0.05, slippage_pct=0.04,
                          apply_funding=True, fill_on_next_open=True)
 COST_SCENARIOS = {"base": BASE_COSTS, "stress": STRESS_COSTS}
 
-# DSR trial count: 1,354 historical (Program D) + 1 Family 1 trial
-N_TRIALS_DSR = 1354 + 1
+# DSR trial count (corrected 2026-11-28, PREREG III.11):
+# Program D ended at 1,456 registered configs (1,354 base + 72
+# Amendment C re-logged + 24 Amendment D + 6 Amendment E). Family 1
+# evaluated 8 channel configs x 3 assets = 24 distinct config-asset
+# hypotheses; folds and cost scenarios are robustness checks of the
+# SAME hypothesis, not independent trials. N = 1,456 + 24 = 1,480.
+N_TRIALS_HISTORICAL_D = 1456
+FAMILY1_CONFIG_ASSET_HYPOTHESES = 24
+N_TRIALS_DSR = N_TRIALS_HISTORICAL_D + FAMILY1_CONFIG_ASSET_HYPOTHESES
 MIN_OOS_TRADES = 30                # Part III.5 hurdle
 MAX_DRAWDOWN_PCT = 20.0            # Part III.5 hurdle
-DSR_HURDLE = 0.95                  # Part III.5 hurdle
+# compute_dsr returns a p-value: SMALL = significant. The original
+# Part III.5 text "DSR >= 0.95" encoded inverted semantics; corrected
+# by PREREG III.11 (2026-11-28). Pass requires p <= 0.05.
+DSR_P_HURDLE = 0.05
 
 # Warm-up history loaded before each fold's test window so channels/ATR
 # are fully formed; warm-up bars never produce OOS trades (filtered by
@@ -343,7 +353,7 @@ def _pooled_stats(fold_results: List[Dict[str, Any]],
         "n_oos_trades": len(trades),
         "net_expectancy_bps": float(np.mean(bps)) if len(bps) else 0.0,
         "per_trade_sharpe": pt_sharpe,
-        "dsr": dsr,
+        "dsr_p_value": dsr,
         "total_funding_pnl": fund,
         "total_fees_slippage": fees,
         "total_notional_traded": notional,
@@ -373,7 +383,7 @@ def _passes_hurdles(stats: Dict[str, Any], stress_stats: Dict[str, Any],
     return (
         stats["net_expectancy_bps"] > 0
         and stress_stats["net_expectancy_bps"] > 0
-        and stats["dsr"] >= DSR_HURDLE
+        and stats["dsr_p_value"] <= DSR_P_HURDLE
         and stats["max_drawdown_pct"] <= MAX_DRAWDOWN_PCT
         and stats["n_oos_trades"] >= MIN_OOS_TRADES
         and baseline_passed                      # PREREG III.10

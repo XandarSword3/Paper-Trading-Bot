@@ -1,0 +1,198 @@
+{
+ "correction": "PREREG III.11 DSR semantics + trial count",
+ "n_trials_dsr": 1480,
+ "configs": {
+  "1h_N20_M10/BTCUSDT": {
+   "per_trade_sharpe": -0.023421128787792844,
+   "n_oos_trades": 398,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N20_M10/SOLUSDT": {
+   "per_trade_sharpe": -0.04025423939938101,
+   "n_oos_trades": 405,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N20_M10/ETHUSDT": {
+   "per_trade_sharpe": 0.002345984358862442,
+   "n_oos_trades": 301,
+   "dsr_p_value_corrected": 0.9995567771549083,
+   "dsr_field_original": 0.9995162894668952,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N20_M20/BTCUSDT": {
+   "per_trade_sharpe": -0.031008672841738114,
+   "n_oos_trades": 333,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N20_M20/SOLUSDT": {
+   "per_trade_sharpe": -0.01983036729903845,
+   "n_oos_trades": 336,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N20_M20/ETHUSDT": {
+   "per_trade_sharpe": -0.023436689488682674,
+   "n_oos_trades": 251,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M10/BTCUSDT": {
+   "per_trade_sharpe": -0.021348246763228395,
+   "n_oos_trades": 269,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M10/SOLUSDT": {
+   "per_trade_sharpe": -0.08634862250287473,
+   "n_oos_trades": 275,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M10/ETHUSDT": {
+   "per_trade_sharpe": 0.040528753049957754,
+   "n_oos_trades": 199,
+   "dsr_p_value_corrected": 0.99738179713745,
+   "dsr_field_original": 0.9971771130200762,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M20/BTCUSDT": {
+   "per_trade_sharpe": -0.01409167157290721,
+   "n_oos_trades": 235,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M20/SOLUSDT": {
+   "per_trade_sharpe": -0.03314441806899035,
+   "n_oos_trades": 231,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "1h_N55_M20/ETHUSDT": {
+   "per_trade_sharpe": 0.015536277465767311,
+   "n_oos_trades": 176,
+   "dsr_p_value_corrected": 0.9992076038829406,
+   "dsr_field_original": 0.999138496238319,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M10/BTCUSDT": {
+   "per_trade_sharpe": 0.014306868287700985,
+   "n_oos_trades": 120,
+   "dsr_p_value_corrected": 0.9993319386287426,
+   "dsr_field_original": 0.99927285342091,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M10/SOLUSDT": {
+   "per_trade_sharpe": -0.04149428882298631,
+   "n_oos_trades": 129,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M10/ETHUSDT": {
+   "per_trade_sharpe": 0.06567806992917179,
+   "n_oos_trades": 86,
+   "dsr_p_value_corrected": 0.9970469851257371,
+   "dsr_field_original": 0.996819090550925,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M20/BTCUSDT": {
+   "per_trade_sharpe": 0.020872367264552945,
+   "n_oos_trades": 104,
+   "dsr_p_value_corrected": 0.9991886450888422,
+   "dsr_field_original": 0.9991180264649365,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M20/SOLUSDT": {
+   "per_trade_sharpe": -0.058949463926210074,
+   "n_oos_trades": 105,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N20_M20/ETHUSDT": {
+   "per_trade_sharpe": 0.04364644945017199,
+   "n_oos_trades": 76,
+   "dsr_p_value_corrected": 0.9985731489889453,
+   "dsr_field_original": 0.9984549505759394,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M10/BTCUSDT": {
+   "per_trade_sharpe": -0.02305786713628196,
+   "n_oos_trades": 96,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M10/SOLUSDT": {
+   "per_trade_sharpe": -0.06361226435438215,
+   "n_oos_trades": 97,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M10/ETHUSDT": {
+   "per_trade_sharpe": 0.009971078774811449,
+   "n_oos_trades": 72,
+   "dsr_p_value_corrected": 0.9994815254778253,
+   "dsr_field_original": 0.99943473528567,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M20/BTCUSDT": {
+   "per_trade_sharpe": 0.020853870708903727,
+   "n_oos_trades": 84,
+   "dsr_p_value_corrected": 0.999246987609428,
+   "dsr_field_original": 0.9991810407389664,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M20/SOLUSDT": {
+   "per_trade_sharpe": -0.04515956815925412,
+   "n_oos_trades": 80,
+   "dsr_p_value_corrected": 1.0,
+   "dsr_field_original": 1.0,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  },
+  "4h_N55_M20/ETHUSDT": {
+   "per_trade_sharpe": 0.0219596043746531,
+   "n_oos_trades": 65,
+   "dsr_p_value_corrected": 0.9992826207944558,
+   "dsr_field_original": 0.9992195449242025,
+   "passes_hurdles_original": false,
+   "passes_hurdles_corrected": false
+  }
+ }
+}
