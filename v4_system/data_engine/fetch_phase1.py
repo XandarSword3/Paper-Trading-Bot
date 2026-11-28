@@ -40,7 +40,10 @@ from v4_system.config import REPORTS_DIR, TIMEFRAMES
 from v4_system.data_engine import pit, refresh as refresh_mod, store
 from v4_system.data_engine.availability_probe import run_probe
 from v4_system.data_engine.binance_client import BinanceClient
-from v4_system.data_engine.contract_specs import fetch_exchange_specs
+from v4_system.data_engine.contract_specs import (fetch_exchange_specs,
+                                                   fetch_spot_specs)
+from v4_system.data_engine import funding_intervals as fi_mod
+from v4_system.data_engine import margin_tiers as mt_mod
 from v4_system.data_engine.funding import fetch_funding_history
 from v4_system.data_engine.klines import (fetch_index_price_klines,
                                            fetch_mark_price_klines,
@@ -205,12 +208,25 @@ def run_full(intraday_start: str = INTRADAY_START,
         specs = fetch_exchange_specs(symbols, client)
         store.save(specs.reset_index().rename(columns={"index": "symbol"}),
                    "contract_specs", source="fapi /fapi/v1/exchangeInfo",
-                   symbol="MULTI", timeframe=None)
+                   symbol="MULTI", timeframe=None,
+                   available_at=pd.Timestamp.now(tz="UTC"))
         print(f"contract specs: {len(specs)} symbols")
         statuses.append({"name": "contract_specs", "status": "downloaded"})
     except Exception as e:
         print(f"contract specs FAILED: {e}")
         statuses.append({"name": "contract_specs", "status": "failed",
+                         "error": f"{type(e).__name__}: {e}"})
+    try:
+        spot_specs = fetch_spot_specs(symbols, spot_client)
+        store.save(spot_specs.reset_index().rename(columns={"index": "symbol"}),
+                   "spot_contract_specs", source="api /api/v3/exchangeInfo",
+                   symbol="MULTI", timeframe=None,
+                   available_at=pd.Timestamp.now(tz="UTC"))
+        print(f"spot contract specs: {len(spot_specs)} symbols")
+        statuses.append({"name": "spot_contract_specs", "status": "downloaded"})
+    except Exception as e:
+        print(f"spot contract specs FAILED: {e}")
+        statuses.append({"name": "spot_contract_specs", "status": "failed",
                          "error": f"{type(e).__name__}: {e}"})
 
     plan = dataset_plan(symbols, timeframes)
@@ -318,6 +334,69 @@ def verify_coverage(plan: list[dict] | None = None,
             "elapsed_s": elapsed_s, "summary": summary, "datasets": datasets}
 
 
+def run_metadata(symbols: list[str] | None = None,
+                 client: BinanceClient | None = None) -> dict:
+    """Item 6: funding intervals + dated margin-tier snapshots.
+
+    Contract specs are handled in run_full. This fetches:
+    - funding_intervals: current config (fundingInfo) + observed history
+    - margin_tiers: dated leverageBracket snapshots (signed endpoint;
+      skipped with an explicit status when no API keys are available)
+    """
+    symbols = symbols or SYMBOLS
+    client = client or BinanceClient.futures()
+    result = {}
+
+    # --- funding intervals ---
+    try:
+        info = fi_mod.fetch_funding_info(symbols, client)
+        funding_dfs = {}
+        for sym in symbols:
+            try:
+                funding_dfs[sym] = store.load(f"{sym}_funding")
+            except FileNotFoundError:
+                funding_dfs[sym] = pd.DataFrame()
+        table = fi_mod.build_funding_interval_table(funding_dfs, info)
+        retrieved = pd.Timestamp.now(tz="UTC")
+        store.save(table.reset_index(), "funding_intervals",
+                   source="fapi /fapi/v1/fundingInfo + funding history",
+                   symbol="MULTI", timeframe=None,
+                   available_at=retrieved)
+        result["funding_intervals"] = "downloaded"
+        print(f"funding intervals: {len(table)} symbols")
+        for sym, row in table.iterrows():
+            print(f"  {sym}: current={row['current_interval_hours']}h "
+                  f"observed={row['observed_dominant_interval_hours']}h "
+                  f"changes={row['changes_detected']} conf={row['confidence']}")
+    except Exception as e:  # noqa: BLE001
+        result["funding_intervals"] = f"failed: {type(e).__name__}: {e}"
+        print(f"funding intervals FAILED: {e}")
+
+    # --- margin tiers (signed endpoint; needs API keys) ---
+    import os
+    api_key = os.environ.get("BINANCE_API_KEY")
+    api_secret = os.environ.get("BINANCE_API_SECRET")
+    if not api_key or not api_secret:
+        result["margin_tiers"] = "unavailable: no API keys in environment"
+        print("margin tiers: SKIPPED (no BINANCE_API_KEY/SECRET)")
+    else:
+        try:
+            brackets = mt_mod.fetch_leverage_brackets(symbols, api_key,
+                                                      api_secret, client)
+            snap = mt_mod.brackets_to_frame(brackets)
+            problems = mt_mod.validate_brackets(snap)
+            if problems:
+                print(f"margin tier validation warnings: {problems}")
+            mt_mod.save_snapshot(snap)
+            result["margin_tiers"] = "downloaded"
+            print(f"margin tiers: {len(snap)} bracket rows, "
+                  f"snapshot {snap['snapshot_time'].iloc[0] if len(snap) else 'n/a'}")
+        except Exception as e:  # noqa: BLE001
+            result["margin_tiers"] = f"failed: {type(e).__name__}: {e}"
+            print(f"margin tiers FAILED: {e}")
+    return result
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--probe", action="store_true", help="run availability probe only")
@@ -326,6 +405,8 @@ def main() -> None:
     ap.add_argument("--verify", action="store_true",
                     help="validate coverage of existing datasets only")
     ap.add_argument("--intraday-start", default=INTRADAY_START)
+    ap.add_argument("--metadata", action="store_true",
+                    help="fetch funding intervals + margin tiers only")
     args = ap.parse_args()
 
     if args.probe:
@@ -350,6 +431,9 @@ def main() -> None:
         return
     if args.quick:
         run_full(symbols=["BTCUSDT"], timeframes=["1h"])
+        return
+    if args.metadata:
+        run_metadata()
         return
     run_full(intraday_start=args.intraday_start)
 

@@ -6,6 +6,8 @@ are GETs against fapi.binance.com (USDⓈ-M futures) or api.binance.com
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import time
 from typing import Any
 
@@ -41,6 +43,42 @@ class BinanceClient:
             self._throttle()
             try:
                 resp = self.session.get(url, params=params, timeout=REQUEST_TIMEOUT)
+                if resp.status_code == 429 or resp.status_code >= 500:
+                    retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
+                    time.sleep(min(retry_after, 60))
+                    continue
+                resp.raise_for_status()
+                return resp.json()
+            except requests.RequestException as e:
+                last_err = e
+                time.sleep(min(2 ** attempt, 30))
+        raise BinanceAPIError(f"GET {url} failed after {MAX_RETRIES} attempts: {last_err}")
+
+    def get_signed(self, path: str, params: dict[str, Any] | None = None,
+                   api_key: str | None = None, api_secret: str | None = None) -> Any:
+        """Signed GET for authenticated READ-ONLY endpoints (e.g.
+        /fapi/v1/leverageBracket). Uses HMAC-SHA256 per Binance docs.
+        Never use for trading endpoints."""
+        import os
+        api_key = api_key or os.environ.get("BINANCE_API_KEY")
+        api_secret = api_secret or os.environ.get("BINANCE_API_SECRET")
+        if not api_key or not api_secret:
+            raise BinanceAPIError("API key/secret required for signed endpoint")
+        params = dict(params or {})
+        params["timestamp"] = int(time.time() * 1000)
+        params["recvWindow"] = 5000
+        query = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
+        signature = hmac.new(api_secret.encode(), query.encode(),
+                             hashlib.sha256).hexdigest()
+        params["signature"] = signature
+        url = f"{self.base}{path}"
+        last_err: Exception | None = None
+        for attempt in range(MAX_RETRIES):
+            self._throttle()
+            try:
+                resp = self.session.get(url, params=params,
+                                        headers={"X-MBX-APIKEY": api_key},
+                                        timeout=REQUEST_TIMEOUT)
                 if resp.status_code == 429 or resp.status_code >= 500:
                     retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
                     time.sleep(min(retry_after, 60))
