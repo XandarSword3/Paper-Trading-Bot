@@ -43,6 +43,15 @@ def fetch_agg_trades(symbol: str,
         batch = client.get("/fapi/v1/aggTrades", params=params)
         if not batch:
             break
+        # Local boundary enforcement on EVERY page: the exchange's
+        # endTime parameter is not trusted (and fromId pagination pages
+        # carry no time filter at all), so keep only trades inside
+        # [start_ms, end_ms]. The end boundary is INCLUSIVE: a trade
+        # exactly at end_ms is kept, anything later is dropped.
+        batch = [r for r in batch
+                 if start_ms <= int(r["T"]) <= end_ms]
+        if not batch:
+            break  # page contained only out-of-range trades
         rows.extend(batch)
         if len(batch) < 1000:
             break
